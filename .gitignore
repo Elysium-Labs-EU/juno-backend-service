@@ -1,0 +1,8 @@
+# dependencies
+/node_modules
+
+# Local files
+.vscode/snipsnap.code-snippets
+src/google/token*.*
+src/google/credentials.json
+.DS_Store

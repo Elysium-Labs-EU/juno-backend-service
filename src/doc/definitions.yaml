@@ -1,0 +1,453 @@
+openapi: '3.0.2'
+info:
+  title: API Title
+  version: '1.0'
+servers:
+  - url: http://localhost:5001
+tags:
+  - name: User
+    description: User is the Google Account.
+  - name: Threads
+    description: A thread is an object that can hold multiple messages.
+  - name: Message
+    description: A message is an object that contains the text and/or attachment.
+  - name: Labels
+    description: A label is a categorization tool, a message and thread can have different multiple labels.
+  - name: Drafts
+    description: A draft is an unsent message.
+  - name: Contacts
+    description: A contact is someone who the user interacted with.
+paths:
+  /api/contacts/?pageSize={pageSize}&readMask={readMask}&pageToken={pageToken}:
+    get:
+      description: Get all contacts of the user.
+      summary: Get all contacts
+      tags:
+        - 'Contacts'
+      parameters:
+        - in: path
+          name: pageSize
+          schema:
+            type: integer
+        - in: path
+          name: pageToken
+          allowEmptyValue: true
+          schema:
+            type: string
+        - in: path
+          name: readMask
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/contact/search/?query={query}&readMask={readMask}:
+    get:
+      description: Query specific contacts of the user.
+      summary: Query contacts
+      tags:
+        - 'Contacts'
+      parameters:
+        - in: path
+          name: query
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: readMask
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/labels:
+    delete:
+      description: Send a specific label Id to delete it.
+      summary: Delete a specific label
+      tags:
+        - 'Labels'
+      responses:
+        '200':
+          description: OK
+    patch:
+      description: Send a specific label Id and update instruction to update it.
+      summary: Patch a specific label
+      tags:
+        - 'Labels'
+      parameters:
+        - name: 'id'
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: 'resource'
+          in: 'body'
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              labelListVisibility:
+                type: string
+              messageListVisibility:
+                type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      description: Send a name and settings to create a new label.
+      summary: Create a new label
+      tags:
+        - 'Labels'
+      parameters:
+        - name: 'labelListVisibility'
+          in: query
+          schema:
+            type: string
+        - name: 'messageListVisibility'
+          in: query
+          schema:
+            type: string
+        - name: 'name'
+          in: query
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Created
+    get:
+      description: Get all labels for the current user.
+      summary: Get all labels
+      tags:
+        - 'Labels'
+      responses:
+        '200':
+          description: OK
+  /api/send-message:
+    post:
+      description: 'Message object that needs to be send via GMail'
+      summary: Send a message
+      tags:
+        - 'Message'
+      parameters:
+        - in: 'body'
+          name: 'body'
+          required: true
+          description: 'Message object that needs to be send via GMail'
+          schema:
+            type: object
+            required:
+              - raw
+              - id
+              - threadId
+            properties:
+              raw:
+                type: string
+              id:
+                type: string
+              threadId:
+                type: string
+      responses:
+        '201':
+          description: Created
+  /api/message/attachment/{messageId}/{id}:
+    get:
+      description: Use the messageId and the (attachment)Id to get the attachment file link. The user id will be infered to be the authorized user.
+      summary: Get the attachment for a specific message.
+      tags:
+        - 'Message'
+      parameters:
+        - name: messageId
+          in: path
+          description: The id of the Message
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: The Id of the attachment.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/message/:
+    delete:
+      description: Delete a specific message via message Id. A deletion cannot be reverted.
+      summary: Delete specific message
+      tags:
+        - 'Message'
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Requires the messsageId to delete specific message.
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+      responses:
+        '200':
+          description: OK
+  /api/message/thrash/{id}:
+    post:
+      description: Thrash a specific message via message Id. A thrashed message can be un-thrashed.
+      summary: Thrash specific message
+      tags:
+        - 'Message'
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Requires the messsageId to thrash specific message.
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+      responses:
+        '201':
+          description: Created
+  /api/message/{id}:
+    patch:
+      description: Modify a message via an object that contains a messsage Id and a resource object.
+      summary: Modify a specific message
+      tags:
+        - 'Message'
+      parameters:
+        - name: Id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: resource
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - 'id'
+            properties:
+              id:
+                type: string
+              resource:
+                type: object
+                properties:
+                  removeLabelIds:
+                    type: array
+                    items:
+                      type: string
+                  addLabelIds:
+                    type: array
+                    items:
+                      type: string
+      responses:
+        '200':
+          description: OK
+  /api/update-draft/{id}:
+    put:
+      description: Use the id of the draft and the request body to update
+      summary: Update a specific draft message
+      tags:
+        - 'Drafts'
+      parameters:
+        - in: path
+          name: Id
+          required: true
+          schema:
+            type: string
+        - in: body
+          name: requestBody
+          required: true
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: object
+                required:
+                  - raw
+                  - Id
+                  - threadId
+                properties:
+                  raw:
+                    type: string
+                  id:
+                    type: string
+                  threadId:
+                    type: string
+      responses:
+        '200':
+          description: OK
+  /api/send-draft:
+    post:
+      description: Send a draft message via a request body that contains an id and a message. The message can contain objects subject, body, to, and sender.
+      summary: Send a draft message
+      tags:
+        - 'Drafts'
+      parameters:
+        - in: body
+          name: requestBody
+          required: true
+          schema:
+            type: object
+            required:
+              - Id
+              - message
+            properties:
+              id:
+                type: string
+              message:
+                type: object
+                required:
+                  - raw
+                  - id
+                  - threadId
+                properties:
+                  raw:
+                    type: string
+                  id:
+                    type: string
+                  threadId:
+                    type: string
+                  labelIds:
+                    type: array
+                    items:
+                      type: string
+      responses:
+        '201':
+          description: Created
+  /api/draft/{id}:
+    get:
+      description: Use the draft Id to get its details.
+      summary: Get a draft by Id.
+      tags:
+        - 'Drafts'
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/drafts/?&maxResults={maxResults}&nextPageToken={nextPageToken}:
+    get:
+      description: Get a list of drafts based on maxResults and nextPageToken
+      summary: Get user's draft list
+      parameters:
+        - name: maxResults
+          in: path
+          schema:
+            type: string
+          allowEmptyValue: true
+        - name: nextPageToken
+          in: path
+          schema:
+            type: string
+          allowEmptyValue: true
+      tags:
+        - 'Drafts'
+      responses:
+        '200':
+          description: OK
+  /api/create-draft:
+    post:
+      description: The user id will be infered to be the authorized user. Create a draft based on the input.
+      summary: Create a new draft based on the input
+      tags:
+        - 'Drafts'
+      parameters:
+        - in: body
+          name: 'requestBody'
+          description: 'Draft object that needs to be created as a draft in GMail'
+          required: true
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: object
+                required:
+                  - raw
+                  - Id
+                  - threadId
+                properties:
+                  raw:
+                    type: string
+                  id:
+                    type: string
+                  threadId:
+                    type: string
+                  labelIds:
+                    type: array
+                    items:
+                      type: string
+      responses:
+        '201':
+          description: Created
+  /api/thread/{id}:
+    get:
+      summary: Get single thread by ID
+      description: 'The user id will be infered to be the authorized user. And a full format response is the default.'
+      tags:
+        - 'Threads'
+      parameters:
+        - name: id
+          in: 'path'
+          description: The ID of the Thread
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/user/:
+    get:
+      summary: Get profile data via the user ID.
+      description: Get profile data via the user ID. The user id will be infered to be the authorized user.
+      tags:
+        - 'User'
+      responses:
+        '200':
+          description: OK
+  /api/threads/?labelIds={labelIds}&maxResults={maxResults}&nextPageToken={nextPageToken}:
+    get:
+      summary: 'Get a list of threads based on labelIds, maxResults, and a nextPageToken'
+      description: 'The user id will be infered to be the authorized user.'
+      tags:
+        - 'Threads'
+      parameters:
+        - name: 'labelIds'
+          in: 'path'
+          description: Array of label ids
+          schema:
+            type: array
+            items:
+              type: string
+        - name: 'maxResults'
+          in: 'path'
+          description: Integer to define maximum number of results.
+          schema:
+            type: integer
+        - name: 'nextPageToken'
+          in: 'path'
+          description: Page token of the page to return
+          allowEmptyValue: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
