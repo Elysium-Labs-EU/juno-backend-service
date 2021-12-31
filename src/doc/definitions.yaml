@@ -342,6 +342,27 @@ paths:
       responses:
         '200':
           description: OK
+  /api/draft/:
+    delete:
+      description: Delete the specified draft.
+      summary: Delete the specified draft.
+      tags:
+        - 'Drafts'
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Requires the draftId to delete specific draft.
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+      responses:
+        '200':
+          description: OK
   /api/drafts/?&maxResults={maxResults}&nextPageToken={nextPageToken}:
     get:
       description: Get a list of drafts based on maxResults and nextPageToken
