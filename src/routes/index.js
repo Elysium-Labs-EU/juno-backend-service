@@ -11,6 +11,7 @@ const { fetchDrafts } = require('../controllers/Drafts/fetchDrafts');
 const { fetchSingleDraft } = require('../controllers/Drafts/fetchSingleDraft');
 const { sendDraft } = require('../controllers/Drafts/sendDraft');
 const { updateDraft } = require('../controllers/Drafts/updateDraft');
+const { deleteDraft } = require('../controllers/Drafts/deleteDraft');
 const {
 	updateSingleMessage,
 } = require('../controllers/Message/updateSingleMessage');
@@ -47,6 +48,7 @@ router.get('/api/thread/:id?', fetchSingleThread);
 router.post('/api/create-draft', createDraft);
 router.get('/api/drafts/:maxResults?/:nextPageToken?', fetchDrafts);
 router.get('/api/draft/:id?', fetchSingleDraft);
+router.delete('/api/draft/', deleteDraft);
 router.post('/api/send-draft', sendDraft);
 router.put('/api/update-draft/?:id?', updateDraft);
 router.patch('/api/message/:id?', updateSingleMessage);
