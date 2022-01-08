@@ -17,6 +17,9 @@ const getThreads = (auth, req) => new Promise((resolve, reject) => {
       if (req.query.pageToken) {
         requestBody.pageToken = req.query.pageToken
       }
+      if (req.query.q) {
+        requestBody.q = req.query.q
+      }
 
       return new Promise((resolve, reject) => {
         gmail.users.threads.list(requestBody,
@@ -44,9 +47,9 @@ exports.fetchThreads = (req, res) => {
   authenticated
     .then((auth) => {
       getThreads(auth, req).then((response) => {
-        res.status(200).json({
-          message: response,
-        })
+        res.status(200).json(
+          response,
+        )
       })
     })
     .catch((err) => {
