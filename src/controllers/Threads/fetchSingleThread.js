@@ -1,7 +1,7 @@
 const { google } = require('googleapis')
-const {authenticated} = require('../../google/index')
-const {USER} = require('../../constants/globalConstants')
-
+const { authenticated } = require('../../google/index')
+const { USER } = require('../../constants/globalConstants')
+ 
 const getThread = (auth, req) => new Promise((resolve, reject) => {
     const gmail = google.gmail({ version: 'v1', auth })
     const threadId = req.params.id
