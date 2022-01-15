@@ -1,4 +1,4 @@
-# Juno backend - [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bd0d77d77497483dae29b0360594c0fe)](https://www.codacy.com/gh/Elysium-Labs-EU/juno-backend-service/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Elysium-Labs-EU/juno-backend-service&amp;utm_campaign=Badge_Grade)
+# Juno backend - [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bd0d77d77497483dae29b0360594c0fe)](https://www.codacy.com/gh/Elysium-Labs-EU/juno-backend-service/dashboard?utm_source=github.com&utm_medium=referral&utm_content=Elysium-Labs-EU/juno-backend-service&utm_campaign=Badge_Grade)
 
 The backend code for the application Juno, build in NodeJS. This serves as an API layer connecting the React frontend to the Gmail API services.
 
@@ -11,7 +11,7 @@ The normal setup sequence would be;
 1.  Download the code to your local machine
 2.  Run `yarn` to install all dependencies
 3.  Store the `credentials.json` inside the folder `/google`
-4.  Run `yarn start` from the root to start the server (using nodemon)
+4.  Run `yarn start:watch` from the root to start the server (using nodemon)
 5.  If case you have no `token.json` in the folder `/google` the code will generate one for you, follow the steps in the console.
 6.  Once the server is running, you can open `/api-docs` to see the SwaggerUI for all API's.
 

@@ -1,7 +1,7 @@
-const express = require('express');
-const swaggerJSDoc = require('swagger-jsdoc');
-const swaggerUI = require('swagger-ui-express');
-const indexRoute = require('./index');
+import express from 'express';
+import swaggerJSDoc from 'swagger-jsdoc';
+import swaggerUI from 'swagger-ui-express';
+import indexRoute from './index';
 
 const app = express();
 
@@ -47,4 +47,4 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-module.exports = app;
+export default app;
