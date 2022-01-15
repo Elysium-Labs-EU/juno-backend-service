@@ -1,4 +1,4 @@
-# Juno backend - [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bd0d77d77497483dae29b0360594c0fe)](https://www.codacy.com/gh/Elysium-Labs-EU/juno-backend-service/dashboard?utm_source=github.com&utm_medium=referral&utm_content=Elysium-Labs-EU/juno-backend-service&utm_campaign=Badge_Grade)
+# Juno backend - [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bd0d77d77497483dae29b0360594c0fe)](https://www.codacy.com/gh/Elysium-Labs-EU/juno-backend-service/dashboard?utm_source=github.com&utm_medium=referral&utm_content=Elysium-Labs-EU/juno-backend-service&utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/ca475727f33352dffbfb/maintainability)](https://codeclimate.com/github/Elysium-Labs-EU/juno-backend-service/maintainability)
 
 The backend code for the application Juno, build in NodeJS. This serves as an API layer connecting the React frontend to the Gmail API services.
 
