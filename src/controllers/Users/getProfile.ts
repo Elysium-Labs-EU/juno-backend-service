@@ -2,46 +2,38 @@ import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-const fetchProfile = (auth) =>
-	new Promise((resolve, reject) => {
-		const gmail = google.gmail({ version: 'v1', auth });
+const fetchProfile = async (auth) => {
+	const gmail = google.gmail({ version: 'v1', auth });
 
-		function listUser() {
-			return new Promise((resolve, reject) => {
-				gmail.users.getProfile(
-					{
-						userId: USER,
-					},
-					(err, res) => {
-						if (err) {
-							reject(new Error(`Profile returned an error: ${err}`));
-						}
-						if (res && res.data) {
-							resolve(res.data);
-						} else {
-							reject(new Error('No Profile found...'));
-						}
-					}
-				);
+	async function listUser() {
+		try {
+			const response = await gmail.users.getProfile({
+				userId: USER,
 			});
+			if (response && response.status == 200) {
+				return response.data;
+			} else {
+				new Error('No Profile found...');
+			}
+		} catch (err) {
+			new Error(`Profile returned an error: ${err}`);
 		}
-		const user = listUser();
-		if (user) resolve(user);
-		reject(new Error('No Profile found...'));
-	});
-export const getProfile = (req, res) => {
-	authenticated
-		.then((auth) => {
-			fetchProfile(auth).then((response) => {
-				res.status(200).json({
-					data: response,
-				});
-			});
-		})
-		.catch((err) => {
-			res.status(404).json(err);
-		})
-		.catch((err) => {
-			res.status(401).json(err);
-		});
+	}
+	try {
+		const user = await listUser();
+		if (user) return user;
+		return new Error('No Profile found...');
+	} catch (err) {
+		new Error(`Profile returned an error: ${err}`);
+	}
+};
+export const getProfile = async (req, res) => {
+	try {
+		const auth = await authenticated;
+		const response = await fetchProfile(auth);
+		return res.status(200).json({ data: response });
+	} catch (err) {
+		res.status(404).json(err);
+		res.status(401).json(err);
+	}
 };
