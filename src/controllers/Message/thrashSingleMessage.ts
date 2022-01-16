@@ -2,50 +2,39 @@ import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-const thrashMessage = (auth, req) =>
-	new Promise((resolve, reject) => {
-		const gmail = google.gmail({ version: 'v1', auth });
-		const messageId = req.params.id;
+const thrashMessage = async (auth, req) => {
+	const gmail = google.gmail({ version: 'v1', auth });
 
-		function singleMessage(messageId) {
-			return new Promise((resolve, reject) => {
-				gmail.users.threads.trash(
-					{
-						userId: USER,
-						id: messageId,
-					},
-					(err, res) => {
-						if (err) {
-							reject(err);
-						}
-						const message = res.data;
-						if (message !== null) {
-							resolve(message);
-						} else {
-							reject(new Error('Message not found...'));
-						}
-					}
-				);
+	async function singleMessage() {
+		try {
+			const response = await gmail.users.threads.trash({
+				userId: USER,
+				id: req.params.id,
 			});
+			if (response && response.data) {
+				return response.data;
+			}
+			return new Error('No message found...');
+		} catch (err) {
+			throw Error(`Single message return an error: ${err}`);
 		}
-
-		const message = singleMessage(messageId);
-		if (message) resolve(message);
-		reject(new Error('Message not found...'));
-	});
-export const thrashSingleMessage = (req, res) => {
-	authenticated
-		.then((auth) => {
-			thrashMessage(auth, req).then((response) => {
-				res.status(200).json({
-					message: response,
-				});
-			});
-		})
-		.catch((err) => {
-			res.status(404).json(err);
-		})
-		.catch((err) => {
-			res.status(401).json(err);
-		});
+	}
+	try {
+		const message = singleMessage();
+		if (message) {
+			return message;
+		}
+	} catch (err) {
+		throw Error('Message not found...');
+	}
+};
+export const thrashSingleMessage = async (req, res) => {
+	try {
+		const auth = await authenticated;
+		const response = await thrashMessage(auth, req);
+		return res.status(200).json({ message: response });
+	} catch (err) {
+		res.status(404).json(err);
+		res.status(401).json(err);
+	}
 };
