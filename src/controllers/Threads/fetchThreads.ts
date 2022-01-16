@@ -24,18 +24,22 @@ const getThreads = async (auth, req) => {
 		}
 		try {
 			const response = await gmail.users.threads.list(requestBody);
-			if (response && response.data) return response.data;
-			new Error('No threads found...');
+			if (response && response.data) {
+				return response.data;
+			}
+			throw Error('No threads found...');
 		} catch (err) {
-			new Error(`Threads returned an error: ${err}`);
+			throw Error(`Threads returned an error: ${err}`);
 		}
 	}
 	try {
 		const threads = await listThreads();
-		if (threads) return threads;
-		return new Error('No threads found...');
+		if (threads) {
+			return threads;
+		}
+		throw Error('No threads found...');
 	} catch (err) {
-		new Error(`Threads returned an error: ${err}`);
+		throw Error(`Threads returned an error: ${err}`);
 	}
 };
 
