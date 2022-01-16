@@ -2,49 +2,42 @@ import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-const getThread = (auth, req) =>
-	new Promise((resolve, reject) => {
-		const gmail = google.gmail({ version: 'v1', auth });
-		const threadId = req.params.id;
-		function singleThread() {
-			return new Promise((resolve, reject) => {
-				gmail.users.threads.get(
-					{
-						userId: USER,
-						id: threadId,
-						format: 'full',
-					},
-					(err, res) => {
-						if (err) {
-							reject(err);
-						}
-						if (res && res.data) {
-							resolve(res.data);
-						} else {
-							reject(new Error('Thread not found...'));
-						}
-					}
-				);
-			});
-		}
+const getThread = async (auth, req) => {
+	const gmail = google.gmail({ version: 'v1', auth });
+	const threadId = req.params.id;
 
-		const thread = singleThread();
-		if (thread) resolve(thread);
-		reject(new Error('Thread not found...'));
-	});
-export const fetchSingleThread = (req, res) => {
-	authenticated
-		.then((auth) => {
-			getThread(auth, req).then((response) => {
-				res.status(200).json({
-					thread: response,
-				});
+	async function singleThread() {
+		try {
+			const response = await gmail.users.threads.get({
+				userId: USER,
+				id: threadId,
+				format: 'full',
 			});
-		})
-		.catch((err) => {
-			res.status(404).json(err);
-		})
-		.catch((err) => {
-			res.status(401).json(err);
-		});
+			if (response && response.data) {
+				return response.data;
+			}
+			return new Error('Thread not found...');
+		} catch (err) {
+			throw Error(`Threads returned an error: ${err}`);
+		}
+	}
+	try {
+		const thread = await singleThread();
+		if (thread) {
+			return thread;
+		}
+		return new Error('Thread not found...');
+	} catch (err) {
+		throw Error(`Threads returned an error: ${err}`);
+	}
+};
+export const fetchSingleThread = async (req, res) => {
+	try {
+		const auth = await authenticated;
+		const response = await getThread(auth, req);
+		return res.status(200).json({ thread: response });
+	} catch (err) {
+		res.status(404).json(err);
+		res.status(401).json(err);
+	}
 };

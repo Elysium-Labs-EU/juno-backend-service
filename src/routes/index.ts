@@ -3,6 +3,7 @@ import express from 'express';
 const router = express.Router();
 
 import { fetchThreads } from '../controllers/Threads/fetchThreads';
+import { fetchFullThreads } from '../controllers/Threads/fetchFullThreads';
 import { fetchSingleThread } from '../controllers/Threads/fetchSingleThread';
 import { createDraft } from '../controllers/Drafts/createDraft';
 import { fetchDrafts } from '../controllers/Drafts/fetchDrafts';
@@ -28,6 +29,10 @@ router.get(
 	fetchAllContacts
 );
 router.get('/api/contact/search/:query?/:readMask?', queryContacts);
+router.get(
+	'/api/threads_full/:labelIds?/:maxResults?/:nextPageToken?',
+	fetchFullThreads
+);
 router.get(
 	'/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
 	fetchThreads
