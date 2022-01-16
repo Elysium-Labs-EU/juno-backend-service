@@ -10,18 +10,20 @@ const fetchProfile = async (auth) => {
 			const response = await gmail.users.getProfile({
 				userId: USER,
 			});
-			if (response && response.status == 200) {
+			if (response && response.status === 200) {
 				return response.data;
 			} else {
-				new Error('No Profile found...');
+				throw Error('No Profile found...');
 			}
 		} catch (err) {
-			new Error(`Profile returned an error: ${err}`);
+			throw Error(`Profile returned an error: ${err}`);
 		}
 	}
 	try {
 		const user = await listUser();
-		if (user) return user;
+		if (user) {
+			return user;
+		}
 		return new Error('No Profile found...');
 	} catch (err) {
 		new Error(`Profile returned an error: ${err}`);
