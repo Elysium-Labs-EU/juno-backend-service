@@ -27,7 +27,7 @@ const getThreads = async (auth, req) => {
 			if (response && response.data) {
 				return response.data;
 			}
-			throw Error('No threads found...');
+			return new Error('No threads found...');
 		} catch (err) {
 			throw Error(`Threads returned an error: ${err}`);
 		}
@@ -37,7 +37,7 @@ const getThreads = async (auth, req) => {
 		if (threads) {
 			return threads;
 		}
-		throw Error('No threads found...');
+		return new Error('No threads found...');
 	} catch (err) {
 		throw Error(`Threads returned an error: ${err}`);
 	}

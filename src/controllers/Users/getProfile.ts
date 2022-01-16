@@ -13,7 +13,7 @@ const fetchProfile = async (auth) => {
 			if (response && response.status === 200) {
 				return response.data;
 			} else {
-				throw Error('No Profile found...');
+				return new Error('No Profile found...');
 			}
 		} catch (err) {
 			throw Error(`Profile returned an error: ${err}`);
@@ -26,7 +26,7 @@ const fetchProfile = async (auth) => {
 		}
 		return new Error('No Profile found...');
 	} catch (err) {
-		new Error(`Profile returned an error: ${err}`);
+		throw Error(`Profile returned an error: ${err}`);
 	}
 };
 export const getProfile = async (req, res) => {

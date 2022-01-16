@@ -13,18 +13,22 @@ const getThread = async (auth, req) => {
 				id: threadId,
 				format: 'full',
 			});
-			if (response && response.data) return response.data;
-			new Error('Thread not found...');
+			if (response && response.data) {
+				return response.data;
+			}
+			return new Error('Thread not found...');
 		} catch (err) {
-			new Error(`Threads returned an error: ${err}`);
+			throw Error(`Threads returned an error: ${err}`);
 		}
 	}
 	try {
 		const thread = await singleThread();
-		if (thread) return thread;
+		if (thread) {
+			return thread;
+		}
 		return new Error('Thread not found...');
 	} catch (err) {
-		new Error(`Threads returned an error: ${err}`);
+		throw Error(`Threads returned an error: ${err}`);
 	}
 };
 export const fetchSingleThread = async (req, res) => {
