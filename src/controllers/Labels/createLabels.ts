@@ -2,58 +2,45 @@ import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-const newLabels = (auth, req) =>
-	new Promise((resolve, reject) => {
-		const gmail = google.gmail({ version: 'v1', auth });
-		const { body } = req;
+const newLabels = async (auth, req) => {
+	const gmail = google.gmail({ version: 'v1', auth });
 
-		const createNewLabel = () => {
-			if (body) {
-				const { labelListVisibility, messageListVisibility, name } = body;
-				return new Promise((resolve, reject) => {
-					gmail.users.labels.create(
-						{
-							userId: USER,
-							requestBody: {
-								labelListVisibility,
-								messageListVisibility,
-								name,
-							},
-						},
-						(err, res) => {
-							if (err) {
-								reject(new Error(`Create labels returned an error: ${err}`));
-							}
-							if (res && res.data) {
-								resolve(res.data);
-							} else {
-								reject(new Error('No labels created...'));
-							}
-						}
-					);
-				});
-			}
-			throw new Error('Invalid body');
-		};
-		if (body) {
-			const labels = createNewLabel();
-			if (labels) resolve(labels);
-			reject(new Error('No labels created...'));
-		}
-	});
-export const createLabels = (req, res) => {
-	authenticated
-		.then((auth) => {
-			newLabels(auth, req).then((response) => {
-				res.status(200).json({
-					message: response,
-				});
+	async function createNewLabel() {
+		try {
+			const {
+				body: { labelListVisibility, messageListVisibility, name },
+			} = req;
+			const response = gmail.users.labels.create({
+				userId: USER,
+				requestBody: {
+					labelListVisibility,
+					messageListVisibility,
+					name,
+				},
 			});
-		})
-		.catch((err) => {
-			res.status(404).json(err);
-		})
-		.catch((err) => {
-			res.status(401).json(err);
-		});
+			// TODO: Check response
+			return response;
+		} catch (err) {
+			throw Error(`Create labels returned an error: ${err}`);
+		}
+	}
+	try {
+		const labels = await createNewLabel();
+		if (labels) {
+			return labels;
+		}
+		return new Error('No labels created...');
+	} catch (err) {
+		throw Error(`Create labels returned an error: ${err}`);
+	}
+};
+export const createLabels = async (req, res) => {
+	try {
+		const auth = await authenticated;
+		const response = await newLabels(auth, req);
+		return res.status(200).json({ message: response });
+	} catch (err) {
+		res.status(404).json(err);
+		res.status(401).json(err);
+	}
 };

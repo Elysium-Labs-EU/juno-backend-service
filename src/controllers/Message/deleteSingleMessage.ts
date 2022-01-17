@@ -14,6 +14,7 @@ const deleteMessage = async (auth, req) => {
 				userId: USER,
 				id,
 			});
+			// TODO: Verify this method.
 			return response;
 		} catch (err) {
 			throw Error('Message not removed...');
