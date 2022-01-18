@@ -54,6 +54,7 @@ const getFullThreads = async (auth, req) => {
 			const hydrateMetaList = async () => {
 				const results: any = [];
 				const threads = response.data.threads;
+				// TODO: Depending on the length of the list, cut it up for simultaneous processes.
 				if (threads) {
 					await asyncForEach(threads, async (thread) => {
 						const threadDetail = await singleThread(thread);

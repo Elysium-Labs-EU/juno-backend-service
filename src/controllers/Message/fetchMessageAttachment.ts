@@ -2,54 +2,43 @@ import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-const getAttachment = (auth, req) =>
-	new Promise((resolve, reject) => {
-		const gmail = google.gmail({ version: 'v1', auth });
-		const { messageId } = req.params;
-		const attachmentId = req.params.id;
+const getAttachment = async (auth, req) => {
+	const gmail = google.gmail({ version: 'v1', auth });
+	const { messageId } = req.params;
+	const attachmentId = req.params.id;
 
-		function singleMessageAttachments() {
-			if (messageId && attachmentId) {
-				return new Promise((resolve, reject) => {
-					gmail.users.messages.attachments.get(
-						{
-							userId: USER,
-							messageId,
-							id: attachmentId,
-						},
-						(err, res) => {
-							if (err) {
-								reject(new Error(`Get Attachment returned an error: ${err}`));
-							}
-							if (res && res.data) {
-								resolve(res.data);
-							} else {
-								reject(new Error('Message attachment not found...'));
-							}
-						}
-					);
-				});
-			}
-			return null;
-		}
-
-		const messageAttachment = singleMessageAttachments();
-		if (messageAttachment) resolve(messageAttachment);
-		reject(new Error('Message attachment not found...'));
-	});
-export const fetchMessageAttachment = (req, res) => {
-	authenticated
-		.then((auth) => {
-			getAttachment(auth, req).then((response) => {
-				res.status(200).json({
-					messageAttachment: response,
-				});
+	async function singleMessageAttachments() {
+		try {
+			const response = await gmail.users.messages.attachments.get({
+				userId: USER,
+				messageId,
+				id: attachmentId,
 			});
-		})
-		.catch((err) => {
-			res.status(404).json(err);
-		})
-		.catch((err) => {
-			res.status(401).json(err);
-		});
+			if (response && response.data) {
+				return response.data;
+			}
+			return new Error('Message attachment not found...');
+		} catch (err) {
+			throw Error(`Get Attachment returned an error: ${err}`);
+		}
+	}
+	try {
+		const messageAttachment = await singleMessageAttachments();
+		if (messageAttachment) {
+			return messageAttachment;
+		}
+		return new Error('Message attachment not found...');
+	} catch (err) {
+		throw Error(`Get Attachment returned an error: ${err}`);
+	}
+};
+export const fetchMessageAttachment = async (req, res) => {
+	try {
+		const auth = await authenticated;
+		const response = await getAttachment(auth, req);
+		return res.status(200).json({ messageAttachment: response });
+	} catch (err) {
+		res.status(404).json(err);
+		res.status(401).json(err);
+	}
 };
