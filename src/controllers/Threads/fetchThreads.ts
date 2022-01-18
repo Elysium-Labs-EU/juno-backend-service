@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { gmail_v1, google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
@@ -6,7 +6,7 @@ const getThreads = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 
 	async function listThreads() {
-		const requestBody: any = {
+		const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {
 			userId: USER,
 		};
 		requestBody.maxResults =

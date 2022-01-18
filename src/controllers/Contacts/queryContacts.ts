@@ -1,11 +1,11 @@
-import { google } from 'googleapis';
+import { google, people_v1 } from 'googleapis';
 import { authenticated } from '../../google/index';
 
 const getContacts = async (auth, req) => {
 	const people = google.people({ version: 'v1', auth });
 
-	async function listContacts() {
-		const requestBody: any = {};
+	async function searchContacts() {
+		const requestBody: people_v1.Params$Resource$Othercontacts$Search = {};
 		requestBody.query = req.query.query;
 		requestBody.readMask = req.query.readMask;
 		try {
@@ -19,7 +19,7 @@ const getContacts = async (auth, req) => {
 		}
 	}
 	try {
-		const threads = listContacts();
+		const threads = searchContacts();
 		if (threads) {
 			return threads;
 		}

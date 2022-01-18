@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { gmail_v1, google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
@@ -14,7 +14,7 @@ async function asyncForEach<T>(
 const getFullThreads = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 
-	const requestBody: any = {
+	const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {
 		userId: USER,
 	};
 	requestBody.maxResults =
@@ -52,9 +52,9 @@ const getFullThreads = async (auth, req) => {
 		const response = await gmail.users.threads.list(requestBody);
 		if (response && response.data) {
 			const hydrateMetaList = async () => {
-				const results: any = [];
+				const results: gmail_v1.Schema$Thread[] = [];
+
 				const threads = response.data.threads;
-				// TODO: Depending on the length of the list, cut it up for simultaneous processes.
 				if (threads) {
 					await asyncForEach(threads, async (thread) => {
 						const threadDetail = await singleThread(thread);
