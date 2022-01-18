@@ -2,53 +2,41 @@ import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-const removeDraft = (auth, req) =>
-	new Promise((resolve, reject) => {
-		const gmail = google.gmail({ version: 'v1', auth });
-		const { body } = req;
+const removeDraft = async (auth, req) => {
+	const gmail = google.gmail({ version: 'v1', auth });
+	const {
+		body: { id },
+	} = req;
 
-		function removeSingleDraft() {
-			const { id } = body;
-			return new Promise((resolve, reject) => {
-				gmail.users.drafts.delete(
-					{
-						userId: USER,
-						id,
-					},
-					(err, res) => {
-						if (err) {
-							reject(new Error(`Draft returned an error: ${err}`));
-						}
-						if (res && res.status === 204) {
-							resolve(res);
-						} else {
-							reject(new Error('No draft deleted...'));
-						}
-					}
-				);
+	async function removeSingleDraft() {
+		try {
+			const response = await gmail.users.drafts.delete({
+				userId: USER,
+				id,
 			});
+			// TODO: Check this function
+			return response;
+		} catch (err) {
+			throw Error(`Draft returned an error: ${err}`);
 		}
-		if (body) {
-			const removedDraft = removeSingleDraft();
-			resolve(removedDraft);
+	}
+	try {
+		const removedDraft = await removeSingleDraft();
+		if (removedDraft) {
+			return removedDraft;
 		}
-		if (!body) {
-			reject(new Error('No draft deleted...'));
-		}
-	});
-export const deleteDraft = (req, res) => {
-	authenticated
-		.then((auth) => {
-			removeDraft(auth, req).then((response) => {
-				res.status(200).json({
-					message: response,
-				});
-			});
-		})
-		.catch((err) => {
-			res.status(404).json(err);
-		})
-		.catch((err) => {
-			res.status(401).json(err);
-		});
+		return new Error('No draft deleted...');
+	} catch (err) {
+		throw Error(`Draft returned an error: ${err}`);
+	}
+};
+export const deleteDraft = async (req, res) => {
+	try {
+		const auth = await authenticated;
+		const response = await removeDraft(auth, req);
+		return res.status(200).json({ message: response });
+	} catch (err) {
+		res.status(404).json(err);
+		res.status(401).json(err);
+	}
 };

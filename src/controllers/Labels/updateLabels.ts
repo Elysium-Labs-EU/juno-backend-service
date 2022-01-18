@@ -14,6 +14,7 @@ const refreshLabels = async (auth, req) => {
 				id,
 				requestBody,
 			});
+			console.log(response);
 			if (response && response.data) {
 				return response.data;
 			}
