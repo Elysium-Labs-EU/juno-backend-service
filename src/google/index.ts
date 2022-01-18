@@ -91,7 +91,7 @@ const authorize = () => {
 	});
 };
 
-export const authenticated = new Promise((resolve, reject) => {
+export const authenticated = async () => {
 	// Load client secrets from a local file.
-	authorize().then(resolve, reject);
-});
+	return await authorize();
+};

@@ -30,11 +30,10 @@ const getDrafts = async (auth) => {
 };
 export const fetchDrafts = async (req, res) => {
 	try {
-		const auth = await authenticated;
+		const auth = await authenticated();
 		const response = await getDrafts(auth);
 		return res.status(200).json({ message: response });
 	} catch (err) {
-		res.status(404).json(err);
 		res.status(401).json(err);
 	}
 };

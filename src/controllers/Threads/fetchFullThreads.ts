@@ -79,11 +79,10 @@ const getFullThreads = async (auth, req) => {
 
 export const fetchFullThreads = async (req, res) => {
 	try {
-		const auth = await authenticated;
+		const auth = await authenticated();
 		const response = await getFullThreads(auth, req);
 		return res.status(200).json(response);
 	} catch (err) {
-		res.status(404).json(err);
 		res.status(401).json(err);
 	}
 };
