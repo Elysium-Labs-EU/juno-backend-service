@@ -18,7 +18,6 @@ const newLabels = async (auth, req) => {
 					name,
 				},
 			});
-			// TODO: Check response
 			return response;
 		} catch (err) {
 			throw Error(`Create labels returned an error: ${err}`);

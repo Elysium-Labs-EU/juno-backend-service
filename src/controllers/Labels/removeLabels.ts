@@ -14,8 +14,6 @@ const removeTheLabels = async (auth, req) => {
 				userId: USER,
 				id,
 			});
-			console.log(response);
-			// TODO: Verify this method.
 			return response;
 		} catch (err) {
 			throw Error(`Create labels returned an error: ${err}`);

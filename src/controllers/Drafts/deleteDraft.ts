@@ -14,7 +14,6 @@ const removeDraft = async (auth, req) => {
 				userId: USER,
 				id,
 			});
-			// TODO: Check this function
 			return response;
 		} catch (err) {
 			throw Error(`Draft returned an error: ${err}`);
