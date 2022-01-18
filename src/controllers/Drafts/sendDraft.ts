@@ -34,11 +34,10 @@ const exportDraft = async (auth, req) => {
 };
 export const sendDraft = async (req, res) => {
 	try {
-		const auth = await authenticated;
+		const auth = await authenticated();
 		const response = await exportDraft(auth, req);
 		return res.status(200).json({ message: response });
 	} catch (err) {
-		res.status(404).json(err);
 		res.status(401).json(err);
 	}
 };
