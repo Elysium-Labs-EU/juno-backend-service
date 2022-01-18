@@ -1,11 +1,11 @@
-import { google } from 'googleapis';
+import { google, people_v1 } from 'googleapis';
 import { authenticated } from '../../google/index';
 
 const getContacts = async (auth, req) => {
 	const people = google.people({ version: 'v1', auth });
 
 	async function listContacts() {
-		const requestBody: any = {};
+		const requestBody: people_v1.Params$Resource$Othercontacts$List = {};
 
 		requestBody.pageSize =
 			typeof Number(req.query.pageSize) !== 'number'
