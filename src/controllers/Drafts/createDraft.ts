@@ -33,8 +33,8 @@ const exportDraft = async (auth, req) => {
 					message: {
 						raw: encodedMessage,
 						id: messageId,
-						threadId: threadId,
-						labelIds: labelIds,
+						threadId,
+						labelIds,
 					},
 				},
 			});

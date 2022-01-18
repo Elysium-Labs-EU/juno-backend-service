@@ -15,7 +15,9 @@ const updateMessage = async (auth, req) => {
 			if (response && response.data) {
 				return response.data;
 			}
-		} catch (err) {}
+		} catch (err) {
+			throw Error(`Single message returned an error: ${err}`);
+		}
 	}
 	try {
 		const message = await singleMessage();
