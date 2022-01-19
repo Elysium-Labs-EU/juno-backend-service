@@ -20,7 +20,7 @@ export const getProfile = async (req, res) => {
 	try {
 		const auth = await authenticated();
 		const response = await fetchProfile(auth);
-		return res.status(200).json({ data: response });
+		return res.status(200).json(response);
 	} catch (err) {
 		res.status(401).json(err);
 	}

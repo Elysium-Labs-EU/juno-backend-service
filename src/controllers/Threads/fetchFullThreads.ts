@@ -66,7 +66,10 @@ const getFullThreads = async (auth, req) => {
 						results.push(threadDetail);
 					});
 				}
-				return results;
+				return {
+					...response.data,
+					threads: results,
+				};
 			};
 			return hydrateMetaList();
 		}
