@@ -8,23 +8,12 @@ const removeDraft = async (auth, req) => {
 		body: { id },
 	} = req;
 
-	async function removeSingleDraft() {
-		try {
-			const response = await gmail.users.drafts.delete({
-				userId: USER,
-				id,
-			});
-			return response;
-		} catch (err) {
-			throw Error(`Draft returned an error: ${err}`);
-		}
-	}
 	try {
-		const removedDraft = await removeSingleDraft();
-		if (removedDraft) {
-			return removedDraft;
-		}
-		return new Error('No draft deleted...');
+		const response = await gmail.users.drafts.delete({
+			userId: USER,
+			id,
+		});
+		return response;
 	} catch (err) {
 		throw Error(`Draft returned an error: ${err}`);
 	}

@@ -4,24 +4,13 @@ import { authenticated } from '../../google/index';
 const getContacts = async (auth, req) => {
 	const people = google.people({ version: 'v1', auth });
 
-	async function searchContacts() {
-		const requestBody: people_v1.Params$Resource$Othercontacts$Search = {};
-		requestBody.query = req.query.query;
-		requestBody.readMask = req.query.readMask;
-		try {
-			const response = await people.otherContacts.search(requestBody);
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('No contacts found...');
-		} catch (err) {
-			throw Error(`Contacts returned an error: ${err}`);
-		}
-	}
+	const requestBody: people_v1.Params$Resource$Othercontacts$Search = {};
+	requestBody.query = req.query.query;
+	requestBody.readMask = req.query.readMask;
 	try {
-		const threads = searchContacts();
-		if (threads) {
-			return threads;
+		const response = await people.otherContacts.search(requestBody);
+		if (response && response.data) {
+			return response.data;
 		}
 		return new Error('No contacts found...');
 	} catch (err) {

@@ -24,32 +24,21 @@ const exportDraft = async (auth, req) => {
 		.replace(/\+/g, '-')
 		.replace(/\//g, '_')
 		.replace(/=+$/, '');
-	async function initiateDraft() {
-		try {
-			const response = await gmail.users.drafts.create({
-				userId: USER,
-				// id: draftId,
-				requestBody: {
-					message: {
-						raw: encodedMessage,
-						id: messageId,
-						threadId,
-						labelIds,
-					},
-				},
-			});
-			if (response) {
-				return response;
-			}
-			return new Error('Draft is not created...');
-		} catch (err) {
-			throw Error(`Create Draft returned an error ${err}`);
-		}
-	}
 	try {
-		const finalMail = initiateDraft();
-		if (finalMail) {
-			return finalMail;
+		const response = await gmail.users.drafts.create({
+			userId: USER,
+			// id: draftId,
+			requestBody: {
+				message: {
+					raw: encodedMessage,
+					id: messageId,
+					threadId,
+					labelIds,
+				},
+			},
+		});
+		if (response) {
+			return response;
 		}
 		return new Error('Draft is not created...');
 	} catch (err) {

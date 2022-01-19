@@ -5,25 +5,14 @@ import { USER } from '../../constants/globalConstants';
 const getDraft = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 
-	async function singleDraft() {
-		try {
-			const response = await gmail.users.drafts.get({
-				userId: USER,
-				id: req.params.id,
-				format: 'full',
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('Draft not found...');
-		} catch (err) {
-			throw Error(`Fetching Draft returned an error ${err}`);
-		}
-	}
 	try {
-		const draft = await singleDraft();
-		if (draft) {
-			return draft;
+		const response = await gmail.users.drafts.get({
+			userId: USER,
+			id: req.params.id,
+			format: 'full',
+		});
+		if (response && response.data) {
+			return response.data;
 		}
 		return new Error('Draft not found...');
 	} catch (err) {
