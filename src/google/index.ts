@@ -45,7 +45,9 @@ export const getNewToken = (oAuth2Client) =>
 				oAuth2Client.setCredentials(token);
 				// Save the token for later program executions
 				fs.writeFile(TOKEN_PATH, JSON.stringify(token), () => {
-					if (err) reject(new Error(err));
+					if (err) {
+						reject(new Error(err));
+					}
 					console.log('Token stored to', TOKEN_PATH);
 					return null;
 				});
