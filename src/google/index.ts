@@ -3,7 +3,6 @@ import readline from 'readline';
 import { google } from 'googleapis';
 import path from 'path';
 import credentials from './credentials.json';
-import { OAuth2Client } from 'google-auth-library';
 
 // If modifying these scopes, delete token.json.
 const SCOPES = [

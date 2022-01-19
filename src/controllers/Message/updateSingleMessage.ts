@@ -1,7 +1,6 @@
 import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
-import { Request, Response } from 'express';
 
 const updateMessage = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
@@ -19,7 +18,7 @@ const updateMessage = async (auth, req) => {
 		throw Error(`Single message returned an error: ${err}`);
 	}
 };
-export const updateSingleMessage = async (req: Request, res: Response) => {
+export const updateSingleMessage = async (req, res) => {
 	try {
 		const auth = await authenticated();
 		const response = await updateMessage(auth, req);
