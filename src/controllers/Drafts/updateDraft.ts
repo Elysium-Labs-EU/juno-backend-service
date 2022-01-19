@@ -1,42 +1,11 @@
 import { google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
+import messageEncoding from '../../utils/messageEncoding';
 
 const exportDraft = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
-
-	const {
-		body,
-		subject,
-		to,
-		cc,
-		bcc,
-		sender,
-		draftId,
-		threadId,
-		messageId,
-		labelIds,
-	} = req.body;
-	const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-	const messageParts = [
-		`From: ${sender}`,
-		`To: ${to}`,
-		`Cc: ${cc}`,
-		`Bcc: ${bcc}`,
-		'Content-Type: text/html; charset=utf-8',
-		'MIME-Version: 1.0',
-		`Subject: ${utf8Subject}`,
-		'',
-		`${body}`,
-	];
-	const message = messageParts.join('\n');
-
-	// The body needs to be base64url encoded.
-	const encodedMessage = Buffer.from(message)
-		.toString('base64')
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_')
-		.replace(/=+$/, '');
+	const { draftId, threadId, messageId, labelIds } = req.body;
 
 	try {
 		const response = await gmail.users.drafts.update({
@@ -44,7 +13,7 @@ const exportDraft = async (auth, req) => {
 			id: draftId,
 			requestBody: {
 				message: {
-					raw: encodedMessage,
+					raw: messageEncoding(req.body),
 					id: messageId,
 					threadId,
 					labelIds,
