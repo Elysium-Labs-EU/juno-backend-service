@@ -11,8 +11,30 @@ async function asyncForEach<T>(
 	}
 }
 
+async function singleThread(
+	thread: gmail_v1.Schema$Thread,
+	gmail: gmail_v1.Gmail
+) {
+	const { id } = thread;
+	try {
+		if (id) {
+			const response = await gmail.users.threads.get({
+				userId: USER,
+				id,
+				format: 'full',
+			});
+			if (response && response.data) {
+				return response.data;
+			}
+		}
+		throw Error('Thread not found...');
+	} catch (err) {
+		throw Error(`Threads returned an error: ${err}`);
+	}
+}
+
 const getFullThreads = async (auth, req) => {
-	const gmail = google.gmail({ version: 'v1', auth });
+	const gmail: gmail_v1.Gmail = google.gmail({ version: 'v1', auth });
 
 	const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {
 		userId: USER,
@@ -31,24 +53,7 @@ const getFullThreads = async (auth, req) => {
 		requestBody.q = req.query.q;
 	}
 
-	async function singleThread(thread) {
-		const { id } = thread;
-		try {
-			const response = await gmail.users.threads.get({
-				userId: USER,
-				id,
-				format: 'full',
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			throw Error('Thread not found...');
-		} catch (err) {
-			throw Error(`Threads returned an error: ${err}`);
-		}
-	}
-
-	async function listThreads() {
+	try {
 		const response = await gmail.users.threads.list(requestBody);
 		if (response && response.data) {
 			const hydrateMetaList = async () => {
@@ -57,7 +62,7 @@ const getFullThreads = async (auth, req) => {
 				const threads = response.data.threads;
 				if (threads) {
 					await asyncForEach(threads, async (thread) => {
-						const threadDetail = await singleThread(thread);
+						const threadDetail = await singleThread(thread, gmail);
 						results.push(threadDetail);
 					});
 				}
@@ -65,13 +70,6 @@ const getFullThreads = async (auth, req) => {
 			};
 			return hydrateMetaList();
 		}
-	}
-	try {
-		const threads = await listThreads();
-		if (threads) {
-			return threads;
-		}
-		return new Error('No threads found...');
 	} catch (err) {
 		throw Error(`Threads returned an error: ${err}`);
 	}

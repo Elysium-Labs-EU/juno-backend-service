@@ -13,30 +13,18 @@ const refreshLabels = async (auth, req) => {
 		};
 	} = req;
 
-	async function updateLabel() {
-		try {
-			const response = await gmail.users.labels.patch({
-				userId: USER,
-				id,
-				requestBody,
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('No labels created...');
-		} catch (err) {
-			throw new Error(`Create labels returned an error: ${err}`);
-		}
-	}
 	try {
-		const labels = await updateLabel();
-		if (labels) {
-			return labels;
+		const response = await gmail.users.labels.patch({
+			userId: USER,
+			id,
+			requestBody,
+		});
+		if (response && response.data) {
+			return response.data;
 		}
-
 		return new Error('No labels created...');
 	} catch (err) {
-		throw Error(`Create labels returned an error: ${err}`);
+		throw new Error(`Create labels returned an error: ${err}`);
 	}
 };
 export const updateLabels = async (req, res) => {

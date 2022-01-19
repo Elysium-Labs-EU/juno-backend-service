@@ -6,26 +6,15 @@ const exportDraft = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 	const { id } = req.body;
 
-	async function sendDraft() {
-		try {
-			const response = await gmail.users.drafts.send({
-				userId: USER,
-				requestBody: {
-					id,
-				},
-			});
-			if (response) {
-				return response;
-			}
-			return new Error('Mail was not sent...');
-		} catch (err) {
-			throw Error(`Sending Draft encountered an error ${err}`);
-		}
-	}
 	try {
-		const finalMail = await sendDraft();
-		if (finalMail) {
-			return finalMail;
+		const response = await gmail.users.drafts.send({
+			userId: USER,
+			requestBody: {
+				id,
+			},
+		});
+		if (response) {
+			return response;
 		}
 		return new Error('Mail was not sent...');
 	} catch (err) {

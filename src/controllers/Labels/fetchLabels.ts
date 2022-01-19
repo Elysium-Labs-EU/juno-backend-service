@@ -5,23 +5,12 @@ import { USER } from '../../constants/globalConstants';
 const getLabels = async (auth) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 
-	async function listLabels() {
-		try {
-			const response = await gmail.users.labels.list({
-				userId: USER,
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('No Labels found...');
-		} catch (err) {
-			throw Error(`Labels returned an error: ${err}`);
-		}
-	}
 	try {
-		const labels = await listLabels();
-		if (labels) {
-			return labels;
+		const response = await gmail.users.labels.list({
+			userId: USER,
+		});
+		if (response && response.data) {
+			return response.data;
 		}
 		return new Error('No Labels found...');
 	} catch (err) {

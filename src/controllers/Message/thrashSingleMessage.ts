@@ -5,27 +5,17 @@ import { USER } from '../../constants/globalConstants';
 const thrashMessage = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 
-	async function singleMessage() {
-		try {
-			const response = await gmail.users.threads.trash({
-				userId: USER,
-				id: req.params.id,
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('No message found...');
-		} catch (err) {
-			throw Error(`Single message return an error: ${err}`);
-		}
-	}
 	try {
-		const message = singleMessage();
-		if (message) {
-			return message;
+		const response = await gmail.users.threads.trash({
+			userId: USER,
+			id: req.params.id,
+		});
+		if (response && response.data) {
+			return response.data;
 		}
+		return new Error('No message found...');
 	} catch (err) {
-		throw Error('Message not found...');
+		throw Error(`Single message return an error: ${err}`);
 	}
 };
 export const thrashSingleMessage = async (req, res) => {

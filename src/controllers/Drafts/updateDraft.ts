@@ -37,33 +37,26 @@ const exportDraft = async (auth, req) => {
 		.replace(/\+/g, '-')
 		.replace(/\//g, '_')
 		.replace(/=+$/, '');
-	async function initiateDraft(encodedMessage) {
-		try {
-			const response = await gmail.users.drafts.update({
-				userId: USER,
-				id: draftId,
-				requestBody: {
-					message: {
-						raw: encodedMessage,
-						id: messageId,
-						threadId,
-						labelIds,
-					},
-				},
-			});
-			if (response) {
-				return response;
-			}
-			return new Error('Draft is not updated...');
-		} catch (err) {
-			throw Error(`Draft update encountered an error ${err}`);
-		}
-	}
+
 	try {
-		const finalMail = await initiateDraft(encodedMessage);
-		return finalMail;
+		const response = await gmail.users.drafts.update({
+			userId: USER,
+			id: draftId,
+			requestBody: {
+				message: {
+					raw: encodedMessage,
+					id: messageId,
+					threadId,
+					labelIds,
+				},
+			},
+		});
+		if (response) {
+			return response;
+		}
+		return new Error('Draft is not updated...');
 	} catch (err) {
-		throw Error('Draft is not updated...');
+		throw Error(`Draft update encountered an error ${err}`);
 	}
 };
 

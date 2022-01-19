@@ -8,25 +8,14 @@ const deleteMessage = async (auth, req) => {
 		body: { id },
 	} = req;
 
-	async function removeMessage() {
-		try {
-			const response = await gmail.users.threads.delete({
-				userId: USER,
-				id,
-			});
-			return response;
-		} catch (err) {
-			throw Error('Message not removed...');
-		}
-	}
 	try {
-		const message = await removeMessage();
-		if (message) {
-			return message;
-		}
-		return new Error('Message not removed...');
+		const response = await gmail.users.threads.delete({
+			userId: USER,
+			id,
+		});
+		return response;
 	} catch (err) {
-		throw Error(`Message Removing returned an error: ${err}`);
+		throw Error('Message not removed...');
 	}
 };
 export const deleteSingleMessage = async (req, res) => {

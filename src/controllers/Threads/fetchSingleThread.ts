@@ -6,25 +6,14 @@ const getThread = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 	const threadId = req.params.id;
 
-	async function singleThread() {
-		try {
-			const response = await gmail.users.threads.get({
-				userId: USER,
-				id: threadId,
-				format: 'full',
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('Thread not found...');
-		} catch (err) {
-			throw Error(`Threads returned an error: ${err}`);
-		}
-	}
 	try {
-		const thread = await singleThread();
-		if (thread) {
-			return thread;
+		const response = await gmail.users.threads.get({
+			userId: USER,
+			id: threadId,
+			format: 'full',
+		});
+		if (response && response.data) {
+			return response.data;
 		}
 		return new Error('Thread not found...');
 	} catch (err) {

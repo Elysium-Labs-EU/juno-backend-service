@@ -8,23 +8,12 @@ const removeTheLabels = async (auth, req) => {
 		body: { id },
 	} = req;
 
-	async function deleteLabel() {
-		try {
-			const response = await gmail.users.labels.delete({
-				userId: USER,
-				id,
-			});
-			return response;
-		} catch (err) {
-			throw Error(`Create labels returned an error: ${err}`);
-		}
-	}
 	try {
-		const labels = await deleteLabel();
-		if (labels) {
-			return labels;
-		}
-		return new Error('No labels created...');
+		const response = await gmail.users.labels.delete({
+			userId: USER,
+			id,
+		});
+		return response;
 	} catch (err) {
 		throw Error(`Create labels returned an error: ${err}`);
 	}

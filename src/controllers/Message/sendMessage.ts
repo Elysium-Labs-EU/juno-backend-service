@@ -25,28 +25,17 @@ const exportMessage = async (auth, req) => {
 		.replace(/\//g, '_')
 		.replace(/=+$/, '');
 
-	async function sendMail() {
-		try {
-			const response = await gmail.users.messages.send({
-				userId: USER,
-				requestBody: {
-					raw: encodedMessage,
-					id,
-					threadId,
-				},
-			});
-			if (response) {
-				return response;
-			}
-			return new Error('Mail was not sent...');
-		} catch (err) {
-			throw Error(`Mail was not sent...: ${err}`);
-		}
-	}
 	try {
-		const emailResult = await sendMail();
-		if (emailResult) {
-			return emailResult;
+		const response = await gmail.users.messages.send({
+			userId: USER,
+			requestBody: {
+				raw: encodedMessage,
+				id,
+				threadId,
+			},
+		});
+		if (response) {
+			return response;
 		}
 		return new Error('Mail was not sent...');
 	} catch (err) {

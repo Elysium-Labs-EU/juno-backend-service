@@ -5,30 +5,19 @@ import { USER } from '../../constants/globalConstants';
 const newLabels = async (auth, req) => {
 	const gmail = google.gmail({ version: 'v1', auth });
 
-	async function createNewLabel() {
-		try {
-			const {
-				body: { labelListVisibility, messageListVisibility, name },
-			} = req;
-			const response = gmail.users.labels.create({
-				userId: USER,
-				requestBody: {
-					labelListVisibility,
-					messageListVisibility,
-					name,
-				},
-			});
-			return response;
-		} catch (err) {
-			throw Error(`Create labels returned an error: ${err}`);
-		}
-	}
 	try {
-		const labels = await createNewLabel();
-		if (labels) {
-			return labels;
-		}
-		return new Error('No labels created...');
+		const {
+			body: { labelListVisibility, messageListVisibility, name },
+		} = req;
+		const response = gmail.users.labels.create({
+			userId: USER,
+			requestBody: {
+				labelListVisibility,
+				messageListVisibility,
+				name,
+			},
+		});
+		return response;
 	} catch (err) {
 		throw Error(`Create labels returned an error: ${err}`);
 	}

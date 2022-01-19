@@ -7,25 +7,14 @@ const getAttachment = async (auth, req) => {
 	const { messageId } = req.params;
 	const attachmentId = req.params.id;
 
-	async function singleMessageAttachments() {
-		try {
-			const response = await gmail.users.messages.attachments.get({
-				userId: USER,
-				messageId,
-				id: attachmentId,
-			});
-			if (response && response.data) {
-				return response.data;
-			}
-			return new Error('Message attachment not found...');
-		} catch (err) {
-			throw Error(`Get Attachment returned an error: ${err}`);
-		}
-	}
 	try {
-		const messageAttachment = await singleMessageAttachments();
-		if (messageAttachment) {
-			return messageAttachment;
+		const response = await gmail.users.messages.attachments.get({
+			userId: USER,
+			messageId,
+			id: attachmentId,
+		});
+		if (response && response.data) {
+			return response.data;
 		}
 		return new Error('Message attachment not found...');
 	} catch (err) {
