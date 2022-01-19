@@ -24,7 +24,7 @@ export const fetchSingleThread = async (req, res) => {
 	try {
 		const auth = await authenticated();
 		const response = await getThread(auth, req);
-		return res.status(200).json({ thread: response });
+		return res.status(200).json(response);
 	} catch (err) {
 		res.status(401).json(err);
 	}
