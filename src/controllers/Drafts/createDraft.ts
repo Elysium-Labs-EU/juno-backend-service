@@ -17,6 +17,14 @@ const setupDraft = async (auth, req) => {
 					id: messageId,
 					threadId,
 					labelIds,
+					payload: {
+						partId: '',
+						mimeType: 'text/html',
+						filename: '',
+						body: {
+							data: messageEncoding(req.body),
+						},
+					},
 				},
 			},
 		});
