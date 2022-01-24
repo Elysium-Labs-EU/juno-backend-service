@@ -1,1 +1,1 @@
-export const USER = 'me';
+export const USER = 'me'
