@@ -2,15 +2,6 @@ import { gmail_v1, google } from 'googleapis';
 import { authenticated } from '../../google/index';
 import { USER } from '../../constants/globalConstants';
 
-async function asyncForEach<T>(
-	array: T[],
-	callback: (item: T, index: number, allItems: T[]) => void
-) {
-	for (let index = 0; index < array.length; index += 1) {
-		await callback(array[index], index, array);
-	}
-}
-
 async function singleThread(
 	thread: gmail_v1.Schema$Thread,
 	gmail: gmail_v1.Gmail
@@ -57,19 +48,18 @@ const getFullThreads = async (auth, req) => {
 		const response = await gmail.users.threads.list(requestBody);
 		if (response && response.data) {
 			const hydrateMetaList = async () => {
-				const results: gmail_v1.Schema$Thread[] = [];
+				const results: Promise<gmail_v1.Schema$Thread>[] = [];
 
 				const threads = response.data.threads;
 				if (threads) {
-					await asyncForEach(threads, async (thread) => {
-						const threadDetail = await singleThread(thread, gmail);
-						results.push(threadDetail);
-					});
+					for (const thread of threads) {
+						results.push(singleThread(thread, gmail));
+					}
+					return {
+						...response.data,
+						threads: await Promise.all(results),
+					};
 				}
-				return {
-					...response.data,
-					threads: results,
-				};
 			};
 			return hydrateMetaList();
 		}
