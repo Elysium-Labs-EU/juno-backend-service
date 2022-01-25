@@ -9,3 +9,4 @@
 src/google/token*.*
 src/google/credentials.json
 .DS_Store
+.vscode/settings.json
