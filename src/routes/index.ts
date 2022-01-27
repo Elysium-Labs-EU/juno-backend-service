@@ -18,6 +18,7 @@ import { fetchMessageAttachment } from '../controllers/Message/fetchMessageAttac
 import { sendMessage } from '../controllers/Message/sendMessage'
 import { createLabels } from '../controllers/Labels/createLabels'
 import { fetchLabels } from '../controllers/Labels/fetchLabels'
+import { fetchSingleLabel } from '../controllers/Labels/fetchSingleLabel'
 import { updateLabels } from '../controllers/Labels/updateLabels'
 import { removeLabels } from '../controllers/Labels/removeLabels'
 import { getProfile } from '../controllers/Users/getProfile'
@@ -48,6 +49,7 @@ router.get('/api/message/attachment/:messageId?/:id?', fetchMessageAttachment)
 router.post('/api/send-message', sendMessage)
 router.post('/api/labels', createLabels)
 router.get('/api/labels', fetchLabels)
+router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
 router.get('/api/user', getProfile)
