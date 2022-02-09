@@ -75,16 +75,13 @@ const authorize = () => {
 
   return new Promise((resolve, reject) => {
     // Check if we have previously stored a token.
-    fs.readFile(TOKEN_PATH, (err: unknown, token: unknown) => {
+    fs.readFile(TOKEN_PATH, async (err: unknown, token: unknown) => {
       if (err) {
-        getNewToken(oAuth2Client).then(
-          (oAuth2ClientNew) => {
-            resolve(oAuth2ClientNew)
-          },
-          () => {
-            reject(new Error(err as string))
-          }
-        )
+        try {
+          resolve(await getNewToken(oAuth2Client)) 
+        } catch (error) {
+          reject(new Error(err as string))
+        }
       } else {
         oAuth2Client.setCredentials(JSON.parse(token as string))
         resolve(oAuth2Client)
