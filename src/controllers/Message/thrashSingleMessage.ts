@@ -20,7 +20,7 @@ const thrashMessage = async (auth, req) => {
 }
 export const thrashSingleMessage = async (req, res) => {
   try {
-    const auth = await authenticated()
+    const auth = await authenticated(req.headers.authorization)
     const response = await thrashMessage(auth, req)
     return res.status(200).json(response)
   } catch (err) {

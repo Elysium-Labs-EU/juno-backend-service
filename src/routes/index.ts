@@ -2,6 +2,7 @@ import express from 'express'
 
 const router = express.Router()
 
+import { googleAuth } from '../controllers/Users/googleAuth'
 import { fetchThreads } from '../controllers/Threads/fetchThreads'
 import { fetchFullThreads } from '../controllers/Threads/fetchFullThreads'
 import { fetchSingleThread } from '../controllers/Threads/fetchSingleThread'
@@ -25,6 +26,7 @@ import { getProfile } from '../controllers/Users/getProfile'
 import { fetchAllContacts } from '../controllers/Contacts/fetchAllContacts'
 import { queryContacts } from '../controllers/Contacts/queryContacts'
 
+router.post('/api/auth/google', googleAuth)
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
   fetchAllContacts

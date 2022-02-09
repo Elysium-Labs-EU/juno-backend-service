@@ -20,7 +20,7 @@ const removeDraft = async (auth, req) => {
 }
 export const deleteDraft = async (req, res) => {
   try {
-    const auth = await authenticated()
+    const auth = await authenticated(req.headers.authorization)
     const response = await removeDraft(auth, req)
     return res.status(200).json(response)
   } catch (err) {

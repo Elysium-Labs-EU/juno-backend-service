@@ -3,6 +3,7 @@ import readline from 'readline'
 import { google } from 'googleapis'
 import path from 'path'
 import credentials from './credentials.json'
+import { OAuth2Client } from 'google-auth-library'
 
 // If modifying these scopes, delete token.json.
 const SCOPES = [
@@ -18,6 +19,8 @@ const SCOPES = [
 ]
 
 const TOKEN_PATH = path.join(__dirname, 'token.json')
+const CLIENT_ID =
+  '113671319507-9mhst0qa3kq4e5g55u4q8gl1af0k2dk0.apps.googleusercontent.com'
 
 /**
  * Get and store new token after prompting for user authorization, and then
@@ -64,7 +67,7 @@ export const getClientSecret = () => credentials
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-const authorize = () => {
+const authorize = async (token) => {
   const { client_secret, client_id, redirect_uris } = credentials.installed
 
   const oAuth2Client = new google.auth.OAuth2(
@@ -73,27 +76,46 @@ const authorize = () => {
     redirect_uris[0]
   )
 
-  return new Promise((resolve, reject) => {
-    // Check if we have previously stored a token.
-    fs.readFile(TOKEN_PATH, (err: unknown, token: unknown) => {
-      if (err) {
-        getNewToken(oAuth2Client).then(
-          (oAuth2ClientNew) => {
-            resolve(oAuth2ClientNew)
-          },
-          () => {
-            reject(new Error(err as string))
-          }
-        )
-      } else {
-        oAuth2Client.setCredentials(JSON.parse(token as string))
-        resolve(oAuth2Client)
-      }
-    })
-  })
+  // return new Promise((resolve, reject) => {
+  //   // Check if we have previously stored a token.
+  //   fs.readFile(TOKEN_PATH, (err: unknown, token: unknown) => {
+  //     if (err) {
+  //       getNewToken(oAuth2Client).then(
+  //         (oAuth2ClientNew) => {
+  //           resolve(oAuth2ClientNew)
+  //         },
+  //         () => {
+  //           reject(new Error(err as string))
+  //         }
+  //       )
+  //     } else {
+  //       oAuth2Client.setCredentials(JSON.parse(token as string))
+  //       resolve(oAuth2Client)
+  //     }
+  //   })
+  // })
+
+  //     const ticket = await client.verifyIdToken({
+  //       idToken: token,
+  //       audience: CLIENT_ID,
+  //     })
+  // console.log('ticket', ticket)
+  // const client = new OAuth2Client(CLIENT_ID)
+  // console.log('check', token)
+  try {
+    // const ticket = await client.verifyIdToken({
+    //   idToken: token.tokenId,
+    //   audience: CLIENT_ID,
+    // })
+    // console.log('ticket', ticket)
+    oAuth2Client.setCredentials(JSON.parse(token as string))
+    return oAuth2Client
+  } catch (err) {
+    console.log('err', JSON.stringify(err))
+  }
 }
 
-export const authenticated = async () => {
+export const authenticated = async (token: any) => {
   // Load client secrets from a local file.
-  return await authorize()
+  return await authorize(token)
 }
