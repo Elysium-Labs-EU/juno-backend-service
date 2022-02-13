@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsc && node dist/server.js",
+    "start2": "swc src --out-dir dist && node dist/server.js",
     "start:watch": "nodemon",
     "lint": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\"",
     "lint-fix": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\" --fix",
@@ -26,6 +27,8 @@
     "typesync": "^0.8.0"
   },
   "devDependencies": {
+    "@swc/cli": "^0.1.55",
+    "@swc/core": "^1.2.139",
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.15",
     "@types/swagger-jsdoc": "^6.0.1",
@@ -50,7 +53,7 @@
     "watch": [
       "src"
     ],
-    "exec": "yarn start",
+    "exec": "yarn start2",
     "ext": "ts"
   }
 }
