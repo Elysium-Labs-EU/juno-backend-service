@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node dist/server.js",
+    "start": "node esbuild.config.js && node out.js",
     "start:watch": "nodemon",
     "lint": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\"",
     "lint-fix": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\" --fix",
@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/local-auth": "^1.0.1",
+    "esbuild": "^0.14.21",
     "express": "^4.17.2",
     "gaxios": "^4.3.2",
     "google-auth-library": "^7.12.0",
