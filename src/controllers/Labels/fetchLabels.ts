@@ -19,7 +19,7 @@ const getLabels = async (auth) => {
 }
 export const fetchLabels = async (req, res) => {
   try {
-    const auth = await authenticated()
+    const auth = await authenticated(req.headers.authorization)
     const response = await getLabels(auth)
     return res.status(200).json(response)
   } catch (err) {

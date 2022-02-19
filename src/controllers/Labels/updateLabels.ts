@@ -29,7 +29,7 @@ const refreshLabels = async (auth, req) => {
 }
 export const updateLabels = async (req, res) => {
   try {
-    const auth = await authenticated()
+    const auth = await authenticated(req.headers.authorization)
     const response = await refreshLabels(auth, req)
     return res.status(200).json(response)
   } catch (err) {

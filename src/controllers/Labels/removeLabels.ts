@@ -21,7 +21,7 @@ const removeTheLabels = async (auth, req) => {
 
 export const removeLabels = async (req, res) => {
   try {
-    const auth = await authenticated()
+    const auth = await authenticated(req.headers.authorization)
     const response = await removeTheLabels(auth, req)
     return res.status(200).json(response)
   } catch (err) {

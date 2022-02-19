@@ -20,7 +20,7 @@ const getContacts = async (auth, req) => {
 
 export const queryContacts = async (req, res) => {
   try {
-    const auth = await authenticated()
+    const auth = await authenticated(req.headers.authorization)
     const response = await getContacts(auth, req)
     return res.status(200).json(response)
   } catch (err) {
