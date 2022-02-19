@@ -12,7 +12,6 @@ const SCOPES = [
   'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/contacts.other.readonly',
@@ -28,36 +27,36 @@ const CLIENT_ID =
  * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
  * @param {getEventsCallback} callback The callback for the authorized client.
  */
-export const getNewToken = (oAuth2Client) =>
-  new Promise((resolve, reject) => {
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES,
-    })
-    console.log('Authorize this app by visiting this url:', authUrl)
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    })
-    rl.question('Enter the code from that page here: ', (code) => {
-      rl.close()
-      oAuth2Client.getToken(code, (err, token) => {
-        if (err) {
-          reject(new Error(err))
-        }
-        oAuth2Client.setCredentials(token)
-        // Save the token for later program executions
-        fs.writeFile(TOKEN_PATH, JSON.stringify(token), () => {
-          if (err) {
-            reject(new Error(err))
-          }
-          console.log('Token stored to', TOKEN_PATH)
-          return null
-        })
-        resolve(oAuth2Client)
-      })
-    })
-  })
+// export const getNewToken = (oAuth2Client) =>
+//   new Promise((resolve, reject) => {
+//     const authUrl = oAuth2Client.generateAuthUrl({
+//       access_type: 'offline',
+//       scope: SCOPES,
+//     })
+//     console.log('Authorize this app by visiting this url:', authUrl)
+//     const rl = readline.createInterface({
+//       input: process.stdin,
+//       output: process.stdout,
+//     })
+//     rl.question('Enter the code from that page here: ', (code) => {
+//       rl.close()
+//       oAuth2Client.getToken(code, (err, token) => {
+//         if (err) {
+//           reject(new Error(err))
+//         }
+//         oAuth2Client.setCredentials(token)
+//         // Save the token for later program executions
+//         fs.writeFile(TOKEN_PATH, JSON.stringify(token), () => {
+//           if (err) {
+//             reject(new Error(err))
+//           }
+//           console.log('Token stored to', TOKEN_PATH)
+//           return null
+//         })
+//         resolve(oAuth2Client)
+//       })
+//     })
+//   })
 
 export const getClientSecret = () => credentials
 
