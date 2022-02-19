@@ -12,8 +12,7 @@ The normal setup sequence would be;
 2.  Run `yarn` to install all dependencies
 3.  Store the `credentials.json` inside the folder `/google`
 4.  Run `yarn start:watch` from the root to start the server (using nodemon)
-5.  If case you have no `token.json` in the folder `/google` the code will generate one for you, follow the steps in the console.
-6.  Once the server is running, you can open `/api-docs` to see the SwaggerUI for all API's.
+5.  Once the server is running, you can open `/api-docs` to see the SwaggerUI for all API's.
 
 You are now good to go and run the frontend. See its [Getting Started](https://github.com/Elysium-Labs-EU/juno-core/blob/main/README.md).
 
