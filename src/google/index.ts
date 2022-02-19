@@ -27,6 +27,5 @@ const authorize = async (token) => {
 }
 
 export const authenticated = async (token: any) => {
-  // Load client secrets from a local file.
   return await authorize(token)
 }
