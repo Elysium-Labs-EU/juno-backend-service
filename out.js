@@ -69,10 +69,7 @@ var import_express = __toESM(require("./node_modules/express/index.js"));
 var import_googleapis2 = require("./node_modules/googleapis/build/src/index.js");
 
 // src/google/index.ts
-var import_fs = __toESM(require("fs"));
-var import_readline = __toESM(require("readline"));
 var import_googleapis = require("./node_modules/googleapis/build/src/index.js");
-var import_path = __toESM(require("path"));
 
 // src/google/credentials.json
 var installed = {
@@ -89,66 +86,18 @@ var credentials_default = {
 };
 
 // src/google/index.ts
-var SCOPES = [
-  "https://mail.google.com",
-  "https://www.googleapis.com/auth/gmail.addons.current.message.action",
-  "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
-  "https://www.googleapis.com/auth/gmail.modify",
-  "https://www.googleapis.com/auth/gmail.readonly",
-  "https://www.googleapis.com/auth/gmail.modify",
-  "https://www.googleapis.com/auth/gmail.compose",
-  "https://www.googleapis.com/auth/gmail.send",
-  "https://www.googleapis.com/auth/contacts.other.readonly"
-];
-var TOKEN_PATH = import_path.default.join(__dirname, "token.json");
-var getNewToken = (oAuth2Client) => new Promise((resolve, reject) => {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: SCOPES
-  });
-  console.log("Authorize this app by visiting this url:", authUrl);
-  const rl = import_readline.default.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  rl.question("Enter the code from that page here: ", (code) => {
-    rl.close();
-    oAuth2Client.getToken(code, (err, token) => {
-      if (err) {
-        reject(new Error(err));
-      }
-      oAuth2Client.setCredentials(token);
-      import_fs.default.writeFile(TOKEN_PATH, JSON.stringify(token), () => {
-        if (err) {
-          reject(new Error(err));
-        }
-        console.log("Token stored to", TOKEN_PATH);
-        return null;
-      });
-      resolve(oAuth2Client);
-    });
-  });
-});
-var authorize = () => {
+var authorize = (token) => __async(void 0, null, function* () {
   const { client_secret, client_id, redirect_uris } = credentials_default.installed;
   const oAuth2Client = new import_googleapis.google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-  return new Promise((resolve, reject) => {
-    import_fs.default.readFile(TOKEN_PATH, (err, token) => __async(void 0, null, function* () {
-      if (err) {
-        try {
-          resolve(yield getNewToken(oAuth2Client));
-        } catch (error) {
-          reject(new Error(err));
-        }
-      } else {
-        oAuth2Client.setCredentials(JSON.parse(token));
-        resolve(oAuth2Client);
-      }
-    }));
-  });
-};
-var authenticated = () => __async(void 0, null, function* () {
-  return yield authorize();
+  try {
+    oAuth2Client.setCredentials(JSON.parse(token));
+    return oAuth2Client;
+  } catch (err) {
+    console.log("err", JSON.stringify(err));
+  }
+});
+var authenticated = (token) => __async(void 0, null, function* () {
+  return yield authorize(token);
 });
 
 // src/constants/globalConstants.ts
@@ -182,7 +131,7 @@ var getThreads = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchThreads = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getThreads(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -250,7 +199,7 @@ var getFullThreads = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchFullThreads = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getFullThreads(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -279,7 +228,7 @@ var getThread = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchSingleThread = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getThread(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -345,7 +294,7 @@ var setupDraft = (auth, req) => __async(void 0, null, function* () {
 });
 var createDraft = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield setupDraft(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -371,7 +320,7 @@ var getDrafts = (auth) => __async(void 0, null, function* () {
 });
 var fetchDrafts = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getDrafts(auth);
     return res.status(200).json(response);
   } catch (err) {
@@ -399,7 +348,7 @@ var getDraft = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchSingleDraft = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getDraft(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -429,7 +378,7 @@ var exportDraft = (auth, req) => __async(void 0, null, function* () {
 });
 var sendDraft = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield exportDraft(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -473,7 +422,7 @@ var exportDraft2 = (auth, req) => __async(void 0, null, function* () {
 });
 var updateDraft = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield exportDraft2(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -500,7 +449,7 @@ var removeDraft = (auth, req) => __async(void 0, null, function* () {
 });
 var deleteDraft = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield removeDraft(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -528,7 +477,7 @@ var updateMessage = (auth, req) => __async(void 0, null, function* () {
 });
 var updateSingleMessage = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield updateMessage(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -555,7 +504,7 @@ var thrashMessage = (auth, req) => __async(void 0, null, function* () {
 });
 var thrashSingleMessage = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield thrashMessage(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -582,7 +531,7 @@ var deleteMessage = (auth, req) => __async(void 0, null, function* () {
 });
 var deleteSingleMessage = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield deleteMessage(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -612,7 +561,7 @@ var getAttachment = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchMessageAttachment = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getAttachment(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -644,7 +593,7 @@ var exportMessage = (auth, req) => __async(void 0, null, function* () {
 });
 var sendMessage = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield exportMessage(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -675,7 +624,7 @@ var newLabels = (auth, req) => __async(void 0, null, function* () {
 });
 var createLabels = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield newLabels(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -701,7 +650,7 @@ var getLabels = (auth) => __async(void 0, null, function* () {
 });
 var fetchLabels = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getLabels(auth);
     return res.status(200).json(response);
   } catch (err) {
@@ -729,7 +678,7 @@ var getLabel = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchSingleLabel = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getLabel(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -760,7 +709,7 @@ var refreshLabels = (auth, req) => __async(void 0, null, function* () {
 });
 var updateLabels = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield refreshLabels(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -787,7 +736,7 @@ var removeTheLabels = (auth, req) => __async(void 0, null, function* () {
 });
 var removeLabels = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield removeTheLabels(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -813,7 +762,7 @@ var fetchProfile = (auth) => __async(void 0, null, function* () {
 });
 var getProfile = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield fetchProfile(auth);
     return res.status(200).json(response);
   } catch (err) {
@@ -845,7 +794,7 @@ var getContacts = (auth, req) => __async(void 0, null, function* () {
 });
 var fetchAllContacts = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getContacts(auth, req);
     return res.status(200).json(response);
   } catch (err) {
@@ -872,7 +821,7 @@ var getContacts2 = (auth, req) => __async(void 0, null, function* () {
 });
 var queryContacts = (req, res) => __async(void 0, null, function* () {
   try {
-    const auth = yield authenticated();
+    const auth = yield authenticated(req.headers.authorization);
     const response = yield getContacts2(auth, req);
     return res.status(200).json(response);
   } catch (err) {

@@ -12,3 +12,4 @@ src/google/credentials.json
 token.json
 .DS_Store
 .vscode/settings.json 
+out.js
