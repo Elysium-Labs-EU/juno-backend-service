@@ -9,5 +9,6 @@ out.js
 .vscode/snipsnap.code-snippets
 src/google/token*.*
 src/google/credentials.json
+token.json
 .DS_Store
 .vscode/settings.json 
