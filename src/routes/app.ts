@@ -45,6 +45,6 @@ const swaggerOptions = {
   apis: ['./index.js', './doc/definitions.yaml'],
 }
 const swaggerDocs = swaggerJSDoc(swaggerOptions)
-app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
+app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 export default app
