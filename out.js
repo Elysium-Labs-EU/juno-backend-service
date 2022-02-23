@@ -839,6 +839,8 @@ router.get("/api/user", getProfile);
 var routes_default = router;
 
 // src/routes/app.ts
+var Sentry = __toESM(require("./node_modules/@sentry/node/dist/index.js"));
+var Tracing = __toESM(require("./node_modules/@sentry/tracing/dist/index.js"));
 var app = (0, import_express2.default)();
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -869,6 +871,21 @@ var swaggerOptions = {
 };
 var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions);
 app.use("/", import_swagger_ui_express.default.serve, import_swagger_ui_express.default.setup(swaggerDocs));
+process.env.NODE_ENV !== "development" && process.env.SENTRY_DSN && Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    new Sentry.Integrations.Http({ tracing: true }),
+    new Tracing.Integrations.Express({ app })
+  ],
+  tracesSampleRate: 1
+});
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+app.use(Sentry.Handlers.errorHandler());
+app.use(function onError(err, req, res, next) {
+  res.statusCode = 500;
+  res.end(res.sentry + "\n");
+});
 var app_default = app;
 
 // src/server.ts
