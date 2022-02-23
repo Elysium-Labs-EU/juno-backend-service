@@ -865,7 +865,7 @@ var swaggerDefinition = {
 };
 var swaggerOptions = {
   swaggerDefinition,
-  apis: ["./index.js", "./doc/definitions.yaml"]
+  apis: ["./index.ts", "./doc/definitions.yaml"]
 };
 var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions);
 app.use("/", import_swagger_ui_express.default.serve, import_swagger_ui_express.default.setup(swaggerDocs));

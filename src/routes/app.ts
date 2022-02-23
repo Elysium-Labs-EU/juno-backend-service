@@ -42,7 +42,7 @@ const swaggerDefinition = {
 // Swagger Configuration
 const swaggerOptions = {
   swaggerDefinition,
-  apis: ['./index.js', './doc/definitions.yaml'],
+  apis: ['./index.ts', './doc/definitions.yaml'],
 }
 const swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
