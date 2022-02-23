@@ -70,25 +70,8 @@ var import_googleapis2 = require("./node_modules/googleapis/build/src/index.js")
 
 // src/google/index.ts
 var import_googleapis = require("./node_modules/googleapis/build/src/index.js");
-
-// src/google/credentials.json
-var installed = {
-  client_id: "113671319507-5t9giuht80llorc8i6041e4upaor3k81.apps.googleusercontent.com",
-  project_id: "node-js-312516",
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_secret: "AKOKH58HYZKrvPJxgB5bUvTe",
-  redirect_uris: ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
-};
-var credentials_default = {
-  installed
-};
-
-// src/google/index.ts
 var authorize = (token) => __async(void 0, null, function* () {
-  const { client_secret, client_id, redirect_uris } = credentials_default.installed;
-  const oAuth2Client = new import_googleapis.google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+  const oAuth2Client = new import_googleapis.google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_REDIRECT_URL);
   try {
     oAuth2Client.setCredentials(JSON.parse(token));
     return oAuth2Client;
