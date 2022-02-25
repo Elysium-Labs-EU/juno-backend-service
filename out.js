@@ -70,25 +70,8 @@ var import_googleapis2 = require("./node_modules/googleapis/build/src/index.js")
 
 // src/google/index.ts
 var import_googleapis = require("./node_modules/googleapis/build/src/index.js");
-
-// src/google/credentials.json
-var installed = {
-  client_id: "113671319507-5t9giuht80llorc8i6041e4upaor3k81.apps.googleusercontent.com",
-  project_id: "node-js-312516",
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_secret: "AKOKH58HYZKrvPJxgB5bUvTe",
-  redirect_uris: ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
-};
-var credentials_default = {
-  installed
-};
-
-// src/google/index.ts
 var authorize = (token) => __async(void 0, null, function* () {
-  const { client_secret, client_id, redirect_uris } = credentials_default.installed;
-  const oAuth2Client = new import_googleapis.google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+  const oAuth2Client = new import_googleapis.google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_REDIRECT_URL);
   try {
     oAuth2Client.setCredentials(JSON.parse(token));
     return oAuth2Client;
@@ -856,6 +839,8 @@ router.get("/api/user", getProfile);
 var routes_default = router;
 
 // src/routes/app.ts
+var Sentry = __toESM(require("./node_modules/@sentry/node/dist/index.js"));
+var Tracing = __toESM(require("./node_modules/@sentry/tracing/dist/index.js"));
 var app = (0, import_express2.default)();
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -882,10 +867,25 @@ var swaggerDefinition = {
 };
 var swaggerOptions = {
   swaggerDefinition,
-  apis: ["./index.js", "./doc/definitions.yaml"]
+  apis: ["./index.ts", "./doc/definitions.yaml"]
 };
 var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions);
-app.use("/api-docs", import_swagger_ui_express.default.serve, import_swagger_ui_express.default.setup(swaggerDocs));
+app.use("/", import_swagger_ui_express.default.serve, import_swagger_ui_express.default.setup(swaggerDocs));
+process.env.NODE_ENV !== "development" && process.env.SENTRY_DSN && Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    new Sentry.Integrations.Http({ tracing: true }),
+    new Tracing.Integrations.Express({ app })
+  ],
+  tracesSampleRate: 1
+});
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+app.use(Sentry.Handlers.errorHandler());
+app.use(function onError(err, req, res, next) {
+  res.statusCode = 500;
+  res.end(res.sentry + "\n");
+});
 var app_default = app;
 
 // src/server.ts
