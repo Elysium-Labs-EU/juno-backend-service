@@ -10,13 +10,12 @@ The normal setup sequence would be;
 
 1.  Download the code to your local machine
 2.  Run `yarn` to install all dependencies
-3.  Store the `credentials.json` inside the folder `/google`
-4.  Create a file called .env in the root of the project
-5.  Add `GOOGLE_CLIENT_ID` with the related Google Client ID
-6.  Add `GOOGLE_CLIENT_SECRET` with the related Google Client Secret
-7.  Add `GOOGLE_REDIRECT_URL` with the related Google Redirect URL - can be `http://localhost`
-8.  Run `yarn start:watch` from the root to start the server (using nodemon)
-9.  Once the server is running, you can open `/` to see the SwaggerUI for all API's.
+3.  Create a file called .env in the root of the project
+4.  Add `GOOGLE_CLIENT_ID` with the related Google Client ID
+5.  Add `GOOGLE_CLIENT_SECRET` with the related Google Client Secret
+6.  Add `GOOGLE_REDIRECT_URL` with the related Google Redirect URL - can be `http://localhost`
+7.  Run `yarn start:watch` from the root to start the server (using nodemon)
+8.  Once the server is running, you can open `/` to see the SwaggerUI for all API's.
 
 You are now good to go and run the frontend. See its [Getting Started](https://github.com/Elysium-Labs-EU/juno-core/blob/main/README.md).
 
