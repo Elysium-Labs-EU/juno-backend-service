@@ -812,6 +812,34 @@ var queryContacts = (req, res) => __async(void 0, null, function* () {
   }
 });
 
+// src/controllers/History/listHistory.ts
+var import_googleapis24 = require("./node_modules/googleapis/build/src/index.js");
+var fetchHistory = (auth, req) => __async(void 0, null, function* () {
+  const gmail = import_googleapis24.google.gmail({ version: "v1", auth });
+  try {
+    const { startHistoryId } = req.query;
+    const response = yield gmail.users.history.list({
+      userId: USER,
+      startHistoryId
+    });
+    if (response && response.status === 200) {
+      return response.data;
+    }
+    return new Error("No history found...");
+  } catch (err) {
+    throw Error(`Profile returned an error: ${err}`);
+  }
+});
+var listHistory = (req, res) => __async(void 0, null, function* () {
+  try {
+    const auth = yield authenticated(req.headers.authorization);
+    const response = yield fetchHistory(auth, req);
+    return res.status(200).json(response);
+  } catch (err) {
+    res.status(401).json(err);
+  }
+});
+
 // src/routes/index.ts
 var router = import_express.default.Router();
 router.get("/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?", fetchAllContacts);
@@ -836,6 +864,7 @@ router.get("/api/label/:id?", fetchSingleLabel);
 router.patch("/api/labels", updateLabels);
 router.delete("/api/labels", removeLabels);
 router.get("/api/user", getProfile);
+router.get("/api/history/:startHistoryId?", listHistory);
 var routes_default = router;
 
 // src/routes/app.ts
