@@ -24,6 +24,7 @@ import { removeLabels } from '../controllers/Labels/removeLabels'
 import { getProfile } from '../controllers/Users/getProfile'
 import { fetchAllContacts } from '../controllers/Contacts/fetchAllContacts'
 import { queryContacts } from '../controllers/Contacts/queryContacts'
+import { listHistory } from '../controllers/History/listHistory'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -53,5 +54,6 @@ router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
 router.get('/api/user', getProfile)
+router.get('/api/history/:startHistoryId?', listHistory)
 
 export default router
