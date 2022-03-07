@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@google-cloud/local-auth": "^1.0.1",
-    "@sentry/node": "^6.18.0",
+    "@sentry/node": "^6.18.1",
     "@sentry/tracing": "^6.18.0",
     "cookie-parser": "^1.4.6",
     "esbuild": "^0.14.23",
@@ -41,11 +41,11 @@
     "@typescript-eslint/parser": "^5.12.1",
     "eslint": "^8.10.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-prettier": "^8.4.0",
+    "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.25.4",
     "nodemon": "^2.0.15",
     "prettier": "^2.5.1",
-    "ts-node": "^10.5.0",
+    "ts-node": "^10.7.0",
     "typescript": "^4.5.5"
   },
   "nodemonConfig": {
