@@ -24,6 +24,7 @@ const getThreads = async (auth, req) => {
   try {
     const response = await gmail.users.threads.list(requestBody)
     if (response && response.data) {
+      const timeStampLastFetch = new Date.now()
       return response.data
     }
     return new Error('No threads found...')

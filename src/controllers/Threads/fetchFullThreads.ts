@@ -55,6 +55,8 @@ const getFullThreads = async (auth, req) => {
           for (const thread of threads) {
             results.push(singleThread(thread, gmail))
           }
+          const timeStampLastFetch = new Date.now()
+          console.log('here', timeStampLastFetch)
           return {
             ...response.data,
             threads: await Promise.all(results),

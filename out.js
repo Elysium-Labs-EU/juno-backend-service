@@ -105,6 +105,7 @@ var getThreads = (auth, req) => __async(void 0, null, function* () {
   try {
     const response = yield gmail.users.threads.list(requestBody);
     if (response && response.data) {
+      const timeStampLastFetch = new Date.now();
       return response.data;
     }
     return new Error("No threads found...");
@@ -169,6 +170,8 @@ var getFullThreads = (auth, req) => __async(void 0, null, function* () {
           for (const thread of threads) {
             results.push(singleThread(thread, gmail));
           }
+          const timeStampLastFetch = new Date.now();
+          console.log("here", timeStampLastFetch);
           return __spreadProps(__spreadValues({}, response.data), {
             threads: yield Promise.all(results)
           });
