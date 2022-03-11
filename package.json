@@ -29,7 +29,7 @@
     "googleapis": "^95.0.0",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.3.0",
-    "ts-loader": "^9.2.7",
+    "ts-loader": "^9.2.8",
     "typesync": "^0.8.0"
   },
   "devDependencies": {
