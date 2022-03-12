@@ -1,6 +1,7 @@
 import { gmail_v1, google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import requestBodyCreator from './threadRequest'
 
 async function singleThread(
   thread: gmail_v1.Schema$Thread,
@@ -26,23 +27,7 @@ async function singleThread(
 
 const getFullThreads = async (auth, req) => {
   const gmail: gmail_v1.Gmail = google.gmail({ version: 'v1', auth })
-
-  const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {
-    userId: USER,
-  }
-  requestBody.maxResults =
-    typeof Number(req.query.maxResults) !== 'number'
-      ? 20
-      : Number(req.query.maxResults)
-  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    requestBody.labelIds = req.query.labelIds
-  }
-  if (req.query.pageToken) {
-    requestBody.pageToken = req.query.pageToken
-  }
-  if (req.query.q) {
-    requestBody.q = req.query.q
-  }
+  const requestBody = requestBodyCreator(req)
 
   try {
     const response = await gmail.users.threads.list(requestBody)
@@ -55,11 +40,12 @@ const getFullThreads = async (auth, req) => {
           for (const thread of threads) {
             results.push(singleThread(thread, gmail))
           }
-          const timeStampLastFetch = new Date.now()
+          const timeStampLastFetch = Date.now()
           console.log('here', timeStampLastFetch)
           return {
             ...response.data,
             threads: await Promise.all(results),
+            timestamp: timeStampLastFetch,
           }
         }
       }
