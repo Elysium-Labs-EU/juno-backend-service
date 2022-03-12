@@ -86,9 +86,8 @@ var authenticated = (token) => __async(void 0, null, function* () {
 // src/constants/globalConstants.ts
 var USER = "me";
 
-// src/controllers/Threads/fetchThreads.ts
-var getThreads = (auth, req) => __async(void 0, null, function* () {
-  const gmail = import_googleapis2.google.gmail({ version: "v1", auth });
+// src/controllers/Threads/threadRequest.ts
+var requestBodyCreator = (req) => {
   const requestBody = {
     userId: USER
   };
@@ -102,6 +101,14 @@ var getThreads = (auth, req) => __async(void 0, null, function* () {
   if (req.query.q) {
     requestBody.q = req.query.q;
   }
+  return requestBody;
+};
+var threadRequest_default = requestBodyCreator;
+
+// src/controllers/Threads/fetchThreads.ts
+var getThreads = (auth, req) => __async(void 0, null, function* () {
+  const gmail = import_googleapis2.google.gmail({ version: "v1", auth });
+  const requestBody = threadRequest_default(req);
   try {
     const response = yield gmail.users.threads.list(requestBody);
     if (response && response.data) {
@@ -146,19 +153,7 @@ function singleThread(thread, gmail) {
 }
 var getFullThreads = (auth, req) => __async(void 0, null, function* () {
   const gmail = import_googleapis3.google.gmail({ version: "v1", auth });
-  const requestBody = {
-    userId: USER
-  };
-  requestBody.maxResults = typeof Number(req.query.maxResults) !== "number" ? 20 : Number(req.query.maxResults);
-  if (req.query.labelIds && req.query.labelIds !== "undefined") {
-    requestBody.labelIds = req.query.labelIds;
-  }
-  if (req.query.pageToken) {
-    requestBody.pageToken = req.query.pageToken;
-  }
-  if (req.query.q) {
-    requestBody.q = req.query.q;
-  }
+  const requestBody = threadRequest_default(req);
   try {
     const response = yield gmail.users.threads.list(requestBody);
     if (response && response.data) {
@@ -169,8 +164,11 @@ var getFullThreads = (auth, req) => __async(void 0, null, function* () {
           for (const thread of threads) {
             results.push(singleThread(thread, gmail));
           }
+          const timeStampLastFetch = Date.now();
+          console.log("here", timeStampLastFetch);
           return __spreadProps(__spreadValues({}, response.data), {
-            threads: yield Promise.all(results)
+            threads: yield Promise.all(results),
+            timestamp: timeStampLastFetch
           });
         }
       });

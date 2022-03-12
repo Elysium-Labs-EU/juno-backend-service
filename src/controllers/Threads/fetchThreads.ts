@@ -1,29 +1,15 @@
-import { gmail_v1, google } from 'googleapis'
+import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
-import { USER } from '../../constants/globalConstants'
+import requestBodyCreator from './threadRequest'
 
 const getThreads = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
+  const requestBody = requestBodyCreator(req)
 
-  const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {
-    userId: USER,
-  }
-  requestBody.maxResults =
-    typeof Number(req.query.maxResults) !== 'number'
-      ? 20
-      : Number(req.query.maxResults)
-  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    requestBody.labelIds = req.query.labelIds
-  }
-  if (req.query.pageToken) {
-    requestBody.pageToken = req.query.pageToken
-  }
-  if (req.query.q) {
-    requestBody.q = req.query.q
-  }
   try {
     const response = await gmail.users.threads.list(requestBody)
     if (response && response.data) {
+      // const timeStampLastFetch = Date.now()
       return response.data
     }
     return new Error('No threads found...')
