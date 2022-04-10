@@ -7,12 +7,8 @@ out.js
 
 # Local files
 .vscode/snipsnap.code-snippets
-src/google/token*.*
-src/google/credentials.json
-token.json
 .DS_Store
 .vscode/settings.json 
-out.js
 .env
 src/environments/.env.dev
 src/environments/.env.prod
