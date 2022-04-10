@@ -1,21 +1,33 @@
 import supertokens from 'supertokens-node'
 import Session from 'supertokens-node/recipe/session'
 import ThirdParty from 'supertokens-node/recipe/thirdparty'
+import assertNonNullish from '../utils/assertNonNullish'
 
 const { Google } = ThirdParty
 
 const superTokenInit = () => {
+  assertNonNullish(
+    process.env.SUPERTOKEN_CONNECTION_URI,
+    'No SuperToken connectionURI found'
+  )
+  assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
+  assertNonNullish(
+    process.env.GOOGLE_CLIENT_SECRET,
+    'No Google Client Secret found'
+  )
+  assertNonNullish(process.env.BACKEND_URL, 'No Backend URL found')
+  assertNonNullish(process.env.FRONTEND_URL, 'No Frontend URL found')
+
   supertokens.init({
     framework: 'express',
     supertokens: {
-      connectionURI:
-        'https://32c65ca1b5ed11ec98ed89cb2be9b480-eu-west-1.aws.supertokens.io:3573',
-      apiKey: 'WvdaQbza9=0uGNeDyoWaRdcCx9yiff',
+      connectionURI: process.env.SUPERTOKEN_CONNECTION_URI,
+      apiKey: process.env.SUPERTOKEN_API_KEY,
     },
     appInfo: {
       appName: 'Juno',
-      apiDomain: 'http://localhost:5001',
-      websiteDomain: 'http://localhost:3000',
+      apiDomain: process.env.BACKEND_URL,
+      websiteDomain: process.env.FRONTEND_URL,
       apiBasePath: '/auth',
       websiteBasePath: '/auth',
     },
@@ -24,9 +36,8 @@ const superTokenInit = () => {
         signInAndUpFeature: {
           providers: [
             Google({
-              clientId:
-                '113671319507-5t9giuht80llorc8i6041e4upaor3k81.apps.googleusercontent.com',
-              clientSecret: 'AKOKH58HYZKrvPJxgB5bUvTe',
+              clientId: process.env.GOOGLE_CLIENT_ID,
+              clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             }),
           ],
         },

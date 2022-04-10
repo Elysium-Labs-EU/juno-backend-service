@@ -1,13 +1,14 @@
 import express from 'express'
 import cors from 'cors'
+import 'dotenv/config'
 import supertokens from 'supertokens-node'
+import superTokenInit from '../google/superToken'
 import { errorHandler, middleware } from 'supertokens-node/framework/express'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 import indexRoute from './index'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
-import superTokenInit from '../google/superToken'
 
 superTokenInit()
 
@@ -51,7 +52,7 @@ const swaggerOptions = {
   apis: ['./index.ts', './doc/definitions.yaml'],
 }
 const swaggerDocs = swaggerJSDoc(swaggerOptions)
-app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
+app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
 process.env.NODE_ENV !== 'development' &&
@@ -73,7 +74,7 @@ process.env.NODE_ENV !== 'development' &&
 
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
     credentials: true,
   })

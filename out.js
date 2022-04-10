@@ -77,9 +77,97 @@ var import_http = __toESM(require('http'))
 // src/routes/app.ts
 var import_express3 = __toESM(require('./node_modules/express/index.js'))
 var import_cors = __toESM(require('./node_modules/cors/lib/index.js'))
+var import_config = require('./node_modules/dotenv/config.js')
 var import_supertokens_node2 = __toESM(
   require('./node_modules/supertokens-node/index.js')
 )
+
+// src/google/superToken.ts
+var import_supertokens_node = __toESM(
+  require('./node_modules/supertokens-node/index.js')
+)
+var import_session = __toESM(
+  require('./node_modules/supertokens-node/recipe/session/index.js')
+)
+var import_thirdparty = __toESM(
+  require('./node_modules/supertokens-node/recipe/thirdparty/index.js')
+)
+
+// src/utils/assertNonNullish.ts
+function assertNonNullish(value, message) {
+  if (value === null || value === void 0) {
+    throw Error(message)
+  }
+}
+
+// src/google/superToken.ts
+var { Google } = import_thirdparty.default
+var superTokenInit = () => {
+  assertNonNullish(
+    process.env.SUPERTOKEN_CONNECTION_URI,
+    'No SuperToken connectionURI found'
+  )
+  assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
+  assertNonNullish(
+    process.env.GOOGLE_CLIENT_SECRET,
+    'No Google Client Secret found'
+  )
+  assertNonNullish(process.env.BACKEND_URL, 'No Backend URL found')
+  assertNonNullish(process.env.FRONTEND_URL, 'No Frontend URL found')
+  import_supertokens_node.default.init({
+    framework: 'express',
+    supertokens: {
+      connectionURI: process.env.SUPERTOKEN_CONNECTION_URI,
+      apiKey: process.env.SUPERTOKEN_API_KEY,
+    },
+    appInfo: {
+      appName: 'Juno',
+      apiDomain: process.env.BACKEND_URL,
+      websiteDomain: process.env.FRONTEND_URL,
+      apiBasePath: '/auth',
+      websiteBasePath: '/auth',
+    },
+    recipeList: [
+      import_thirdparty.default.init({
+        signInAndUpFeature: {
+          providers: [
+            Google({
+              clientId: process.env.GOOGLE_CLIENT_ID,
+              clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            }),
+          ],
+        },
+        override: {
+          apis: (originalImplementation) => {
+            return __spreadProps(__spreadValues({}, originalImplementation), {
+              signInUpPOST: function (input) {
+                return __async(this, null, function* () {
+                  if (originalImplementation.signInUpPOST === void 0) {
+                    throw Error('Should never come here')
+                  }
+                  const response = yield originalImplementation.signInUpPOST(
+                    input
+                  )
+                  if (response.status === 'OK') {
+                    const thirdPartyAuthCodeResponse = response.authCodeResponse
+                    response.session.updateSessionData(
+                      thirdPartyAuthCodeResponse
+                    )
+                  }
+                  return response
+                })
+              },
+            })
+          },
+        },
+      }),
+      import_session.default.init(),
+    ],
+  })
+}
+var superToken_default = superTokenInit
+
+// src/routes/app.ts
 var import_express4 = require('./node_modules/supertokens-node/framework/express/index.js')
 var import_swagger_jsdoc = __toESM(
   require('./node_modules/swagger-jsdoc/index.js')
@@ -1027,75 +1115,6 @@ var routes_default = router
 // src/routes/app.ts
 var Sentry = __toESM(require('./node_modules/@sentry/node/dist/index.js'))
 var Tracing = __toESM(require('./node_modules/@sentry/tracing/dist/index.js'))
-
-// src/google/superToken.ts
-var import_supertokens_node = __toESM(
-  require('./node_modules/supertokens-node/index.js')
-)
-var import_session = __toESM(
-  require('./node_modules/supertokens-node/recipe/session/index.js')
-)
-var import_thirdparty = __toESM(
-  require('./node_modules/supertokens-node/recipe/thirdparty/index.js')
-)
-var { Google } = import_thirdparty.default
-var superTokenInit = () => {
-  import_supertokens_node.default.init({
-    framework: 'express',
-    supertokens: {
-      connectionURI:
-        'https://32c65ca1b5ed11ec98ed89cb2be9b480-eu-west-1.aws.supertokens.io:3573',
-      apiKey: 'WvdaQbza9=0uGNeDyoWaRdcCx9yiff',
-    },
-    appInfo: {
-      appName: 'Juno',
-      apiDomain: 'http://localhost:5001',
-      websiteDomain: 'http://localhost:3000',
-      apiBasePath: '/auth',
-      websiteBasePath: '/auth',
-    },
-    recipeList: [
-      import_thirdparty.default.init({
-        signInAndUpFeature: {
-          providers: [
-            Google({
-              clientId:
-                '113671319507-5t9giuht80llorc8i6041e4upaor3k81.apps.googleusercontent.com',
-              clientSecret: 'AKOKH58HYZKrvPJxgB5bUvTe',
-            }),
-          ],
-        },
-        override: {
-          apis: (originalImplementation) => {
-            return __spreadProps(__spreadValues({}, originalImplementation), {
-              signInUpPOST: function (input) {
-                return __async(this, null, function* () {
-                  if (originalImplementation.signInUpPOST === void 0) {
-                    throw Error('Should never come here')
-                  }
-                  const response = yield originalImplementation.signInUpPOST(
-                    input
-                  )
-                  if (response.status === 'OK') {
-                    const thirdPartyAuthCodeResponse = response.authCodeResponse
-                    response.session.updateSessionData(
-                      thirdPartyAuthCodeResponse
-                    )
-                  }
-                  return response
-                })
-              },
-            })
-          },
-        },
-      }),
-      import_session.default.init(),
-    ],
-  })
-}
-var superToken_default = superTokenInit
-
-// src/routes/app.ts
 superToken_default()
 var app = (0, import_express3.default)()
 app.use((req, res, next) => {
@@ -1133,7 +1152,7 @@ var swaggerOptions = {
 }
 var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions)
 app.use(
-  '/',
+  '/swagger',
   import_swagger_ui_express.default.serve,
   import_swagger_ui_express.default.setup(swaggerDocs)
 )
@@ -1149,7 +1168,7 @@ process.env.NODE_ENV !== 'development' &&
   })
 app.use(
   (0, import_cors.default)({
-    origin: 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     allowedHeaders: [
       'content-type',
       ...import_supertokens_node2.default.getAllCORSHeaders(),
