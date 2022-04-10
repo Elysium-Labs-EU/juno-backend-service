@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -21,9 +22,9 @@ const exportDraft = async (auth, req) => {
     throw Error(`Sending Draft encountered an error ${err}`)
   }
 }
-export const sendDraft = async (req, res) => {
+export const sendDraft = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await exportDraft(auth, req)
     return res.status(200).json(response)
   } catch (err) {

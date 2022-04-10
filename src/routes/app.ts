@@ -1,9 +1,15 @@
 import express from 'express'
+import cors from 'cors'
+import supertokens from 'supertokens-node'
+import { errorHandler, middleware } from 'supertokens-node/framework/express'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 import indexRoute from './index'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
+import superTokenInit from '../google/superToken'
+
+superTokenInit()
 
 const app = express()
 
@@ -22,8 +28,6 @@ app.use((req, res, next) => {
 
 app.use(express.json())
 
-app.use('/', indexRoute)
-
 const swaggerDefinition = {
   info: {
     title: 'Juno API',
@@ -41,7 +45,7 @@ const swaggerDefinition = {
   },
 }
 
-// Swagger Configuration
+// // Swagger Configuration
 const swaggerOptions = {
   swaggerDefinition,
   apis: ['./index.ts', './doc/definitions.yaml'],
@@ -67,6 +71,16 @@ process.env.NODE_ENV !== 'development' &&
     tracesSampleRate: 1.0,
   })
 
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
+    credentials: true,
+  })
+)
+app.use(middleware())
+app.use('/', indexRoute)
+
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
 app.use(Sentry.Handlers.requestHandler())
@@ -75,8 +89,9 @@ app.use(Sentry.Handlers.tracingHandler())
 
 // The error handler must be before any other error middleware and after all controllers
 app.use(Sentry.Handlers.errorHandler())
-
+app.use(errorHandler())
 // Optional fallthrough error handler
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use(function onError(err, req, res, next) {
   // The error id is attached to `res.sentry` to be returned
   // and optionally displayed to the user for support.

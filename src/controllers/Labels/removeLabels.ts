@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -19,9 +20,9 @@ const removeTheLabels = async (auth, req) => {
   }
 }
 
-export const removeLabels = async (req, res) => {
+export const removeLabels = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await removeTheLabels(auth, req)
     return res.status(200).json(response)
   } catch (err) {

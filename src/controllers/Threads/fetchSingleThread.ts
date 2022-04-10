@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -20,9 +21,9 @@ const getThread = async (auth, req) => {
     throw Error(`Threads returned an error: ${err}`)
   }
 }
-export const fetchSingleThread = async (req, res) => {
+export const fetchSingleThread = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await getThread(auth, req)
     return res.status(200).json(response)
   } catch (err) {

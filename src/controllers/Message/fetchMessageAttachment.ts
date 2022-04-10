@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -21,9 +22,9 @@ const getAttachment = async (auth, req) => {
     throw Error(`Get Attachment returned an error: ${err}`)
   }
 }
-export const fetchMessageAttachment = async (req, res) => {
+export const fetchMessageAttachment = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await getAttachment(auth, req)
     return res.status(200).json(response)
   } catch (err) {

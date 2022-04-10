@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -24,9 +25,9 @@ const exportMessage = async (auth, req) => {
     throw Error(`Mail was not sent...: ${err}`)
   }
 }
-export const sendMessage = async (req, res) => {
+export const sendMessage = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await exportMessage(auth, req)
     return res.status(200).json(response)
   } catch (err) {
