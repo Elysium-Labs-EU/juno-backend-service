@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { gmail_v1, google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -27,9 +28,9 @@ const refreshLabels = async (auth, req) => {
     throw new Error(`Create labels returned an error: ${err}`)
   }
 }
-export const updateLabels = async (req, res) => {
+export const updateLabels = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await refreshLabels(auth, req)
     return res.status(200).json(response)
   } catch (err) {

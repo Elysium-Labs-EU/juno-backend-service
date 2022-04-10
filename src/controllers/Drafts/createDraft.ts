@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -37,9 +38,9 @@ const setupDraft = async (auth, req) => {
   }
 }
 
-export const createDraft = async (req, res) => {
+export const createDraft = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await setupDraft(auth, req)
     return res.status(200).json(response)
   } catch (err) {

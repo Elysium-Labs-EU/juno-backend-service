@@ -14,3 +14,5 @@ token.json
 .vscode/settings.json 
 out.js
 .env
+src/environments/.env.dev
+src/environments/.env.prod

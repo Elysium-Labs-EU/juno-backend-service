@@ -1,3 +1,4 @@
+import { SessionRequest } from 'supertokens-node/framework/express'
 import { google, people_v1 } from 'googleapis'
 import { authenticated } from '../../google/index'
 
@@ -28,9 +29,9 @@ const getContacts = async (auth, req) => {
   }
 }
 
-export const fetchAllContacts = async (req, res) => {
+export const fetchAllContacts = async (req: SessionRequest, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req)
     const response = await getContacts(auth, req)
     return res.status(200).json(response)
   } catch (err) {

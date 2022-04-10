@@ -75,7 +75,100 @@ var __async = (__this, __arguments, generator) => {
 var import_http = __toESM(require('http'))
 
 // src/routes/app.ts
-var import_express2 = __toESM(require('./node_modules/express/index.js'))
+var import_express3 = __toESM(require('./node_modules/express/index.js'))
+var import_cors = __toESM(require('./node_modules/cors/lib/index.js'))
+var import_config = require('./node_modules/dotenv/config.js')
+var import_supertokens_node2 = __toESM(
+  require('./node_modules/supertokens-node/index.js')
+)
+
+// src/google/superToken.ts
+var import_supertokens_node = __toESM(
+  require('./node_modules/supertokens-node/index.js')
+)
+var import_session = __toESM(
+  require('./node_modules/supertokens-node/recipe/session/index.js')
+)
+var import_thirdparty = __toESM(
+  require('./node_modules/supertokens-node/recipe/thirdparty/index.js')
+)
+
+// src/utils/assertNonNullish.ts
+function assertNonNullish(value, message) {
+  if (value === null || value === void 0) {
+    throw Error(message)
+  }
+}
+
+// src/google/superToken.ts
+var { Google } = import_thirdparty.default
+var superTokenInit = () => {
+  assertNonNullish(
+    process.env.SUPERTOKEN_CONNECTION_URI,
+    'No SuperToken connectionURI found'
+  )
+  assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
+  assertNonNullish(
+    process.env.GOOGLE_CLIENT_SECRET,
+    'No Google Client Secret found'
+  )
+  assertNonNullish(process.env.BACKEND_URL, 'No Backend URL found')
+  assertNonNullish(process.env.FRONTEND_URL, 'No Frontend URL found')
+  import_supertokens_node.default.init({
+    framework: 'express',
+    supertokens: {
+      connectionURI: process.env.SUPERTOKEN_CONNECTION_URI,
+      apiKey: process.env.SUPERTOKEN_API_KEY,
+    },
+    appInfo: {
+      appName: 'Juno',
+      apiDomain: process.env.BACKEND_URL,
+      websiteDomain: process.env.FRONTEND_URL,
+      apiBasePath: '/auth',
+      websiteBasePath: '/auth',
+    },
+    recipeList: [
+      import_thirdparty.default.init({
+        signInAndUpFeature: {
+          providers: [
+            Google({
+              clientId: process.env.GOOGLE_CLIENT_ID,
+              clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            }),
+          ],
+        },
+        override: {
+          apis: (originalImplementation) => {
+            return __spreadProps(__spreadValues({}, originalImplementation), {
+              signInUpPOST: function (input) {
+                return __async(this, null, function* () {
+                  if (originalImplementation.signInUpPOST === void 0) {
+                    throw Error('Should never come here')
+                  }
+                  const response = yield originalImplementation.signInUpPOST(
+                    input
+                  )
+                  if (response.status === 'OK') {
+                    const thirdPartyAuthCodeResponse = response.authCodeResponse
+                    response.session.updateSessionData(
+                      thirdPartyAuthCodeResponse
+                    )
+                  }
+                  return response
+                })
+              },
+            })
+          },
+        },
+      }),
+      import_session.default.init(),
+    ],
+  })
+}
+var superToken_default = superTokenInit
+
+// src/routes/app.ts
+var import_express4 = require('./node_modules/supertokens-node/framework/express/index.js')
 var import_swagger_jsdoc = __toESM(
   require('./node_modules/swagger-jsdoc/index.js')
 )
@@ -85,6 +178,7 @@ var import_swagger_ui_express = __toESM(
 
 // src/routes/index.ts
 var import_express = __toESM(require('./node_modules/express/index.js'))
+var import_express2 = require('./node_modules/supertokens-node/recipe/session/framework/express/index.js')
 
 // src/controllers/Threads/fetchThreads.ts
 var import_googleapis2 = require('./node_modules/googleapis/build/src/index.js')
@@ -99,14 +193,18 @@ var authorize = (token) =>
       process.env.GOOGLE_REDIRECT_URL
     )
     try {
-      oAuth2Client.setCredentials(JSON.parse(token))
+      oAuth2Client.setCredentials(token)
       return oAuth2Client
     } catch (err) {
       console.log('err', JSON.stringify(err))
     }
   })
-var authenticated = (token) =>
+var authenticated = (req) =>
   __async(void 0, null, function* () {
+    var _a
+    const token = yield (_a = req.session) == null
+      ? void 0
+      : _a.getSessionData()
     return yield authorize(token)
   })
 
@@ -153,7 +251,7 @@ var getThreads = (auth, req) =>
 var fetchThreads = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getThreads(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -214,7 +312,7 @@ var getFullThreads = (auth, req) =>
 var fetchFullThreads = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getFullThreads(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -245,7 +343,7 @@ var getThread = (auth, req) =>
 var fetchSingleThread = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getThread(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -319,7 +417,7 @@ var setupDraft = (auth, req) =>
 var createDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield setupDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -347,7 +445,7 @@ var getDrafts = (auth) =>
 var fetchDrafts = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getDrafts(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -377,7 +475,7 @@ var getDraft = (auth, req) =>
 var fetchSingleDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -409,7 +507,7 @@ var exportDraft = (auth, req) =>
 var sendDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield exportDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -455,7 +553,7 @@ var exportDraft2 = (auth, req) =>
 var updateDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield exportDraft2(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -484,7 +582,7 @@ var removeDraft = (auth, req) =>
 var deleteDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield removeDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -514,7 +612,7 @@ var updateMessage = (auth, req) =>
 var updateSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield updateMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -543,7 +641,7 @@ var thrashMessage = (auth, req) =>
 var thrashSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield thrashMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -572,7 +670,7 @@ var deleteMessage = (auth, req) =>
 var deleteSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield deleteMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -604,7 +702,7 @@ var getAttachment = (auth, req) =>
 var fetchMessageAttachment = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getAttachment(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -638,7 +736,7 @@ var exportMessage = (auth, req) =>
 var sendMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield exportMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -671,7 +769,7 @@ var newLabels = (auth, req) =>
 var createLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield newLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -688,7 +786,7 @@ var getLabels = (auth) =>
       const response = yield gmail.users.labels.list({
         userId: USER,
       })
-      if (response && response.data) {
+      if (response == null ? void 0 : response.data) {
         return response.data
       }
       return new Error('No Labels found...')
@@ -699,7 +797,7 @@ var getLabels = (auth) =>
 var fetchLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getLabels(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -729,7 +827,7 @@ var getLabel = (auth, req) =>
 var fetchSingleLabel = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getLabel(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -762,7 +860,7 @@ var refreshLabels = (auth, req) =>
 var updateLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield refreshLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -791,7 +889,7 @@ var removeTheLabels = (auth, req) =>
 var removeLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield removeTheLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -819,7 +917,7 @@ var fetchProfile = (auth) =>
 var getProfile = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield fetchProfile(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -856,7 +954,7 @@ var getContacts = (auth, req) =>
 var fetchAllContacts = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getContacts(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -885,7 +983,7 @@ var getContacts2 = (auth, req) =>
 var queryContacts = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield getContacts2(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -915,7 +1013,7 @@ var fetchHistory = (auth, req) =>
 var listHistory = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req)
       const response = yield fetchHistory(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -927,39 +1025,98 @@ var listHistory = (req, res) =>
 var router = import_express.default.Router()
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
+  (0, import_express2.verifySession)(),
   fetchAllContacts
 )
-router.get('/api/contact/search/:query?/:readMask?', queryContacts)
+router.get(
+  '/api/contact/search/:query?/:readMask?',
+  (0, import_express2.verifySession)(),
+  queryContacts
+)
 router.get(
   '/api/threads_full/:labelIds?/:maxResults?/:nextPageToken?',
+  (0, import_express2.verifySession)(),
   fetchFullThreads
 )
-router.get('/api/threads/:labelIds?/:maxResults?/:nextPageToken?', fetchThreads)
-router.get('/api/thread/:id?', fetchSingleThread)
-router.post('/api/create-draft', createDraft)
-router.get('/api/drafts/:maxResults?/:nextPageToken?', fetchDrafts)
-router.get('/api/draft/:id?', fetchSingleDraft)
-router.delete('/api/draft/', deleteDraft)
-router.post('/api/send-draft', sendDraft)
-router.put('/api/update-draft/?:id?', updateDraft)
-router.patch('/api/message/:id?', updateSingleMessage)
-router.post('/api/message/thrash/:id?', thrashSingleMessage)
-router.delete('/api/message/', deleteSingleMessage)
-router.get('/api/message/attachment/:messageId?/:id?', fetchMessageAttachment)
-router.post('/api/send-message', sendMessage)
-router.post('/api/labels', createLabels)
-router.get('/api/labels', fetchLabels)
-router.get('/api/label/:id?', fetchSingleLabel)
-router.patch('/api/labels', updateLabels)
-router.delete('/api/labels', removeLabels)
-router.get('/api/user', getProfile)
-router.get('/api/history/:startHistoryId?', listHistory)
+router.get(
+  '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
+  (0, import_express2.verifySession)(),
+  fetchThreads
+)
+router.get(
+  '/api/thread/:id?',
+  (0, import_express2.verifySession)(),
+  fetchSingleThread
+)
+router.post(
+  '/api/create-draft',
+  (0, import_express2.verifySession)(),
+  createDraft
+)
+router.get(
+  '/api/drafts/:maxResults?/:nextPageToken?',
+  (0, import_express2.verifySession)(),
+  fetchDrafts
+)
+router.get(
+  '/api/draft/:id?',
+  (0, import_express2.verifySession)(),
+  fetchSingleDraft
+)
+router.delete('/api/draft/', (0, import_express2.verifySession)(), deleteDraft)
+router.post('/api/send-draft', (0, import_express2.verifySession)(), sendDraft)
+router.put(
+  '/api/update-draft/?:id?',
+  (0, import_express2.verifySession)(),
+  updateDraft
+)
+router.patch(
+  '/api/message/:id?',
+  (0, import_express2.verifySession)(),
+  updateSingleMessage
+)
+router.post(
+  '/api/message/thrash/:id?',
+  (0, import_express2.verifySession)(),
+  thrashSingleMessage
+)
+router.delete(
+  '/api/message/',
+  (0, import_express2.verifySession)(),
+  deleteSingleMessage
+)
+router.get(
+  '/api/message/attachment/:messageId?/:id?',
+  (0, import_express2.verifySession)(),
+  fetchMessageAttachment
+)
+router.post(
+  '/api/send-message',
+  (0, import_express2.verifySession)(),
+  sendMessage
+)
+router.post('/api/labels', (0, import_express2.verifySession)(), createLabels)
+router.get('/api/labels', (0, import_express2.verifySession)(), fetchLabels)
+router.get(
+  '/api/label/:id?',
+  (0, import_express2.verifySession)(),
+  fetchSingleLabel
+)
+router.patch('/api/labels', (0, import_express2.verifySession)(), updateLabels)
+router.delete('/api/labels', (0, import_express2.verifySession)(), removeLabels)
+router.get('/api/user', (0, import_express2.verifySession)(), getProfile)
+router.get(
+  '/api/history/:startHistoryId?',
+  (0, import_express2.verifySession)(),
+  listHistory
+)
 var routes_default = router
 
 // src/routes/app.ts
 var Sentry = __toESM(require('./node_modules/@sentry/node/dist/index.js'))
 var Tracing = __toESM(require('./node_modules/@sentry/tracing/dist/index.js'))
-var app = (0, import_express2.default)()
+superToken_default()
+var app = (0, import_express3.default)()
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader(
@@ -972,8 +1129,7 @@ app.use((req, res, next) => {
   )
   next()
 })
-app.use(import_express2.default.json())
-app.use('/', routes_default)
+app.use(import_express3.default.json())
 var swaggerDefinition = {
   info: {
     title: 'Juno API',
@@ -996,7 +1152,7 @@ var swaggerOptions = {
 }
 var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions)
 app.use(
-  '/',
+  '/swagger',
   import_swagger_ui_express.default.serve,
   import_swagger_ui_express.default.setup(swaggerDocs)
 )
@@ -1010,9 +1166,22 @@ process.env.NODE_ENV !== 'development' &&
     ],
     tracesSampleRate: 1,
   })
+app.use(
+  (0, import_cors.default)({
+    origin: process.env.FRONTEND_URL,
+    allowedHeaders: [
+      'content-type',
+      ...import_supertokens_node2.default.getAllCORSHeaders(),
+    ],
+    credentials: true,
+  })
+)
+app.use((0, import_express4.middleware)())
+app.use('/', routes_default)
 app.use(Sentry.Handlers.requestHandler())
 app.use(Sentry.Handlers.tracingHandler())
 app.use(Sentry.Handlers.errorHandler())
+app.use((0, import_express4.errorHandler)())
 app.use(function onError(err, req, res, next) {
   res.statusCode = 500
   res.end(res.sentry + '\n')

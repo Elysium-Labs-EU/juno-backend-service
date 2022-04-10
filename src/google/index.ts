@@ -1,4 +1,5 @@
 import { google } from 'googleapis'
+import { SessionRequest } from 'supertokens-node/framework/express'
 
 const authorize = async (token) => {
   const oAuth2Client = new google.auth.OAuth2(
@@ -8,13 +9,14 @@ const authorize = async (token) => {
   )
 
   try {
-    oAuth2Client.setCredentials(JSON.parse(token as string))
+    oAuth2Client.setCredentials(token)
     return oAuth2Client
   } catch (err) {
     console.log('err', JSON.stringify(err))
   }
 }
 
-export const authenticated = async (token: any) => {
+export const authenticated = async (req: SessionRequest) => {
+  const token = await req.session?.getSessionData()
   return await authorize(token)
 }

@@ -5,8 +5,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node esbuild.config.js && node out.js",
-    "start:watch": "nodemon",
+    "start:tsc": "tsc && node dist/server.js",
+    "start:esbuild": "node esbuild.config.js && node out.js",
+    "start:watch:dev": "cp ./src/environments/.env.dev  .env && nodemon",
     "lint": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\"",
     "lint-fix": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\" --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,json,md,tsx,ts}\"",
@@ -24,11 +25,14 @@
     "@sentry/node": "^6.19.2",
     "@sentry/tracing": "^6.19.2",
     "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
     "esbuild": "^0.14.27",
     "express": "^4.17.3",
     "express-session": "^1.17.2",
     "gaxios": "^4.3.2",
     "googleapis": "^100.0.0",
+    "supertokens-node": "^9.1.2",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.3.0",
     "ts-loader": "^9.2.8",
@@ -63,7 +67,7 @@
     "watch": [
       "src"
     ],
-    "exec": "yarn start",
+    "exec": "yarn start:esbuild",
     "ext": "ts"
   }
 }
