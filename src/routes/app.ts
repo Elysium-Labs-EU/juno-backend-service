@@ -14,6 +14,8 @@ superTokenInit()
 
 const app = express()
 
+console.log(process.env.BACKEND_URL)
+
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader(
