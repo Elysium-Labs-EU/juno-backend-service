@@ -18,8 +18,6 @@ const superTokenInit = () => {
   assertNonNullish(process.env.BACKEND_URL, 'No Backend URL found')
   assertNonNullish(process.env.FRONTEND_URL, 'No Frontend URL found')
 
-  console.log('here', process.env.BACKEND_URL)
-
   supertokens.init({
     framework: 'express',
     supertokens: {

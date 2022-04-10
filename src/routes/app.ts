@@ -14,8 +14,6 @@ superTokenInit()
 
 const app = express()
 
-console.log(process.env.BACKEND_URL)
-
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader(
@@ -54,7 +52,7 @@ const swaggerOptions = {
   apis: ['./index.ts', './doc/definitions.yaml'],
 }
 const swaggerDocs = swaggerJSDoc(swaggerOptions)
-app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
+app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
 process.env.NODE_ENV !== 'development' &&
