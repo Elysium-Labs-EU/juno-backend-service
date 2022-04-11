@@ -169,12 +169,6 @@ var superToken_default = superTokenInit
 
 // src/routes/app.ts
 var import_express4 = require('./node_modules/supertokens-node/framework/express/index.js')
-var import_swagger_jsdoc = __toESM(
-  require('./node_modules/swagger-jsdoc/index.js')
-)
-var import_swagger_ui_express = __toESM(
-  require('./node_modules/swagger-ui-express/index.js')
-)
 
 // src/routes/index.ts
 var import_express = __toESM(require('./node_modules/express/index.js'))
@@ -1117,45 +1111,7 @@ var Sentry = __toESM(require('./node_modules/@sentry/node/dist/index.js'))
 var Tracing = __toESM(require('./node_modules/@sentry/tracing/dist/index.js'))
 superToken_default()
 var app = (0, import_express3.default)()
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'
-  )
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, PATCH, OPTIONS'
-  )
-  next()
-})
 app.use(import_express3.default.json())
-var swaggerDefinition = {
-  info: {
-    title: 'Juno API',
-    version: '0.0.1',
-    description:
-      'This is a REST API application made with Express. It retrieves data from Gmail Api.',
-    license: {
-      name: 'Licensed under GNU General Public License v3.0',
-      url: 'https://github.com/Elysium-Labs-EU/juno-backend/blob/main/LICENSE',
-    },
-    contact: {
-      name: 'Robbert Tuerlings',
-      url: 'https://robberttuerlings.online',
-    },
-  },
-}
-var swaggerOptions = {
-  swaggerDefinition,
-  apis: ['./index.ts', './doc/definitions.yaml'],
-}
-var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions)
-app.use(
-  '/swagger',
-  import_swagger_ui_express.default.serve,
-  import_swagger_ui_express.default.setup(swaggerDocs)
-)
 process.env.NODE_ENV !== 'development' &&
   process.env.SENTRY_DSN &&
   Sentry.init({

@@ -4,55 +4,61 @@ import 'dotenv/config'
 import supertokens from 'supertokens-node'
 import superTokenInit from '../google/superToken'
 import { errorHandler, middleware } from 'supertokens-node/framework/express'
-import swaggerJSDoc from 'swagger-jsdoc'
-import swaggerUI from 'swagger-ui-express'
+// import swaggerJSDoc from 'swagger-jsdoc'
+// import swaggerUI from 'swagger-ui-express'
 import indexRoute from './index'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
+// import assertNonNullish from '../utils/assertNonNullish'
 
 superTokenInit()
 
 const app = express()
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'
-  )
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, PATCH, OPTIONS'
-  )
-  next()
-})
+// app.use((req, res, next) => {
+//   assertNonNullish(
+//     process.env.FRONTEND_URL,
+//     'No Frontend environment variable found.'
+//   )
+//   res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL)
+//   res.setHeader(
+//     'Access-Control-Allow-Headers',
+//     'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'
+//   )
+//   res.setHeader(
+//     'Access-Control-Allow-Methods',
+//     'GET, POST, PUT, DELETE, PATCH, OPTIONS'
+//   )
+//   res.setHeader('Access-Control-Allow-Credentials', 'true')
+//   next()
+// })
 
 app.use(express.json())
 
-const swaggerDefinition = {
-  info: {
-    title: 'Juno API',
-    version: '0.0.1',
-    description:
-      'This is a REST API application made with Express. It retrieves data from Gmail Api.',
-    license: {
-      name: 'Licensed under GNU General Public License v3.0',
-      url: 'https://github.com/Elysium-Labs-EU/juno-backend/blob/main/LICENSE',
-    },
-    contact: {
-      name: 'Robbert Tuerlings',
-      url: 'https://robberttuerlings.online',
-    },
-  },
-}
+// const swaggerDefinition = {
+//   info: {
+//     title: 'Juno API',
+//     version: '0.0.1',
+//     description:
+//       'This is a REST API application made with Express. It retrieves data from Gmail Api.',
+//     license: {
+//       name: 'Licensed under GNU General Public License v3.0',
+//       url: 'https://github.com/Elysium-Labs-EU/juno-backend/blob/main/LICENSE',
+//     },
+//     contact: {
+//       name: 'Robbert Tuerlings',
+//       url: 'https://robberttuerlings.online',
+//     },
+//   },
+// }
 
 // // Swagger Configuration
-const swaggerOptions = {
-  swaggerDefinition,
-  apis: ['./index.ts', './doc/definitions.yaml'],
-}
-const swaggerDocs = swaggerJSDoc(swaggerOptions)
-app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
+// const swaggerOptions = {
+//   swaggerDefinition,
+//   apis: ['./index.ts', './doc/definitions.yaml'],
+// }
+// const swaggerDocs = swaggerJSDoc(swaggerOptions)
+// app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
 process.env.NODE_ENV !== 'development' &&
