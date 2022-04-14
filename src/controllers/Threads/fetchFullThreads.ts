@@ -1,4 +1,4 @@
-import { SessionRequest } from 'supertokens-node/framework/express'
+// import { SessionRequest } from 'supertokens-node/framework/express'
 import { gmail_v1, google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -56,9 +56,9 @@ const getFullThreads = async (auth, req) => {
   }
 }
 
-export const fetchFullThreads = async (req: SessionRequest, res) => {
+export const fetchFullThreads = async (req, res) => {
   try {
-    const auth = await authenticated(req)
+    const auth = await authenticated(req.headers.authorization)
     const response = await getFullThreads(auth, req)
     return res.status(200).json(response)
   } catch (err) {
