@@ -21,7 +21,6 @@ export const getProfile = async (req, res) => {
   // export const getProfile = async (req: SessionRequest, res) => {
   try {
     const auth = await authenticated(req.headers.authorization)
-    console.log(auth)
     const response = await fetchProfile(auth)
     return res.status(200).json(response)
   } catch (err) {
