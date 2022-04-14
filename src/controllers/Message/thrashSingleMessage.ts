@@ -1,4 +1,4 @@
-import { SessionRequest } from 'supertokens-node/framework/express'
+// import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -19,9 +19,9 @@ const thrashMessage = async (auth, req) => {
     throw Error(`Single message return an error: ${err}`)
   }
 }
-export const thrashSingleMessage = async (req: SessionRequest, res) => {
+export const thrashSingleMessage = async (req, res) => {
   try {
-    const auth = await authenticated(req)
+    const auth = await authenticated(req.headers.authorization)
     const response = await thrashMessage(auth, req)
     return res.status(200).json(response)
   } catch (err) {

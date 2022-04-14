@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "checkJs": true,
+    "allowJs": true,
+    "moduleResolution": "node",
+    "types": ["node"],
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowUnreachableCode": true,
+    "useUnknownInCatchVariables": false,
+    "resolveJsonModule": true
+  },
+  "lib": ["es2015"],
+  "include": [],
+  "exclude": ["node_modules", "<node_internals>/**"],
+  "files": [
+    "/Users/r.tuerlings/Coding/juno-backend-service/src/controllers/Users/getProfile.ts",
+    "/Users/r.tuerlings/Coding/juno-backend-service/src/google/index.ts"
+  ]
+}

@@ -1,4 +1,4 @@
-import { SessionRequest } from 'supertokens-node/framework/express'
+// import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
@@ -19,9 +19,9 @@ const fetchHistory = async (auth, req) => {
     throw Error(`Profile returned an error: ${err}`)
   }
 }
-export const listHistory = async (req: SessionRequest, res) => {
+export const listHistory = async (req, res) => {
   try {
-    const auth = await authenticated(req)
+    const auth = await authenticated(req.headers.authorization)
     const response = await fetchHistory(auth, req)
     return res.status(200).json(response)
   } catch (err) {
