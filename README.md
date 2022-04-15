@@ -10,12 +10,15 @@ The normal setup sequence would be;
 
 1.  Download the code to your local machine
 2.  Run `yarn` to install all dependencies
-3.  Create a file called .env in the root of the project
+3.  Create a file called .env in the root of the project and follow steps 4 to 9
 4.  Add `GOOGLE_CLIENT_ID` with the related Google Client ID
 5.  Add `GOOGLE_CLIENT_SECRET` with the related Google Client Secret
-6.  Add `GOOGLE_REDIRECT_URL` with the related Google Redirect URL - can be `http://localhost`
-7.  Run `yarn start:watch` from the root to start the server (using nodemon)
-8.  Once the server is running, you can open `/` to see the SwaggerUI for all API's.
+6.  Add `SENTRY_DSN`=LOREM
+7.  Add `SUPERTOKEN_CONNECTION_URI`=LOREM
+8.  Add `SUPERTOKEN_API_KEY`=LOREM
+9.  Add `GOOGLE_REDIRECT_URL` with the related Google Redirect URL - can be `http://localhost`
+10.  Run `yarn start:watch:dev` for Mac/Linux and `yarn start:watch:dev:win` for Windows from the root to start the server (using nodemon)
+11.  Once the server is running, you can open `/swagger` to see the SwaggerUI for all API's.
 
 You are now good to go and run the frontend. See its [Getting Started](https://github.com/Elysium-Labs-EU/juno-core/blob/main/README.md).
 

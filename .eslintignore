@@ -1,3 +1,4 @@
 lint-staged.config.mjs
 out.js
 src/google/index.ts
+src/environments/instructions.md
