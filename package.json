@@ -8,6 +8,7 @@
     "start": "node esbuild.config.js && node out.js",
     "start:tsc": "tsc && node dist/server.js",
     "start:watch:dev": "cp ./src/environments/.env.dev  .env && nodemon",
+    "start:watch:dev:win": "copy .env .env.dev  && nodemon",
     "lint": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\"",
     "lint-fix": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\" --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,json,md,tsx,ts}\"",

@@ -12,3 +12,4 @@ out.js
 .env
 src/environments/.env.dev
 src/environments/.env.prod
+.env.dev
