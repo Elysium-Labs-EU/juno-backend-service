@@ -18,7 +18,7 @@ The normal setup sequence would be;
 8.  Add `SUPERTOKEN_API_KEY`=LOREM
 9.  Add `GOOGLE_REDIRECT_URL` with the related Google Redirect URL - can be `http://localhost`
 10.  Run `yarn start:watch:dev` for Mac/Linux and `yarn start:watch:dev:win` for Windows from the root to start the server (using nodemon)
-11.  Once the server is running, you can open `/` to see the SwaggerUI for all API's.
+11.  Once the server is running, you can open `/swagger` to see the SwaggerUI for all API's.
 
 You are now good to go and run the frontend. See its [Getting Started](https://github.com/Elysium-Labs-EU/juno-core/blob/main/README.md).
 
