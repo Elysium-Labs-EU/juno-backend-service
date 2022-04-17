@@ -7,9 +7,13 @@ const authorize = async (token) => {
     process.env.GOOGLE_REDIRECT_URL
   )
 
+  // const parsedTokenObject = JSON.parse(token)
+  // console.log(parsedTokenObject)
+
   try {
-    oAuth2Client.setCredentials(JSON.parse(token as string))
-    return oAuth2Client
+    const response = oAuth2Client.setCredentials(JSON.parse(token as string))
+    console.log('RESPONSE', response)
+    return response
   } catch (err) {
     console.log('err', JSON.stringify(err))
   }

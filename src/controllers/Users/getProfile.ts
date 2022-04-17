@@ -19,9 +19,11 @@ const fetchProfile = async (auth) => {
 }
 export const getProfile = async (req, res) => {
   // export const getProfile = async (req: SessionRequest, res) => {
+  console.log(req.headers.authorization)
   try {
     const auth = await authenticated(req.headers.authorization)
     const response = await fetchProfile(auth)
+    console.log('@@@response', response)
     return res.status(200).json(response)
   } catch (err) {
     res.status(401).json(err)

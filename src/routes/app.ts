@@ -10,9 +10,13 @@ import indexRoute from './index'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
 import assertNonNullish from '../utils/assertNonNullish'
+import firebaseInit from '../google/firebase'
 
 // SuperToken Init file
 // superTokenInit()
+
+// Firebase Init filename
+firebaseInit()
 
 const app = express()
 
