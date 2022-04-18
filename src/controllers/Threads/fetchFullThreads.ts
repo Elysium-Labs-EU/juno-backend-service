@@ -57,7 +57,7 @@ const getFullThreads = async (auth, req) => {
 
 export const fetchFullThreads = async (req, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req.session.oAuthClient)
     const response = await getFullThreads(auth, req)
     return res.status(200).json(response)
   } catch (err) {

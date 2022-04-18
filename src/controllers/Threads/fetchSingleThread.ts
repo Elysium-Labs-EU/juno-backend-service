@@ -22,7 +22,7 @@ const getThread = async (auth, req) => {
 }
 export const fetchSingleThread = async (req, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req.session.oAuthClient)
     const response = await getThread(auth, req)
     return res.status(200).json(response)
   } catch (err) {

@@ -18,8 +18,8 @@ const fetchProfile = async (auth) => {
 }
 export const getProfile = async (req, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
-    // console.log('auth', auth)
+    // TODO: Extend the check by verifying the received sessionToken with the active one in the session.
+    const auth = await authenticated(req.session.oAuthClient)
     const response = await fetchProfile(auth)
     return res.status(200).json(response)
   } catch (err) {

@@ -1,5 +1,4 @@
 import express from 'express'
-// import cors from 'cors'
 import 'dotenv/config'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
@@ -8,26 +7,29 @@ import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
 import assertNonNullish from '../utils/assertNonNullish'
 import session from 'express-session'
+// import redis from 'connect-redis'
+// import { createClient } from 'redis'
+// const redisClient = createClient({ legacyMode: true })
+
+// const redisStore = redis(session)
+// redisClient.connect().catch(console.error)
 
 const app = express()
 console.log('booted')
+
 app.use(
   session({
+    // store: new redisStore({ client: redisClient }),
+    saveUninitialized: false,
     secret: 'Shh, its a secret!',
     resave: false,
-    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      maxAge: 1000 * 60 * 30,
+    },
   })
 )
-// app.get('/session_test', function (req: any, res) {
-//   console.log(req.session)
-//   if (req.session.page_views) {
-//     req.session.page_views++
-//     res.send('You visited this page ' + req.session.page_views + ' times')
-//   } else {
-//     req.session.page_views = 1
-//     res.send('Welcome to this page for the first time!')
-//   }
-// })
 
 app.use((req, res, next) => {
   assertNonNullish(
@@ -92,17 +94,6 @@ process.env.NODE_ENV !== 'development' &&
     tracesSampleRate: 1.0,
   })
 
-// SuperToken Cors
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL,
-//     allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
-//     credentials: true,
-//   })
-// )
-// SuperToken Middleware
-// app.use(middleware())
-
 app.use('/', indexRoute)
 
 // RequestHandler creates a separate execution context using domains, so that every
@@ -113,9 +104,6 @@ app.use(Sentry.Handlers.tracingHandler())
 
 // The error handler must be before any other error middleware and after all controllers
 app.use(Sentry.Handlers.errorHandler())
-
-// SuperToken Error Handler
-// app.use(errorHandler())
 
 // Optional fallthrough error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

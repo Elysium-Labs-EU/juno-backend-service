@@ -141,10 +141,10 @@ const authorize = async (token) => {
   }
 }
 
-export const authenticated = async (token: any) => {
+export const authenticated = async (token?: any) => {
   try {
     if (token) {
-      const response = await authorize({ access_token: token })
+      const response = await authorize(token)
       // console.log(response)
       return response
     }

@@ -230,7 +230,7 @@ var authenticated = (token) =>
   __async(void 0, null, function* () {
     try {
       if (token) {
-        const response2 = yield authorize({ access_token: token })
+        const response2 = yield authorize(token)
         return response2
       }
       const response = yield main()
@@ -283,7 +283,7 @@ var getThreads = (auth, req) =>
 var fetchThreads = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getThreads(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -344,7 +344,7 @@ var getFullThreads = (auth, req) =>
 var fetchFullThreads = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getFullThreads(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -375,7 +375,7 @@ var getThread = (auth, req) =>
 var fetchSingleThread = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getThread(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -449,7 +449,7 @@ var setupDraft = (auth, req) =>
 var createDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield setupDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -477,7 +477,7 @@ var getDrafts = (auth) =>
 var fetchDrafts = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getDrafts(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -507,7 +507,7 @@ var getDraft = (auth, req) =>
 var fetchSingleDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -539,7 +539,7 @@ var exportDraft = (auth, req) =>
 var sendDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield exportDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -585,7 +585,7 @@ var exportDraft2 = (auth, req) =>
 var updateDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield exportDraft2(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -614,7 +614,7 @@ var removeDraft = (auth, req) =>
 var deleteDraft = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield removeDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -644,7 +644,7 @@ var updateMessage = (auth, req) =>
 var updateSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield updateMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -673,7 +673,7 @@ var thrashMessage = (auth, req) =>
 var thrashSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield thrashMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -702,7 +702,7 @@ var deleteMessage = (auth, req) =>
 var deleteSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield deleteMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -734,7 +734,7 @@ var getAttachment = (auth, req) =>
 var fetchMessageAttachment = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getAttachment(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -768,7 +768,7 @@ var exportMessage = (auth, req) =>
 var sendMessage = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield exportMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -801,7 +801,7 @@ var newLabels = (auth, req) =>
 var createLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield newLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -829,7 +829,7 @@ var getLabels = (auth) =>
 var fetchLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getLabels(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -859,7 +859,7 @@ var getLabel = (auth, req) =>
 var fetchSingleLabel = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getLabel(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -892,7 +892,7 @@ var refreshLabels = (auth, req) =>
 var updateLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield refreshLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -921,7 +921,7 @@ var removeTheLabels = (auth, req) =>
 var removeLabels = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield removeTheLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -949,7 +949,7 @@ var fetchProfile = (auth) =>
 var getProfile = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield fetchProfile(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -986,7 +986,7 @@ var getContacts = (auth, req) =>
 var fetchAllContacts = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getContacts(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -1015,7 +1015,7 @@ var getContacts2 = (auth, req) =>
 var queryContacts = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield getContacts2(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -1045,7 +1045,7 @@ var fetchHistory = (auth, req) =>
 var listHistory = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.headers.authorization)
+      const auth = yield authenticated(req.session.oAuthClient)
       const response = yield fetchHistory(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -1057,12 +1057,12 @@ var listHistory = (req, res) =>
 var authenticateUser = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const response = yield authenticated('')
+      const response = yield authenticated()
+      req.session.oAuthClient = response.credentials
       return res.status(200).json({
         access_token: response.credentials.access_token,
         refresh_token: response.credentials.refresh_token,
       })
-      req.session.oAuthClient = response
     } catch (err) {
       res.status(401).json(err)
     }
@@ -1097,7 +1097,7 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
-router.post('/api/auth', authenticateUser)
+router.get('/api/auth', authenticateUser)
 router.get('/api/user', getProfile)
 router.get('/api/history/:startHistoryId?', listHistory)
 var routes_default = router
@@ -1108,13 +1108,26 @@ var Tracing = __toESM(require('./node_modules/@sentry/tracing/dist/index.js'))
 var import_express_session = __toESM(
   require('./node_modules/express-session/index.js')
 )
+var import_connect_redis = __toESM(
+  require('./node_modules/connect-redis/index.js')
+)
+var import_redis = require('./node_modules/redis/dist/index.js')
+var redisClient = (0, import_redis.createClient)({ legacyMode: true })
+var redisStore = (0, import_connect_redis.default)(
+  import_express_session.default
+)
 var app = (0, import_express2.default)()
 console.log('booted')
 app.use(
   (0, import_express_session.default)({
+    saveUninitialized: false,
     secret: 'Shh, its a secret!',
     resave: false,
-    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      maxAge: 1e3 * 60 * 30,
+    },
   })
 )
 app.use((req, res, next) => {

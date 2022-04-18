@@ -72,7 +72,7 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
-router.post('/api/auth', authenticateUser)
+router.get('/api/auth', authenticateUser)
 router.get('/api/user', getProfile)
 router.get('/api/history/:startHistoryId?', listHistory)
 

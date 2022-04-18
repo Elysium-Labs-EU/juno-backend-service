@@ -26,7 +26,7 @@ const exportMessage = async (auth, req) => {
 }
 export const sendMessage = async (req, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req.session.oAuthClient)
     const response = await exportMessage(auth, req)
     return res.status(200).json(response)
   } catch (err) {

@@ -23,7 +23,7 @@ const getAttachment = async (auth, req) => {
 }
 export const fetchMessageAttachment = async (req, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req.session.oAuthClient)
     const response = await getAttachment(auth, req)
     return res.status(200).json(response)
   } catch (err) {

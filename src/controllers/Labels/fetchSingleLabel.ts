@@ -21,7 +21,7 @@ const getLabel = async (auth, req) => {
 }
 export const fetchSingleLabel = async (req, res) => {
   try {
-    const auth = await authenticated(req.headers.authorization)
+    const auth = await authenticated(req.session.oAuthClient)
     const response = await getLabel(auth, req)
     return res.status(200).json(response)
   } catch (err) {
