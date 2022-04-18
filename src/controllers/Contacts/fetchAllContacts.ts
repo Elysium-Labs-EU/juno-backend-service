@@ -1,4 +1,3 @@
-// import { SessionRequest } from 'supertokens-node/framework/express'
 import { google, people_v1 } from 'googleapis'
 import { authenticated } from '../../google/index'
 

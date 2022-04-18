@@ -1,7 +1,6 @@
 import { google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
-// import { SessionRequest } from 'supertokens-node/framework/express'
 
 const fetchProfile = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -9,7 +8,7 @@ const fetchProfile = async (auth) => {
     const response = await gmail.users.getProfile({
       userId: USER,
     })
-    if (response && response.status === 200) {
+    if (response?.status === 200) {
       return response.data
     }
     return new Error('No Profile found...')
@@ -18,12 +17,10 @@ const fetchProfile = async (auth) => {
   }
 }
 export const getProfile = async (req, res) => {
-  // export const getProfile = async (req: SessionRequest, res) => {
-  console.log(req.headers.authorization)
   try {
     const auth = await authenticated(req.headers.authorization)
+    // console.log('auth', auth)
     const response = await fetchProfile(auth)
-    console.log('@@@response', response)
     return res.status(200).json(response)
   } catch (err) {
     res.status(401).json(err)

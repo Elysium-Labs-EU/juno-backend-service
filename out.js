@@ -72,7 +72,7 @@ var __async = (__this, __arguments, generator) => {
 }
 
 // src/server.ts
-var import_http = __toESM(require('http'))
+var import_http2 = __toESM(require('http'))
 
 // src/routes/app.ts
 var import_express2 = __toESM(require('./node_modules/express/index.js'))
@@ -88,27 +88,156 @@ var import_swagger_ui_express = __toESM(
 var import_express = __toESM(require('./node_modules/express/index.js'))
 
 // src/controllers/Threads/fetchThreads.ts
-var import_googleapis2 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis = require('./node_modules/googleapis/build/src/index.js')
 
 // src/google/index.ts
-var import_googleapis = require('./node_modules/googleapis/build/src/index.js')
+var import_google_auth_library = require('./node_modules/google-auth-library/build/src/index.js')
+var import_http = __toESM(require('http'))
+var import_url = __toESM(require('url'))
+var import_open = __toESM(require('./node_modules/open/index.js'))
+var import_server_destroy = __toESM(
+  require('./node_modules/server-destroy/index.js')
+)
+
+// src/utils/assertNonNullish.ts
+function assertNonNullish(value, message) {
+  if (value === null || value === void 0) {
+    throw Error(message)
+  }
+}
+
+// src/google/index.ts
+var SCOPES = [
+  'openid',
+  'profile',
+  'https://mail.google.com',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/contacts.other.readonly',
+]
+var getNewRefreshToken = (token) =>
+  __async(void 0, null, function* () {
+    assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
+    assertNonNullish(
+      process.env.GOOGLE_CLIENT_SECRET,
+      'No Google Client Secret found'
+    )
+    assertNonNullish(
+      process.env.GOOGLE_REDIRECT_URL,
+      'No Google Redirect URL found'
+    )
+    const oAuth2Client = new import_google_auth_library.OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URL
+    )
+    const authorizeUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      prompt: 'consent',
+    })
+  })
+function getAuthenticatedClient() {
+  return new Promise((resolve, reject) => {
+    assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
+    assertNonNullish(
+      process.env.GOOGLE_CLIENT_SECRET,
+      'No Google Client Secret found'
+    )
+    assertNonNullish(
+      process.env.GOOGLE_REDIRECT_URL,
+      'No Google Redirect URL found'
+    )
+    const oAuth2Client = new import_google_auth_library.OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URL
+    )
+    const authorizeUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+    })
+    const server2 = import_http.default
+      .createServer((req, res) =>
+        __async(this, null, function* () {
+          try {
+            if (
+              (req == null ? void 0 : req.url) &&
+              req.url.indexOf('/oauth2callback') > -1
+            ) {
+              const qs = new import_url.default.URL(
+                req.url,
+                'http://localhost:3001'
+              ).searchParams
+              const code = qs.get('code')
+              res.end(
+                '<p>Authentication successful! Please return to the console.</p>'
+              )
+              server2.destroy()
+              if (code) {
+                const r = yield oAuth2Client.getToken(code)
+                oAuth2Client.setCredentials(r.tokens)
+                resolve(oAuth2Client)
+              }
+            }
+          } catch (e) {
+            reject(e)
+          }
+        })
+      )
+      .listen(3001, () => {
+        ;(0, import_open.default)(authorizeUrl, { wait: false }).then((cp) =>
+          cp.unref()
+        )
+      })
+    ;(0, import_server_destroy.default)(server2)
+  })
+}
+function main() {
+  return __async(this, null, function* () {
+    const oAuth2Client = yield getAuthenticatedClient()
+    if (oAuth2Client) {
+      const tokenInfo = yield oAuth2Client.getTokenInfo(
+        oAuth2Client.credentials.access_token
+      )
+      if (tokenInfo.expiry_date > Math.floor(new Date().getTime())) {
+        return oAuth2Client
+      }
+      throw Error(`Expiration date before current date.`)
+    }
+  })
+}
 var authorize = (token) =>
   __async(void 0, null, function* () {
-    const oAuth2Client = new import_googleapis.google.auth.OAuth2(
+    const oAuth2Client = new import_google_auth_library.OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URL
     )
     try {
-      oAuth2Client.setCredentials(JSON.parse(token))
+      oAuth2Client.setCredentials(token)
       return oAuth2Client
     } catch (err) {
+      return getNewRefreshToken(token)
       console.log('err', JSON.stringify(err))
     }
   })
 var authenticated = (token) =>
   __async(void 0, null, function* () {
-    return yield authorize(token)
+    try {
+      if (token) {
+        const response2 = yield authorize({ access_token: token })
+        return response2
+      }
+      const response = yield main()
+      return response
+    } catch (err) {
+      console.error(err)
+    }
   })
 
 // src/constants/globalConstants.ts
@@ -139,7 +268,7 @@ var threadRequest_default = requestBodyCreator
 // src/controllers/Threads/fetchThreads.ts
 var getThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis2.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis.google.gmail({ version: 'v1', auth })
     const requestBody = threadRequest_default(req)
     try {
       const response = yield gmail.users.threads.list(requestBody)
@@ -163,7 +292,7 @@ var fetchThreads = (req, res) =>
   })
 
 // src/controllers/Threads/fetchFullThreads.ts
-var import_googleapis3 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis2 = require('./node_modules/googleapis/build/src/index.js')
 function singleThread(thread, gmail) {
   return __async(this, null, function* () {
     const { id } = thread
@@ -186,7 +315,7 @@ function singleThread(thread, gmail) {
 }
 var getFullThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis3.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis2.google.gmail({ version: 'v1', auth })
     const requestBody = threadRequest_default(req)
     try {
       const response = yield gmail.users.threads.list(requestBody)
@@ -224,10 +353,10 @@ var fetchFullThreads = (req, res) =>
   })
 
 // src/controllers/Threads/fetchSingleThread.ts
-var import_googleapis4 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis3 = require('./node_modules/googleapis/build/src/index.js')
 var getThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis4.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis3.google.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.threads.get({
@@ -255,7 +384,7 @@ var fetchSingleThread = (req, res) =>
   })
 
 // src/controllers/Drafts/createDraft.ts
-var import_googleapis5 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis4 = require('./node_modules/googleapis/build/src/index.js')
 
 // src/utils/messageEncoding.ts
 var messageEncoding = (props) => {
@@ -287,7 +416,7 @@ var messageEncoding_default = messageEncoding
 // src/controllers/Drafts/createDraft.ts
 var setupDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis5.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis4.google.gmail({ version: 'v1', auth })
     const { threadId, messageId, labelIds } = req.body
     try {
       const response = yield gmail.users.drafts.create({
@@ -329,10 +458,10 @@ var createDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/fetchDrafts.ts
-var import_googleapis6 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis5 = require('./node_modules/googleapis/build/src/index.js')
 var getDrafts = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis6.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis5.google.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.list({
         userId: USER,
@@ -357,10 +486,10 @@ var fetchDrafts = (req, res) =>
   })
 
 // src/controllers/Drafts/fetchSingleDraft.ts
-var import_googleapis7 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis6 = require('./node_modules/googleapis/build/src/index.js')
 var getDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis7.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis6.google.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.get({
         userId: USER,
@@ -387,10 +516,10 @@ var fetchSingleDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/sendDraft.ts
-var import_googleapis8 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis7 = require('./node_modules/googleapis/build/src/index.js')
 var exportDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis8.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis7.google.gmail({ version: 'v1', auth })
     const { id } = req.body
     try {
       const response = yield gmail.users.drafts.send({
@@ -419,10 +548,10 @@ var sendDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/updateDraft.ts
-var import_googleapis9 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis8 = require('./node_modules/googleapis/build/src/index.js')
 var exportDraft2 = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis9.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis8.google.gmail({ version: 'v1', auth })
     const { draftId, threadId, messageId, labelIds } = req.body
     try {
       const response = yield gmail.users.drafts.update({
@@ -465,10 +594,10 @@ var updateDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/deleteDraft.ts
-var import_googleapis10 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis9 = require('./node_modules/googleapis/build/src/index.js')
 var removeDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis10.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis9.google.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -494,10 +623,10 @@ var deleteDraft = (req, res) =>
   })
 
 // src/controllers/Message/updateSingleMessage.ts
-var import_googleapis11 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis10 = require('./node_modules/googleapis/build/src/index.js')
 var updateMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis11.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis10.google.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.threads.modify({
         userId: USER,
@@ -524,10 +653,10 @@ var updateSingleMessage = (req, res) =>
   })
 
 // src/controllers/Message/thrashSingleMessage.ts
-var import_googleapis12 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis11 = require('./node_modules/googleapis/build/src/index.js')
 var thrashMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis12.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis11.google.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.threads.trash({
         userId: USER,
@@ -553,10 +682,10 @@ var thrashSingleMessage = (req, res) =>
   })
 
 // src/controllers/Message/deleteSingleMessage.ts
-var import_googleapis13 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis12 = require('./node_modules/googleapis/build/src/index.js')
 var deleteMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis13.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis12.google.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -582,10 +711,10 @@ var deleteSingleMessage = (req, res) =>
   })
 
 // src/controllers/Message/fetchMessageAttachment.ts
-var import_googleapis14 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis13 = require('./node_modules/googleapis/build/src/index.js')
 var getAttachment = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis14.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis13.google.gmail({ version: 'v1', auth })
     const { messageId } = req.params
     const attachmentId = req.params.id
     try {
@@ -614,10 +743,10 @@ var fetchMessageAttachment = (req, res) =>
   })
 
 // src/controllers/Message/sendMessage.ts
-var import_googleapis15 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis14 = require('./node_modules/googleapis/build/src/index.js')
 var exportMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis15.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis14.google.gmail({ version: 'v1', auth })
     const { id, threadId } = req.body
     try {
       const response = yield gmail.users.messages.send({
@@ -648,10 +777,10 @@ var sendMessage = (req, res) =>
   })
 
 // src/controllers/Labels/createLabels.ts
-var import_googleapis16 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis15 = require('./node_modules/googleapis/build/src/index.js')
 var newLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis16.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis15.google.gmail({ version: 'v1', auth })
     try {
       const {
         body: { labelListVisibility, messageListVisibility, name },
@@ -681,10 +810,10 @@ var createLabels = (req, res) =>
   })
 
 // src/controllers/Labels/fetchLabels.ts
-var import_googleapis17 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis16 = require('./node_modules/googleapis/build/src/index.js')
 var getLabels = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis17.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis16.google.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.labels.list({
         userId: USER,
@@ -709,10 +838,10 @@ var fetchLabels = (req, res) =>
   })
 
 // src/controllers/Labels/fetchSingleLabel.ts
-var import_googleapis18 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis17 = require('./node_modules/googleapis/build/src/index.js')
 var getLabel = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis18.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis17.google.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.labels.get({
@@ -739,10 +868,10 @@ var fetchSingleLabel = (req, res) =>
   })
 
 // src/controllers/Labels/updateLabels.ts
-var import_googleapis19 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis18 = require('./node_modules/googleapis/build/src/index.js')
 var refreshLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis19.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis18.google.gmail({ version: 'v1', auth })
     const {
       body: { id, requestBody },
     } = req
@@ -772,10 +901,10 @@ var updateLabels = (req, res) =>
   })
 
 // src/controllers/Labels/removeLabels.ts
-var import_googleapis20 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis19 = require('./node_modules/googleapis/build/src/index.js')
 var removeTheLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis20.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis19.google.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -801,15 +930,15 @@ var removeLabels = (req, res) =>
   })
 
 // src/controllers/Users/getProfile.ts
-var import_googleapis21 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis20 = require('./node_modules/googleapis/build/src/index.js')
 var fetchProfile = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis21.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis20.google.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.getProfile({
         userId: USER,
       })
-      if (response && response.status === 200) {
+      if ((response == null ? void 0 : response.status) === 200) {
         return response.data
       }
       return new Error('No Profile found...')
@@ -829,10 +958,10 @@ var getProfile = (req, res) =>
   })
 
 // src/controllers/Contacts/fetchAllContacts.ts
-var import_googleapis22 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis21 = require('./node_modules/googleapis/build/src/index.js')
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
-    const people = import_googleapis22.google.people({ version: 'v1', auth })
+    const people = import_googleapis21.google.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.pageSize =
       typeof Number(req.query.pageSize) !== 'number'
@@ -866,10 +995,10 @@ var fetchAllContacts = (req, res) =>
   })
 
 // src/controllers/Contacts/queryContacts.ts
-var import_googleapis23 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis22 = require('./node_modules/googleapis/build/src/index.js')
 var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
-    const people = import_googleapis23.google.people({ version: 'v1', auth })
+    const people = import_googleapis22.google.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.query = req.query.query
     requestBody.readMask = req.query.readMask
@@ -895,10 +1024,10 @@ var queryContacts = (req, res) =>
   })
 
 // src/controllers/History/listHistory.ts
-var import_googleapis24 = require('./node_modules/googleapis/build/src/index.js')
+var import_googleapis23 = require('./node_modules/googleapis/build/src/index.js')
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis24.google.gmail({ version: 'v1', auth })
+    const gmail = import_googleapis23.google.gmail({ version: 'v1', auth })
     try {
       const { startHistoryId } = req.query
       const response = yield gmail.users.history.list({
@@ -919,6 +1048,21 @@ var listHistory = (req, res) =>
       const auth = yield authenticated(req.headers.authorization)
       const response = yield fetchHistory(auth, req)
       return res.status(200).json(response)
+    } catch (err) {
+      res.status(401).json(err)
+    }
+  })
+
+// src/controllers/Users/authenticateUser.ts
+var authenticateUser = (req, res) =>
+  __async(void 0, null, function* () {
+    try {
+      const response = yield authenticated('')
+      return res.status(200).json({
+        access_token: response.credentials.access_token,
+        refresh_token: response.credentials.refresh_token,
+      })
+      req.session.oAuthClient = response
     } catch (err) {
       res.status(401).json(err)
     }
@@ -953,6 +1097,7 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
+router.post('/api/auth', authenticateUser)
 router.get('/api/user', getProfile)
 router.get('/api/history/:startHistoryId?', listHistory)
 var routes_default = router
@@ -960,29 +1105,18 @@ var routes_default = router
 // src/routes/app.ts
 var Sentry = __toESM(require('./node_modules/@sentry/node/dist/index.js'))
 var Tracing = __toESM(require('./node_modules/@sentry/tracing/dist/index.js'))
-
-// src/utils/assertNonNullish.ts
-function assertNonNullish(value, message) {
-  if (value === null || value === void 0) {
-    throw Error(message)
-  }
-}
-
-// src/google/firebase.ts
-var firebase = __toESM(
-  require('./node_modules/firebase-admin/lib/esm/app/index.js')
+var import_express_session = __toESM(
+  require('./node_modules/express-session/index.js')
 )
-var firebaseInit = () => {
-  const firebaseAdmin = firebase.initializeApp({
-    credential: firebase.applicationDefault(),
-  })
-  console.log(firebaseAdmin)
-}
-var firebase_default = firebaseInit
-
-// src/routes/app.ts
-firebase_default()
 var app = (0, import_express2.default)()
+console.log('booted')
+app.use(
+  (0, import_express_session.default)({
+    secret: 'Shh, its a secret!',
+    resave: false,
+    saveUninitialized: false,
+  })
+)
 app.use((req, res, next) => {
   assertNonNullish(
     process.env.FRONTEND_URL,
@@ -1049,5 +1183,5 @@ var app_default = app
 
 // src/server.ts
 var PORT = process.env.PORT || 5001
-var server = import_http.default.createServer(app_default)
+var server = import_http2.default.createServer(app_default)
 server.listen(PORT)

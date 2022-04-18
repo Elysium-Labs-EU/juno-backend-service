@@ -1,4 +1,3 @@
-// import { SessionRequest } from 'supertokens-node/framework/express'
 import { gmail_v1, google } from 'googleapis'
 import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'

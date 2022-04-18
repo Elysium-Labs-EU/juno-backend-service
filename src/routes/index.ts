@@ -1,5 +1,4 @@
 import express from 'express'
-// import { verifySession } from 'supertokens-node/recipe/session/framework/express'
 
 const router = express.Router()
 
@@ -26,6 +25,7 @@ import { getProfile } from '../controllers/Users/getProfile'
 import { fetchAllContacts } from '../controllers/Contacts/fetchAllContacts'
 import { queryContacts } from '../controllers/Contacts/queryContacts'
 import { listHistory } from '../controllers/History/listHistory'
+import { authenticateUser } from '../controllers/Users/authenticateUser'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -72,56 +72,8 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
+router.post('/api/auth', authenticateUser)
 router.get('/api/user', getProfile)
 router.get('/api/history/:startHistoryId?', listHistory)
 
 export default router
-
-// SuperToken variant
-// router.get(
-//   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
-//   verifySession(),
-//   fetchAllContacts
-// )
-// router.get(
-//   '/api/contact/search/:query?/:readMask?',
-//   verifySession(),
-//   queryContacts
-// )
-// router.get(
-//   '/api/threads_full/:labelIds?/:maxResults?/:nextPageToken?',
-//   verifySession(),
-//   fetchFullThreads
-// )
-// router.get(
-//   '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
-//   verifySession(),
-//   fetchThreads
-// )
-// router.get('/api/thread/:id?', verifySession(), fetchSingleThread)
-// router.post('/api/create-draft', verifySession(), createDraft)
-// router.get(
-//   '/api/drafts/:maxResults?/:nextPageToken?',
-//   verifySession(),
-//   fetchDrafts
-// )
-// router.get('/api/draft/:id?', verifySession(), fetchSingleDraft)
-// router.delete('/api/draft/', verifySession(), deleteDraft)
-// router.post('/api/send-draft', verifySession(), sendDraft)
-// router.put('/api/update-draft/?:id?', verifySession(), updateDraft)
-// router.patch('/api/message/:id?', verifySession(), updateSingleMessage)
-// router.post('/api/message/thrash/:id?', verifySession(), thrashSingleMessage)
-// router.delete('/api/message/', verifySession(), deleteSingleMessage)
-// router.get(
-//   '/api/message/attachment/:messageId?/:id?',
-//   verifySession(),
-//   fetchMessageAttachment
-// )
-// router.post('/api/send-message', verifySession(), sendMessage)
-// router.post('/api/labels', verifySession(), createLabels)
-// router.get('/api/labels', verifySession(), fetchLabels)
-// router.get('/api/label/:id?', verifySession(), fetchSingleLabel)
-// router.patch('/api/labels', verifySession(), updateLabels)
-// router.delete('/api/labels', verifySession(), removeLabels)
-// router.get('/api/user', verifySession(), getProfile)
-// router.get('/api/history/:startHistoryId?', verifySession(), listHistory)

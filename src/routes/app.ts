@@ -1,24 +1,33 @@
 import express from 'express'
 // import cors from 'cors'
 import 'dotenv/config'
-// import supertokens from 'supertokens-node'
-// import superTokenInit from '../google/superToken'
-// import { errorHandler, middleware } from 'supertokens-node/framework/express'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 import indexRoute from './index'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
 import assertNonNullish from '../utils/assertNonNullish'
-import firebaseInit from '../google/firebase'
-
-// SuperToken Init file
-// superTokenInit()
-
-// Firebase Init filename
-firebaseInit()
+import session from 'express-session'
 
 const app = express()
+console.log('booted')
+app.use(
+  session({
+    secret: 'Shh, its a secret!',
+    resave: false,
+    saveUninitialized: false,
+  })
+)
+// app.get('/session_test', function (req: any, res) {
+//   console.log(req.session)
+//   if (req.session.page_views) {
+//     req.session.page_views++
+//     res.send('You visited this page ' + req.session.page_views + ' times')
+//   } else {
+//     req.session.page_views = 1
+//     res.send('Welcome to this page for the first time!')
+//   }
+// })
 
 app.use((req, res, next) => {
   assertNonNullish(
