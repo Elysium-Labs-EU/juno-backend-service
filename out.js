@@ -1059,6 +1059,7 @@ var authenticateUser = (req, res) =>
     try {
       const response = yield authenticated()
       req.session.oAuthClient = response.credentials
+      console.log('here')
       return res.status(200).json({
         access_token: response.credentials.access_token,
         refresh_token: response.credentials.refresh_token,
@@ -1111,15 +1112,40 @@ var import_express_session = __toESM(
 var import_connect_redis = __toESM(
   require('./node_modules/connect-redis/index.js')
 )
+
+// src/data/redis.ts
 var import_redis = require('./node_modules/redis/dist/index.js')
-var redisClient = (0, import_redis.createClient)({ legacyMode: true })
+var initiateRedis = () => {
+  assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
+  const redisClient2 =
+    process.env.REDIS_MODE === 'development'
+      ? (0, import_redis.createClient)({
+          legacyMode: true,
+        })
+      : (0, import_redis.createClient)({
+          username: process.env.REDIS_USER,
+          password: process.env.REDIS_PASS,
+          socket: {
+            host: process.env.REDIS_HOST,
+            port: parseInt(process.env.REDIS_PORT),
+          },
+          legacyMode: true,
+        })
+  redisClient2.connect().catch(console.error)
+  return redisClient2
+}
+var redis_default = initiateRedis
+
+// src/routes/app.ts
+process.env.NODE_ENV !== 'production' && console.log('Booted')
+var app = (0, import_express2.default)()
 var redisStore = (0, import_connect_redis.default)(
   import_express_session.default
 )
-var app = (0, import_express2.default)()
-console.log('booted')
+var redisClient = redis_default()
 app.use(
   (0, import_express_session.default)({
+    store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
     secret: 'Shh, its a secret!',
     resave: false,

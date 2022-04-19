@@ -144,6 +144,17 @@ const authorize = async (token) => {
 export const authenticated = async (token?: any) => {
   try {
     if (token) {
+      // console.log(token)
+      // TODO: Double check the refreshing of the acces token.
+      // if(token.expiry_data >= Math.floor(new Date().getTime())){
+      //     const oAuth2Client = new OAuth2Client(
+      //       process.env.GOOGLE_CLIENT_ID,
+      //       process.env.GOOGLE_CLIENT_SECRET,
+      //       process.env.GOOGLE_REDIRECT_URL
+      //     )
+      //   const check = await oAuth2Client.getRequestHeaders()
+      //   console.log('CHECK', check)
+      // }
       const response = await authorize(token)
       // console.log(response)
       return response

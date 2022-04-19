@@ -7,19 +7,19 @@ import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
 import assertNonNullish from '../utils/assertNonNullish'
 import session from 'express-session'
-// import redis from 'connect-redis'
-// import { createClient } from 'redis'
-// const redisClient = createClient({ legacyMode: true })
+import redis from 'connect-redis'
+import initiateRedis from '../data/redis'
 
-// const redisStore = redis(session)
-// redisClient.connect().catch(console.error)
+process.env.NODE_ENV !== 'production' && console.log('Booted')
 
 const app = express()
-console.log('booted')
+
+const redisStore = redis(session)
+const redisClient = initiateRedis()
 
 app.use(
   session({
-    // store: new redisStore({ client: redisClient }),
+    store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
     secret: 'Shh, its a secret!',
     resave: false,
