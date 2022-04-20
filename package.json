@@ -31,7 +31,7 @@
     "esbuild": "^0.14.27",
     "express": "^4.17.3",
     "express-session": "^1.17.2",
-    "gaxios": "^4.3.2",
+    "gaxios": "^5.0.0",
     "googleapis": "^100.0.0",
     "supertokens-node": "^9.1.2",
     "swagger-jsdoc": "^6.1.0",
