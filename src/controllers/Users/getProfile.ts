@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
-import { authenticateUser } from './authenticateUser'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const fetchProfile = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -17,11 +17,5 @@ const fetchProfile = async (auth) => {
   }
 }
 export const getProfile = async (req, res) => {
-  try {
-    const auth = await authenticateUser(req)
-    const response = await fetchProfile(auth)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err.message)
-  }
+  authMiddleware(fetchProfile)(req, res)
 }

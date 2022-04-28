@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
-import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const removeDraft = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -19,14 +19,5 @@ const removeDraft = async (auth, req) => {
   }
 }
 export const deleteDraft = async (req, res) => {
-  try {
-    const auth = await authenticate({
-      session: req.session?.oAuthClient,
-      requestAccessToken: req.headers?.authorization,
-    })
-    const response = await removeDraft(auth, req)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(removeDraft)(req, res)
 }

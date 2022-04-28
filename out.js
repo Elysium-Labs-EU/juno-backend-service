@@ -200,6 +200,36 @@ var getAuthUrl = (req, res) =>
     }
   })
 
+// src/controllers/Users/authenticateUser.ts
+var authenticateUser = (req) =>
+  __async(void 0, null, function* () {
+    var _a, _b
+    const response = yield authenticate({
+      session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+      requestAccessToken:
+        (_b = req.headers) == null ? void 0 : _b.authorization,
+    })
+    if (response === INVALID_TOKEN) {
+      throw Error(response)
+    }
+    if (response === INVALID_SESSION) {
+      throw Error(response)
+    }
+    return response
+  })
+
+// src/middleware/authMiddleware.ts
+var authMiddleware = (requestFunction) => (req, res) =>
+  __async(void 0, null, function* () {
+    try {
+      const auth = yield authenticateUser(req)
+      const response = yield requestFunction(auth, req)
+      return res.status(200).json(response)
+    } catch (err) {
+      res.status(401).json(err.message)
+    }
+  })
+
 // src/controllers/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
   const requestBody = {
@@ -239,18 +269,7 @@ var getThreads = (auth, req) =>
   })
 var fetchThreads = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getThreads(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getThreads)(req, res)
   })
 
 // src/controllers/Threads/fetchFullThreads.ts
@@ -305,18 +324,7 @@ var getFullThreads = (auth, req) =>
   })
 var fetchFullThreads = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getFullThreads(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getFullThreads)(req, res)
   })
 
 // src/controllers/Threads/fetchSingleThread.ts
@@ -341,18 +349,7 @@ var getThread = (auth, req) =>
   })
 var fetchSingleThread = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getThread(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getThread)(req, res)
   })
 
 // src/controllers/Drafts/createDraft.ts
@@ -420,18 +417,7 @@ var setupDraft = (auth, req) =>
   })
 var createDraft = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield setupDraft(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(setupDraft)(req, res)
   })
 
 // src/controllers/Drafts/fetchDrafts.ts
@@ -453,18 +439,7 @@ var getDrafts = (auth) =>
   })
 var fetchDrafts = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getDrafts(auth)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getDrafts)(req, res)
   })
 
 // src/controllers/Drafts/fetchSingleDraft.ts
@@ -488,18 +463,7 @@ var getDraft = (auth, req) =>
   })
 var fetchSingleDraft = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getDraft(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getDraft)(req, res)
   })
 
 // src/controllers/Drafts/sendDraft.ts
@@ -525,18 +489,7 @@ var exportDraft = (auth, req) =>
   })
 var sendDraft = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield exportDraft(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(exportDraft)(req, res)
   })
 
 // src/controllers/Drafts/updateDraft.ts
@@ -576,18 +529,7 @@ var exportDraft2 = (auth, req) =>
   })
 var updateDraft = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield exportDraft2(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(exportDraft2)(req, res)
   })
 
 // src/controllers/Drafts/deleteDraft.ts
@@ -610,18 +552,7 @@ var removeDraft = (auth, req) =>
   })
 var deleteDraft = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield removeDraft(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(removeDraft)(req, res)
   })
 
 // src/controllers/Message/updateSingleMessage.ts
@@ -645,18 +576,7 @@ var updateMessage = (auth, req) =>
   })
 var updateSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield updateMessage(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(updateMessage)(req, res)
   })
 
 // src/controllers/Message/thrashSingleMessage.ts
@@ -679,18 +599,7 @@ var thrashMessage = (auth, req) =>
   })
 var thrashSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield thrashMessage(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(thrashMessage)(req, res)
   })
 
 // src/controllers/Message/deleteSingleMessage.ts
@@ -713,18 +622,7 @@ var deleteMessage = (auth, req) =>
   })
 var deleteSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield deleteMessage(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(deleteMessage)(req, res)
   })
 
 // src/controllers/Message/fetchMessageAttachment.ts
@@ -750,18 +648,7 @@ var getAttachment = (auth, req) =>
   })
 var fetchMessageAttachment = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getAttachment(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getAttachment)(req, res)
   })
 
 // src/controllers/Message/sendMessage.ts
@@ -789,18 +676,7 @@ var exportMessage = (auth, req) =>
   })
 var sendMessage = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield exportMessage(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(exportMessage)(req, res)
   })
 
 // src/controllers/Labels/createLabels.ts
@@ -827,18 +703,7 @@ var newLabels = (auth, req) =>
   })
 var createLabels = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield newLabels(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(newLabels)(req, res)
   })
 
 // src/controllers/Labels/fetchLabels.ts
@@ -860,18 +725,7 @@ var getLabels = (auth) =>
   })
 var fetchLabels = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getLabels(auth)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getLabels)(req, res)
   })
 
 // src/controllers/Labels/fetchSingleLabel.ts
@@ -895,18 +749,7 @@ var getLabel = (auth, req) =>
   })
 var fetchSingleLabel = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getLabel(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getLabel)(req, res)
   })
 
 // src/controllers/Labels/updateLabels.ts
@@ -933,18 +776,7 @@ var refreshLabels = (auth, req) =>
   })
 var updateLabels = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield refreshLabels(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(refreshLabels)(req, res)
   })
 
 // src/controllers/Labels/removeLabels.ts
@@ -967,42 +799,11 @@ var removeTheLabels = (auth, req) =>
   })
 var removeLabels = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield removeTheLabels(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(removeTheLabels)(req, res)
   })
 
 // src/controllers/Users/getProfile.ts
 var import_googleapis20 = require('./node_modules/googleapis/build/src/index.js')
-
-// src/controllers/Users/authenticateUser.ts
-var authenticateUser = (req) =>
-  __async(void 0, null, function* () {
-    var _a, _b
-    const response = yield authenticate({
-      session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-      requestAccessToken:
-        (_b = req.headers) == null ? void 0 : _b.authorization,
-    })
-    if (response === INVALID_TOKEN) {
-      throw Error(response)
-    }
-    if (response === INVALID_SESSION) {
-      throw Error(response)
-    }
-    return response
-  })
-
-// src/controllers/Users/getProfile.ts
 var fetchProfile = (auth) =>
   __async(void 0, null, function* () {
     const gmail = import_googleapis20.google.gmail({ version: 'v1', auth })
@@ -1020,13 +821,7 @@ var fetchProfile = (auth) =>
   })
 var getProfile = (req, res) =>
   __async(void 0, null, function* () {
-    try {
-      const auth = yield authenticateUser(req)
-      const response = yield fetchProfile(auth)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err.message)
-    }
+    authMiddleware(fetchProfile)(req, res)
   })
 
 // src/controllers/Contacts/fetchAllContacts.ts
@@ -1057,18 +852,7 @@ var getContacts = (auth, req) =>
   })
 var fetchAllContacts = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getContacts(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getContacts)(req, res)
   })
 
 // src/controllers/Contacts/queryContacts.ts
@@ -1091,18 +875,7 @@ var getContacts2 = (auth, req) =>
   })
 var queryContacts = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield getContacts2(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(getContacts2)(req, res)
   })
 
 // src/controllers/History/listHistory.ts
@@ -1126,18 +899,7 @@ var fetchHistory = (auth, req) =>
   })
 var listHistory = (req, res) =>
   __async(void 0, null, function* () {
-    var _a, _b
-    try {
-      const auth = yield authenticate({
-        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-        requestAccessToken:
-          (_b = req.headers) == null ? void 0 : _b.authorization,
-      })
-      const response = yield fetchHistory(auth, req)
-      return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
+    authMiddleware(fetchHistory)(req, res)
   })
 
 // src/routes/index.ts
@@ -1225,7 +987,7 @@ app.use(
     cookie: {
       secure: false,
       httpOnly: true,
-      maxAge: 1e3 * 60 * 2,
+      maxAge: 1e3 * 60 * 730,
     },
   })
 )

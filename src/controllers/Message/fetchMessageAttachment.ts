@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
-import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const getAttachment = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -22,14 +22,5 @@ const getAttachment = async (auth, req) => {
   }
 }
 export const fetchMessageAttachment = async (req, res) => {
-  try {
-    const auth = await authenticate({
-      session: req.session?.oAuthClient,
-      requestAccessToken: req.headers?.authorization,
-    })
-    const response = await getAttachment(auth, req)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(getAttachment)(req, res)
 }

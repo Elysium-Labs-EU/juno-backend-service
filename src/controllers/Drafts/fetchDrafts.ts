@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
-import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const getDrafts = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -18,14 +18,5 @@ const getDrafts = async (auth) => {
   }
 }
 export const fetchDrafts = async (req, res) => {
-  try {
-    const auth = await authenticate({
-      session: req.session?.oAuthClient,
-      requestAccessToken: req.headers?.authorization,
-    })
-    const response = await getDrafts(auth)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(getDrafts)(req, res)
 }

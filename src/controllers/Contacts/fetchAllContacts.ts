@@ -1,5 +1,5 @@
 import { google, people_v1 } from 'googleapis'
-import { authenticate } from '../../google/index'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const getContacts = async (auth, req) => {
   const people = google.people({ version: 'v1', auth })
@@ -29,14 +29,5 @@ const getContacts = async (auth, req) => {
 }
 
 export const fetchAllContacts = async (req, res) => {
-  try {
-    const auth = await authenticate({
-      session: req.session?.oAuthClient,
-      requestAccessToken: req.headers?.authorization,
-    })
-    const response = await getContacts(auth, req)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(getContacts)(req, res)
 }
