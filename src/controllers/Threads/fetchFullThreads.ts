@@ -1,8 +1,7 @@
-// import { SessionRequest } from 'supertokens-node/framework/express'
 import { gmail_v1, google } from 'googleapis'
-import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 import requestBodyCreator from './threadRequest'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 async function singleThread(
   thread: gmail_v1.Schema$Thread,
@@ -57,11 +56,5 @@ const getFullThreads = async (auth, req) => {
 }
 
 export const fetchFullThreads = async (req, res) => {
-  try {
-    const auth = await authenticated(req.headers.authorization)
-    const response = await getFullThreads(auth, req)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(getFullThreads)(req, res)
 }

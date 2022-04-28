@@ -1,7 +1,6 @@
-// import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const getLabels = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -19,11 +18,5 @@ const getLabels = async (auth) => {
   }
 }
 export const fetchLabels = async (req, res) => {
-  try {
-    const auth = await authenticated(req.headers.authorization)
-    const response = await getLabels(auth)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(getLabels)(req, res)
 }
