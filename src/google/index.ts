@@ -85,7 +85,6 @@ export const authorize = async ({
   session,
   requestAccessToken,
 }: IAuthorize) => {
-  console.log(requestAccessToken, session)
   if (
     requestAccessToken &&
     session?.access_token === requestAccessToken.replace(/['"]+/g, '')

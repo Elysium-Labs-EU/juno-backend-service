@@ -136,7 +136,6 @@ var createAuthClientObject = () => {
 }
 var authorize = (_0) =>
   __async(void 0, [_0], function* ({ session: session2, requestAccessToken }) {
-    console.log(requestAccessToken, session2)
     if (
       requestAccessToken &&
       (session2 == null ? void 0 : session2.access_token) ===
@@ -994,7 +993,6 @@ var authenticateUser = (req) =>
       requestAccessToken:
         (_b = req.headers) == null ? void 0 : _b.authorization,
     })
-    console.log('BOOYA', response)
     if (response === INVALID_TOKEN) {
       throw Error(response)
     }
@@ -1027,7 +1025,6 @@ var getProfile = (req, res) =>
       const response = yield fetchProfile(auth)
       return res.status(200).json(response)
     } catch (err) {
-      console.log('err', err)
       res.status(401).json(err.message)
     }
   })

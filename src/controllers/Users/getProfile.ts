@@ -22,7 +22,6 @@ export const getProfile = async (req, res) => {
     const response = await fetchProfile(auth)
     return res.status(200).json(response)
   } catch (err) {
-    console.log('err', err)
     res.status(401).json(err.message)
   }
 }

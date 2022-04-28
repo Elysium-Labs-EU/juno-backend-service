@@ -6,7 +6,6 @@ export const authenticateUser = async (req) => {
     session: req.session?.oAuthClient,
     requestAccessToken: req.headers?.authorization,
   })
-  console.log('BOOYA', response)
   if (response === global.INVALID_TOKEN) {
     throw Error(response)
   }
@@ -14,8 +13,4 @@ export const authenticateUser = async (req) => {
     throw Error(response)
   }
   return response
-  // return res.status(200).json({
-  //   access_token: response.credentials.access_token,
-  //   refresh_token: response.credentials.refresh_token,
-  // })
 }
