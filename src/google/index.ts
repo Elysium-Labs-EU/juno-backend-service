@@ -1,9 +1,6 @@
 import { OAuth2Client } from 'google-auth-library'
-import http from 'http'
-import url from 'url'
-import open from 'open'
-import destroyer from 'server-destroy'
 import assertNonNullish from '../utils/assertNonNullish'
+import * as global from '../constants/globalConstants'
 
 const SCOPES = [
   'openid',
@@ -18,7 +15,55 @@ const SCOPES = [
   'https://www.googleapis.com/auth/contacts.other.readonly',
 ]
 
-const getNewRefreshToken = async (token: any) => {
+// const refreshSession = async ({ req, requestAccessToken }: any) => {
+//
+//   try {
+//     const oAuth2Client = new OAuth2Client(
+//       process.env.GOOGLE_CLIENT_ID,
+//       process.env.GOOGLE_CLIENT_SECRET,
+//       `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
+//     )
+//     oAuth2Client.setCredentials(requestAccessToken)
+//
+//     req.session.oAuthClient = oAuth2Client.credentials
+//     return oAuth2Client
+//   } catch (err) {
+//     return getAuthUrl(req)
+//     console.log('err', JSON.stringify(err))
+//   }
+// }
+// const refreshSession = async () => {
+//
+//   const oAuth2Client: any = await getauthenticateClient()
+//   if (oAuth2Client) {
+//     // After acquiring an access_token, you may want to check on the audience, expiration,
+//     // or original scopes requested.  You can do that with the `getTokenInfo` method.
+//     const tokenInfo = await oAuth2Client.getTokenInfo(
+//       oAuth2Client.credentials.access_token
+//     )
+
+//     if (tokenInfo.expiry_date > Math.floor(new Date().getTime())) {
+//       return oAuth2Client
+//     }
+//     throw Error(`Expiration date before current date.`)
+//   }
+// }
+
+interface IAuthClient {
+  access_token: string
+  refresh_token: string
+  scope: string
+  token_type: 'Bearer'
+  id_token: string
+  expiry_date: number
+}
+
+interface IAuthorize {
+  session: IAuthClient | null
+  requestAccessToken: string | null
+}
+
+const createAuthClientObject = () => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -28,140 +73,92 @@ const getNewRefreshToken = async (token: any) => {
     process.env.GOOGLE_REDIRECT_URL,
     'No Google Redirect URL found'
   )
-  const oAuth2Client = new OAuth2Client(
+
+  return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URL
+    `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
   )
+}
 
-  // Generate the url that will be used for the consent dialog.
-  const authorizeUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent',
-  })
+export const authorize = async ({
+  session,
+  requestAccessToken,
+}: IAuthorize) => {
+  console.log(requestAccessToken, session)
+  if (
+    requestAccessToken &&
+    session?.access_token === requestAccessToken.replace(/['"]+/g, '')
+  ) {
+    const oAuth2Client = createAuthClientObject()
+    try {
+      oAuth2Client.setCredentials(session)
+      return oAuth2Client
+    } catch (err) {
+      // return getNewRefreshToken(session.access_token)
+      console.log('err', JSON.stringify(err))
+    }
+  } else {
+    return global.INVALID_TOKEN
+  }
+}
+
+export const authenticate = async ({
+  session,
+  requestAccessToken,
+}: IAuthorize) => {
+  try {
+    if (typeof session !== 'undefined' && requestAccessToken) {
+      const response = await authorize({ session, requestAccessToken })
+      return response
+    }
+    // If session is invalid, require the user to sign in again.
+    return global.INVALID_SESSION
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 /**
  * Create a new OAuth2Client, and go through the OAuth2 content
- * workflow.  Return the full client to the callback.
+ * workflow.  Return the partial client to the callback.
  */
-function getAuthenticatedClient() {
-  return new Promise((resolve, reject) => {
-    // create an oAuth client to authorize the API call.  Secrets are kept in a `keys.json` file,
-    // which should be downloaded from the Google Developers Console.
+export const getauthenticateClient = async (req, res) => {
+  try {
+    const { code } = req.body
+    // Now that we have the code, use that to acquire tokens.
+    if (code) {
+      const oAuth2Client = createAuthClientObject()
+      const response = await oAuth2Client.getToken(code)
+      // Make sure to set the credentials on the OAuth2 client.
+      oAuth2Client.setCredentials(response.tokens)
+      req.session.oAuthClient = oAuth2Client.credentials
+      return res.status(200).json({
+        access_token: oAuth2Client.credentials.access_token,
+        refresh_token: oAuth2Client.credentials.refresh_token,
+      })
+    }
+  } catch (err) {
+    res.status(401).json(err)
+    throw Error(err)
+  }
+}
 
-    assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
-    assertNonNullish(
-      process.env.GOOGLE_CLIENT_SECRET,
-      'No Google Client Secret found'
-    )
-    assertNonNullish(
-      process.env.GOOGLE_REDIRECT_URL,
-      'No Google Redirect URL found'
-    )
-
-    const oAuth2Client = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URL
-    )
+export const getAuthUrl = async (req, res) => {
+  try {
+    // create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
+    // which should be fetched from the Google Developers Console.
+    const oAuth2Client = createAuthClientObject()
 
     // Generate the url that will be used for the consent dialog.
     const authorizeUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES,
+      // prompt: 'consent',
     })
 
-    // Open an http server to accept the oauth callback. In this simple example, the
-    // only request to our webserver is to /oauth2callback?code=<code>
-    const server: any = http
-      .createServer(async (req, res) => {
-        try {
-          if (req?.url && req.url.indexOf('/oauth2callback') > -1) {
-            // acquire the code from the querystring, and close the web server.
-            const qs = new url.URL(req.url, 'http://localhost:3001')
-              .searchParams
-            const code = qs.get('code')
-            // console.log('code', code)
-            res.end(
-              '<p>Authentication successful! Please return to the console.</p>'
-            )
-            server.destroy()
-            if (code) {
-              // Now that we have the code, use that to acquire tokens.
-              const r = await oAuth2Client.getToken(code)
-              // console.log('@@R@@', r)
-              // Make sure to set the credentials on the OAuth2 client.
-              oAuth2Client.setCredentials(r.tokens)
-              resolve(oAuth2Client)
-            }
-          }
-        } catch (e) {
-          reject(e)
-        }
-      })
-      .listen(3001, () => {
-        // open the browser to the authorize url to start the workflow
-        open(authorizeUrl, { wait: false }).then((cp) => cp.unref())
-      })
-    destroyer(server)
-  })
-}
-
-async function main() {
-  const oAuth2Client: any = await getAuthenticatedClient()
-  if (oAuth2Client) {
-    // After acquiring an access_token, you may want to check on the audience, expiration,
-    // or original scopes requested.  You can do that with the `getTokenInfo` method.
-    const tokenInfo = await oAuth2Client.getTokenInfo(
-      oAuth2Client.credentials.access_token
-    )
-
-    if (tokenInfo.expiry_date > Math.floor(new Date().getTime())) {
-      return oAuth2Client
-    }
-    throw Error(`Expiration date before current date.`)
-  }
-}
-
-const authorize = async (token) => {
-  const oAuth2Client = new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URL
-  )
-
-  try {
-    oAuth2Client.setCredentials(token)
-    return oAuth2Client
+    return res.status(200).json(authorizeUrl)
   } catch (err) {
-    return getNewRefreshToken(token)
-    console.log('err', JSON.stringify(err))
-  }
-}
-
-export const authenticated = async (token?: any) => {
-  try {
-    if (token) {
-      // console.log(token)
-      // TODO: Double check the refreshing of the acces token.
-      // if(token.expiry_data >= Math.floor(new Date().getTime())){
-      //     const oAuth2Client = new OAuth2Client(
-      //       process.env.GOOGLE_CLIENT_ID,
-      //       process.env.GOOGLE_CLIENT_SECRET,
-      //       process.env.GOOGLE_REDIRECT_URL
-      //     )
-      //   const check = await oAuth2Client.getRequestHeaders()
-      //   console.log('CHECK', check)
-      // }
-      const response = await authorize(token)
-      // console.log(response)
-      return response
-    }
-    const response = await main()
-    return response
-  } catch (err) {
-    console.error(err)
+    res.status(401).json(err)
   }
 }

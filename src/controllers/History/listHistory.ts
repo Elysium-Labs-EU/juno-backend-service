@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 
 const fetchHistory = async (auth, req) => {
@@ -20,7 +20,10 @@ const fetchHistory = async (auth, req) => {
 }
 export const listHistory = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await fetchHistory(auth, req)
     return res.status(200).json(response)
   } catch (err) {

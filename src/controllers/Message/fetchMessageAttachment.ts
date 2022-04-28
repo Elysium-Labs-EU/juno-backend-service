@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 
 const getAttachment = async (auth, req) => {
@@ -23,7 +23,10 @@ const getAttachment = async (auth, req) => {
 }
 export const fetchMessageAttachment = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await getAttachment(auth, req)
     return res.status(200).json(response)
   } catch (err) {

@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import requestBodyCreator from './threadRequest'
 
 const getThreads = async (auth, req) => {
@@ -20,7 +20,10 @@ const getThreads = async (auth, req) => {
 
 export const fetchThreads = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await getThreads(auth, req)
     return res.status(200).json(response)
   } catch (err) {

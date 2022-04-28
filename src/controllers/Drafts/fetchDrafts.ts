@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 
 const getDrafts = async (auth) => {
@@ -19,7 +19,10 @@ const getDrafts = async (auth) => {
 }
 export const fetchDrafts = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await getDrafts(auth)
     return res.status(200).json(response)
   } catch (err) {

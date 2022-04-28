@@ -71,7 +71,7 @@
     "watch": [
       "src"
     ],
-    "exec": "yarn start:tsc",
+    "exec": "yarn start",
     "ext": "ts"
   }
 }

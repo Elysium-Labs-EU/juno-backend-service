@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import { authenticateUser } from './authenticateUser'
 
 const fetchProfile = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -18,11 +18,11 @@ const fetchProfile = async (auth) => {
 }
 export const getProfile = async (req, res) => {
   try {
-    // TODO: Extend the check by verifying the received sessionToken with the active one in the session.
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticateUser(req)
     const response = await fetchProfile(auth)
     return res.status(200).json(response)
   } catch (err) {
-    res.status(401).json(err)
+    console.log('err', err)
+    res.status(401).json(err.message)
   }
 }

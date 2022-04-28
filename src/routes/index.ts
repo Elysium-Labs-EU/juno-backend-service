@@ -25,7 +25,7 @@ import { getProfile } from '../controllers/Users/getProfile'
 import { fetchAllContacts } from '../controllers/Contacts/fetchAllContacts'
 import { queryContacts } from '../controllers/Contacts/queryContacts'
 import { listHistory } from '../controllers/History/listHistory'
-import { authenticateUser } from '../controllers/Users/authenticateUser'
+import { getauthenticateClient, getAuthUrl } from '../google/index'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -72,7 +72,8 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
-router.get('/api/auth', authenticateUser)
+router.get('/api/auth/oauth/google/', getAuthUrl)
+router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/history/:startHistoryId?', listHistory)
 

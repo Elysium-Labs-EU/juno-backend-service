@@ -1,14 +1,21 @@
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
+import * as global from '../../constants/globalConstants'
 
-export const authenticateUser = async (req, res) => {
-  try {
-    const response = await authenticated()
-    req.session.oAuthClient = response.credentials
-    return res.status(200).json({
-      access_token: response.credentials.access_token,
-      refresh_token: response.credentials.refresh_token,
-    })
-  } catch (err) {
-    res.status(401).json(err)
+export const authenticateUser = async (req) => {
+  const response = await authenticate({
+    session: req.session?.oAuthClient,
+    requestAccessToken: req.headers?.authorization,
+  })
+  console.log('BOOYA', response)
+  if (response === global.INVALID_TOKEN) {
+    throw Error(response)
   }
+  if (response === global.INVALID_SESSION) {
+    throw Error(response)
+  }
+  return response
+  // return res.status(200).json({
+  //   access_token: response.credentials.access_token,
+  //   refresh_token: response.credentials.refresh_token,
+  // })
 }

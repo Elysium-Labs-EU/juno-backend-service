@@ -17,16 +17,17 @@ const app = express()
 const redisStore = redis(session)
 const redisClient = initiateRedis()
 
+assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 app.use(
   session({
     store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
-    secret: 'Shh, its a secret!',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     cookie: {
       secure: false,
       httpOnly: true,
-      maxAge: 1000 * 60 * 30,
+      maxAge: 1000 * 60 * 2,
     },
   })
 )

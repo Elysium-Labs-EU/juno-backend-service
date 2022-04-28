@@ -1,5 +1,5 @@
 import { gmail_v1, google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 import requestBodyCreator from './threadRequest'
 
@@ -57,7 +57,10 @@ const getFullThreads = async (auth, req) => {
 
 export const fetchFullThreads = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await getFullThreads(auth, req)
     return res.status(200).json(response)
   } catch (err) {

@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 
 const getLabel = async (auth, req) => {
@@ -21,7 +21,10 @@ const getLabel = async (auth, req) => {
 }
 export const fetchSingleLabel = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await getLabel(auth, req)
     return res.status(200).json(response)
   } catch (err) {

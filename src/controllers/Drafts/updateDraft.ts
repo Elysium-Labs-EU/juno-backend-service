@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authenticate } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
 import messageEncoding from '../../utils/messageEncoding'
 
@@ -39,7 +39,10 @@ const exportDraft = async (auth, req) => {
 
 export const updateDraft = async (req, res) => {
   try {
-    const auth = await authenticated(req.session.oAuthClient)
+    const auth = await authenticate({
+      session: req.session?.oAuthClient,
+      requestAccessToken: req.headers?.authorization,
+    })
     const response = await exportDraft(auth, req)
     return res.status(200).json(response)
   } catch (err) {

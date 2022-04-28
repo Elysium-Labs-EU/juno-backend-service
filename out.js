@@ -72,7 +72,7 @@ var __async = (__this, __arguments, generator) => {
 }
 
 // src/server.ts
-var import_http2 = __toESM(require('http'))
+var import_http = __toESM(require('http'))
 
 // src/routes/app.ts
 var import_express2 = __toESM(require('./node_modules/express/index.js'))
@@ -92,12 +92,6 @@ var import_googleapis = require('./node_modules/googleapis/build/src/index.js')
 
 // src/google/index.ts
 var import_google_auth_library = require('./node_modules/google-auth-library/build/src/index.js')
-var import_http = __toESM(require('http'))
-var import_url = __toESM(require('url'))
-var import_open = __toESM(require('./node_modules/open/index.js'))
-var import_server_destroy = __toESM(
-  require('./node_modules/server-destroy/index.js')
-)
 
 // src/utils/assertNonNullish.ts
 function assertNonNullish(value, message) {
@@ -105,6 +99,11 @@ function assertNonNullish(value, message) {
     throw Error(message)
   }
 }
+
+// src/constants/globalConstants.ts
+var USER = 'me'
+var INVALID_TOKEN = 'Invalid token'
+var INVALID_SESSION = 'Invalid session'
 
 // src/google/index.ts
 var SCOPES = [
@@ -119,129 +118,88 @@ var SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/contacts.other.readonly',
 ]
-var getNewRefreshToken = (token) =>
-  __async(void 0, null, function* () {
-    assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
-    assertNonNullish(
-      process.env.GOOGLE_CLIENT_SECRET,
-      'No Google Client Secret found'
-    )
-    assertNonNullish(
-      process.env.GOOGLE_REDIRECT_URL,
-      'No Google Redirect URL found'
-    )
-    const oAuth2Client = new import_google_auth_library.OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URL
-    )
-    const authorizeUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES,
-      prompt: 'consent',
-    })
-  })
-function getAuthenticatedClient() {
-  return new Promise((resolve, reject) => {
-    assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
-    assertNonNullish(
-      process.env.GOOGLE_CLIENT_SECRET,
-      'No Google Client Secret found'
-    )
-    assertNonNullish(
-      process.env.GOOGLE_REDIRECT_URL,
-      'No Google Redirect URL found'
-    )
-    const oAuth2Client = new import_google_auth_library.OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URL
-    )
-    const authorizeUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES,
-    })
-    const server2 = import_http.default
-      .createServer((req, res) =>
-        __async(this, null, function* () {
-          try {
-            if (
-              (req == null ? void 0 : req.url) &&
-              req.url.indexOf('/oauth2callback') > -1
-            ) {
-              const qs = new import_url.default.URL(
-                req.url,
-                'http://localhost:3001'
-              ).searchParams
-              const code = qs.get('code')
-              res.end(
-                '<p>Authentication successful! Please return to the console.</p>'
-              )
-              server2.destroy()
-              if (code) {
-                const r = yield oAuth2Client.getToken(code)
-                oAuth2Client.setCredentials(r.tokens)
-                resolve(oAuth2Client)
-              }
-            }
-          } catch (e) {
-            reject(e)
-          }
-        })
-      )
-      .listen(3001, () => {
-        ;(0, import_open.default)(authorizeUrl, { wait: false }).then((cp) =>
-          cp.unref()
-        )
-      })
-    ;(0, import_server_destroy.default)(server2)
-  })
+var createAuthClientObject = () => {
+  assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
+  assertNonNullish(
+    process.env.GOOGLE_CLIENT_SECRET,
+    'No Google Client Secret found'
+  )
+  assertNonNullish(
+    process.env.GOOGLE_REDIRECT_URL,
+    'No Google Redirect URL found'
+  )
+  return new import_google_auth_library.OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
+  )
 }
-function main() {
-  return __async(this, null, function* () {
-    const oAuth2Client = yield getAuthenticatedClient()
-    if (oAuth2Client) {
-      const tokenInfo = yield oAuth2Client.getTokenInfo(
-        oAuth2Client.credentials.access_token
-      )
-      if (tokenInfo.expiry_date > Math.floor(new Date().getTime())) {
+var authorize = (_0) =>
+  __async(void 0, [_0], function* ({ session: session2, requestAccessToken }) {
+    console.log(requestAccessToken, session2)
+    if (
+      requestAccessToken &&
+      (session2 == null ? void 0 : session2.access_token) ===
+        requestAccessToken.replace(/['"]+/g, '')
+    ) {
+      const oAuth2Client = createAuthClientObject()
+      try {
+        oAuth2Client.setCredentials(session2)
         return oAuth2Client
+      } catch (err) {
+        console.log('err', JSON.stringify(err))
       }
-      throw Error(`Expiration date before current date.`)
+    } else {
+      return INVALID_TOKEN
     }
   })
-}
-var authorize = (token) =>
-  __async(void 0, null, function* () {
-    const oAuth2Client = new import_google_auth_library.OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URL
-    )
+var authenticate = (_0) =>
+  __async(void 0, [_0], function* ({ session: session2, requestAccessToken }) {
     try {
-      oAuth2Client.setCredentials(token)
-      return oAuth2Client
-    } catch (err) {
-      return getNewRefreshToken(token)
-      console.log('err', JSON.stringify(err))
-    }
-  })
-var authenticated = (token) =>
-  __async(void 0, null, function* () {
-    try {
-      if (token) {
-        const response2 = yield authorize(token)
-        return response2
+      if (typeof session2 !== 'undefined' && requestAccessToken) {
+        const response = yield authorize({
+          session: session2,
+          requestAccessToken,
+        })
+        return response
       }
-      const response = yield main()
-      return response
+      return INVALID_SESSION
     } catch (err) {
       console.error(err)
     }
   })
-
-// src/constants/globalConstants.ts
-var USER = 'me'
+var getauthenticateClient = (req, res) =>
+  __async(void 0, null, function* () {
+    try {
+      const { code } = req.body
+      if (code) {
+        const oAuth2Client = createAuthClientObject()
+        const response = yield oAuth2Client.getToken(code)
+        oAuth2Client.setCredentials(response.tokens)
+        req.session.oAuthClient = oAuth2Client.credentials
+        return res.status(200).json({
+          access_token: oAuth2Client.credentials.access_token,
+          refresh_token: oAuth2Client.credentials.refresh_token,
+        })
+      }
+    } catch (err) {
+      res.status(401).json(err)
+      throw Error(err)
+    }
+  })
+var getAuthUrl = (req, res) =>
+  __async(void 0, null, function* () {
+    try {
+      const oAuth2Client = createAuthClientObject()
+      const authorizeUrl = oAuth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: SCOPES,
+      })
+      return res.status(200).json(authorizeUrl)
+    } catch (err) {
+      res.status(401).json(err)
+    }
+  })
 
 // src/controllers/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
@@ -282,8 +240,13 @@ var getThreads = (auth, req) =>
   })
 var fetchThreads = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getThreads(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -343,8 +306,13 @@ var getFullThreads = (auth, req) =>
   })
 var fetchFullThreads = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getFullThreads(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -374,8 +342,13 @@ var getThread = (auth, req) =>
   })
 var fetchSingleThread = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getThread(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -448,8 +421,13 @@ var setupDraft = (auth, req) =>
   })
 var createDraft = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield setupDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -476,8 +454,13 @@ var getDrafts = (auth) =>
   })
 var fetchDrafts = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getDrafts(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -506,8 +489,13 @@ var getDraft = (auth, req) =>
   })
 var fetchSingleDraft = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -538,8 +526,13 @@ var exportDraft = (auth, req) =>
   })
 var sendDraft = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield exportDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -584,8 +577,13 @@ var exportDraft2 = (auth, req) =>
   })
 var updateDraft = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield exportDraft2(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -613,8 +611,13 @@ var removeDraft = (auth, req) =>
   })
 var deleteDraft = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield removeDraft(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -643,8 +646,13 @@ var updateMessage = (auth, req) =>
   })
 var updateSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield updateMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -672,8 +680,13 @@ var thrashMessage = (auth, req) =>
   })
 var thrashSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield thrashMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -701,8 +714,13 @@ var deleteMessage = (auth, req) =>
   })
 var deleteSingleMessage = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield deleteMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -733,8 +751,13 @@ var getAttachment = (auth, req) =>
   })
 var fetchMessageAttachment = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getAttachment(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -767,8 +790,13 @@ var exportMessage = (auth, req) =>
   })
 var sendMessage = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield exportMessage(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -800,8 +828,13 @@ var newLabels = (auth, req) =>
   })
 var createLabels = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield newLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -828,8 +861,13 @@ var getLabels = (auth) =>
   })
 var fetchLabels = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getLabels(auth)
       return res.status(200).json(response)
     } catch (err) {
@@ -858,8 +896,13 @@ var getLabel = (auth, req) =>
   })
 var fetchSingleLabel = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getLabel(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -891,8 +934,13 @@ var refreshLabels = (auth, req) =>
   })
 var updateLabels = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield refreshLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -920,8 +968,13 @@ var removeTheLabels = (auth, req) =>
   })
 var removeLabels = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield removeTheLabels(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -931,6 +984,27 @@ var removeLabels = (req, res) =>
 
 // src/controllers/Users/getProfile.ts
 var import_googleapis20 = require('./node_modules/googleapis/build/src/index.js')
+
+// src/controllers/Users/authenticateUser.ts
+var authenticateUser = (req) =>
+  __async(void 0, null, function* () {
+    var _a, _b
+    const response = yield authenticate({
+      session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+      requestAccessToken:
+        (_b = req.headers) == null ? void 0 : _b.authorization,
+    })
+    console.log('BOOYA', response)
+    if (response === INVALID_TOKEN) {
+      throw Error(response)
+    }
+    if (response === INVALID_SESSION) {
+      throw Error(response)
+    }
+    return response
+  })
+
+// src/controllers/Users/getProfile.ts
 var fetchProfile = (auth) =>
   __async(void 0, null, function* () {
     const gmail = import_googleapis20.google.gmail({ version: 'v1', auth })
@@ -949,11 +1023,12 @@ var fetchProfile = (auth) =>
 var getProfile = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticateUser(req)
       const response = yield fetchProfile(auth)
       return res.status(200).json(response)
     } catch (err) {
-      res.status(401).json(err)
+      console.log('err', err)
+      res.status(401).json(err.message)
     }
   })
 
@@ -985,8 +1060,13 @@ var getContacts = (auth, req) =>
   })
 var fetchAllContacts = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getContacts(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -1014,8 +1094,13 @@ var getContacts2 = (auth, req) =>
   })
 var queryContacts = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield getContacts2(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -1044,26 +1129,15 @@ var fetchHistory = (auth, req) =>
   })
 var listHistory = (req, res) =>
   __async(void 0, null, function* () {
+    var _a, _b
     try {
-      const auth = yield authenticated(req.session.oAuthClient)
+      const auth = yield authenticate({
+        session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
+        requestAccessToken:
+          (_b = req.headers) == null ? void 0 : _b.authorization,
+      })
       const response = yield fetchHistory(auth, req)
       return res.status(200).json(response)
-    } catch (err) {
-      res.status(401).json(err)
-    }
-  })
-
-// src/controllers/Users/authenticateUser.ts
-var authenticateUser = (req, res) =>
-  __async(void 0, null, function* () {
-    try {
-      const response = yield authenticated()
-      req.session.oAuthClient = response.credentials
-      console.log('here')
-      return res.status(200).json({
-        access_token: response.credentials.access_token,
-        refresh_token: response.credentials.refresh_token,
-      })
     } catch (err) {
       res.status(401).json(err)
     }
@@ -1098,7 +1172,8 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
-router.get('/api/auth', authenticateUser)
+router.get('/api/auth/oauth/google/', getAuthUrl)
+router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/history/:startHistoryId?', listHistory)
 var routes_default = router
@@ -1143,16 +1218,17 @@ var redisStore = (0, import_connect_redis.default)(
   import_express_session.default
 )
 var redisClient = redis_default()
+assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 app.use(
   (0, import_express_session.default)({
     store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
-    secret: 'Shh, its a secret!',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     cookie: {
       secure: false,
       httpOnly: true,
-      maxAge: 1e3 * 60 * 30,
+      maxAge: 1e3 * 60 * 2,
     },
   })
 )
@@ -1222,5 +1298,5 @@ var app_default = app
 
 // src/server.ts
 var PORT = process.env.PORT || 5001
-var server = import_http2.default.createServer(app_default)
+var server = import_http.default.createServer(app_default)
 server.listen(PORT)
