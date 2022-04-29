@@ -1,17 +1,54 @@
-# This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
 version: 2.1
 
-# Orbs are reusable packages of CircleCI configuration that you may share across projects, enabling you to create encapsulated, parameterized commands, jobs, and executors that can be used across multiple projects.
-# See: https://circleci.com/docs/2.0/orb-intro/
 orbs:
   node: circleci/node@5.0.2
+  heroku: circleci/heroku@1.2.6
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+commands:
+  deploy-command:
+    parameters:
+      BRANCH:
+        type: string
+      HEROKU_APP_NAME:
+        type: string
+    steps:
+      - run: heroku config:set YARN_PRODUCTION=false -a <<parameters.HEROKU_APP_NAME>>
+      - heroku/deploy-via-git:
+          app-name: <<parameters.HEROKU_APP_NAME>>
+          branch: <<parameters.BRANCH>>
+
+jobs:
+  deploy:
+    executor: heroku/default
+    steps:
+      - checkout
+      - heroku/install
+
+      - when:
+          condition:
+            equal: [main, << pipeline.git.branch >>]
+          steps:
+            - deploy-command:
+                HEROKU_APP_NAME: juno-backend-service
+                BRANCH: main
+
+      - when:
+          condition:
+            equal: [dev, << pipeline.git.branch >>]
+          steps:
+            - deploy-command:
+                HEROKU_APP_NAME: juno-backend-service-dev
+                BRANCH: dev
+
 workflows:
-  build: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  heroku_deploy:
     jobs:
       - node/run:
           pkg-manager: yarn
-          yarn-run: lint
+          yarn-run: lint:prettier
+      - deploy:
+          filters:
+            branches:
+              only:
+                - main
+                - dev
