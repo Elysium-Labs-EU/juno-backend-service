@@ -47,6 +47,8 @@ workflows:
           pkg-manager: yarn
           yarn-run: lint:prettier
       - deploy:
-        filters:
-            branches:
-              only: main
+          filters:
+              branches:
+                only: 
+                  - main
+                  - dev
