@@ -23,9 +23,22 @@ jobs:
     steps:
       - checkout
       - heroku/install
-      - deploy-command:
-          HEROKU_APP_NAME: juno-backend-service
-          BRANCH: main
+      
+      - when:
+          condition:
+            equal: [main, << pipeline.git.branch >>]
+          steps:
+          - deploy-command:
+              HEROKU_APP_NAME: juno-backend-service
+              BRANCH: main
+
+      - when:
+          condition:
+            equal: [dev, << pipeline.git.branch >>]
+          steps:
+          - deploy-command:
+              HEROKU_APP_NAME: juno-backend-service-dev
+              BRANCH: dev
 
 workflows:
   heroku_deploy:
