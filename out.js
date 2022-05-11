@@ -902,6 +902,25 @@ var listHistory = (req, res) =>
     authMiddleware(fetchHistory)(req, res)
   })
 
+// src/controllers/Users/logoutUser.ts
+var logoutUser = (req, res) =>
+  __async(void 0, null, function* () {
+    try {
+      if (req.headers.authorization) {
+        console.log(req.headers.authorization)
+        req.session.destroy(function (err) {
+          if (err) {
+            console.log(err)
+            return res.status(401).json(err.message)
+          }
+          return res.status(205).json()
+        })
+      }
+    } catch (err) {
+      res.status(401).json(err.message)
+    }
+  })
+
 // src/routes/index.ts
 var router = import_express.default.Router()
 router.get(
@@ -934,6 +953,7 @@ router.delete('/api/labels', removeLabels)
 router.get('/api/auth/oauth/google/', getAuthUrl)
 router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
 router.get('/api/user', getProfile)
+router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
 var routes_default = router
 
@@ -987,7 +1007,7 @@ app.use(
     cookie: {
       secure: false,
       httpOnly: true,
-      maxAge: 1e3 * 60 * 730,
+      maxAge: 1e3 * 60 * 10080,
     },
   })
 )
@@ -1035,8 +1055,7 @@ app.use(
   import_swagger_ui_express.default.serve,
   import_swagger_ui_express.default.setup(swaggerDocs)
 )
-process.env.NODE_ENV !== 'development' &&
-  process.env.SENTRY_DSN &&
+process.env.SENTRY_DSN &&
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     integrations: [

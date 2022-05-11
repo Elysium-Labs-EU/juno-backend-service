@@ -26,6 +26,7 @@ import { fetchAllContacts } from '../controllers/Contacts/fetchAllContacts'
 import { queryContacts } from '../controllers/Contacts/queryContacts'
 import { listHistory } from '../controllers/History/listHistory'
 import { getauthenticateClient, getAuthUrl } from '../google/index'
+import { logoutUser } from '../controllers/Users/logoutUser'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -75,6 +76,7 @@ router.delete('/api/labels', removeLabels)
 router.get('/api/auth/oauth/google/', getAuthUrl)
 router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
 router.get('/api/user', getProfile)
+router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
 
 export default router

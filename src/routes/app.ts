@@ -27,7 +27,8 @@ app.use(
     cookie: {
       secure: false,
       httpOnly: true,
-      maxAge: 1000 * 60 * 730,
+      // maxAge: 1000 * 60 * 1,
+      maxAge: 1000 * 60 * 10080,
     },
   })
 )
@@ -78,8 +79,8 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
-process.env.NODE_ENV !== 'development' &&
-  process.env.SENTRY_DSN &&
+// process.env.NODE_ENV !== 'development' &&
+process.env.SENTRY_DSN &&
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     integrations: [
