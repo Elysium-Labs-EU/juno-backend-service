@@ -162,6 +162,7 @@ var authenticate = (_0) =>
         })
         return response
       }
+      console.log(session2, 'User session is invalid')
       return INVALID_SESSION
     } catch (err) {
       console.error(err)
@@ -907,7 +908,6 @@ var logoutUser = (req, res) =>
   __async(void 0, null, function* () {
     try {
       if (req.headers.authorization) {
-        console.log(req.headers.authorization)
         req.session.destroy(function (err) {
           if (err) {
             console.log(err)
@@ -998,6 +998,7 @@ var redisStore = (0, import_connect_redis.default)(
 )
 var redisClient = redis_default()
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+assertNonNullish(process.env.COOKIE_DOMAIN, 'No Cookie Domain.')
 app.use(
   (0, import_express_session.default)({
     store: new redisStore({ client: redisClient }),
@@ -1007,6 +1008,7 @@ app.use(
     cookie: {
       secure: false,
       httpOnly: true,
+      domain: process.env.COOKIE_DOMAIN,
       maxAge: 1e3 * 60 * 10080,
     },
   })
