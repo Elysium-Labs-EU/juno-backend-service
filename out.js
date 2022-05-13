@@ -921,6 +921,18 @@ var logoutUser = (req, res) =>
     }
   })
 
+// src/controllers/health.ts
+var health = (req, res) =>
+  __async(void 0, null, function* () {
+    try {
+      const response = 'I am healthy.'
+      return res.status(200).json(response)
+    } catch (err) {
+      const errResponse = 'I am unhealthy.'
+      res.status(401).json(errResponse)
+    }
+  })
+
 // src/routes/index.ts
 var router = import_express.default.Router()
 router.get(
@@ -955,6 +967,7 @@ router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
+router.get('/api/health', health)
 var routes_default = router
 
 // src/routes/app.ts

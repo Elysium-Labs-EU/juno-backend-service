@@ -27,6 +27,7 @@ import { queryContacts } from '../controllers/Contacts/queryContacts'
 import { listHistory } from '../controllers/History/listHistory'
 import { getauthenticateClient, getAuthUrl } from '../google/index'
 import { logoutUser } from '../controllers/Users/logoutUser'
+import { health } from '../controllers/health'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -78,5 +79,6 @@ router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
+router.get('/api/health', health)
 
 export default router
