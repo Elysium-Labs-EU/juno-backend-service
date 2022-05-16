@@ -24,11 +24,11 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: true,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       // maxAge: 1000 * 60 * 1,
       maxAge: 1000 * 60 * 10080,
-      sameSite: 'lax',
+      sameSite: 'none',
     },
   })
 )
