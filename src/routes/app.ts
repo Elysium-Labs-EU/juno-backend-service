@@ -13,7 +13,6 @@ import initiateRedis from '../data/redis'
 process.env.NODE_ENV !== 'production' && console.log('Booted')
 
 const app = express()
-
 const redisStore = redis(session)
 const redisClient = initiateRedis()
 
