@@ -16,6 +16,23 @@ const app = express()
 const redisStore = redis(session)
 const redisClient = initiateRedis()
 
+interface ICookieSettings {
+  secure: boolean
+  httpOnly: boolean
+  maxAge: number
+  sameSite: 'lax' | 'none'
+}
+
+const cookieSettings: ICookieSettings = {
+  secure: process.env.NODE_ENV !== 'production' ? false : true,
+  httpOnly: true,
+  // maxAge: 1000 * 60 * 1,
+  maxAge: 1000 * 60 * 10080,
+  sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+}
+
+console.log(cookieSettings)
+
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 app.use(
   session({
@@ -23,13 +40,7 @@ app.use(
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
     resave: true,
-    cookie: {
-      secure: process.env.NODE_ENV !== 'production' ? false : true,
-      httpOnly: true,
-      // maxAge: 1000 * 60 * 1,
-      maxAge: 1000 * 60 * 10080,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
-    },
+    cookie: cookieSettings,
   })
 )
 
