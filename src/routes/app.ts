@@ -33,6 +33,8 @@ const cookieSettings: ICookieSettings = {
 
 console.log(cookieSettings)
 
+app.set('trust proxy', 1)
+
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 app.use(
   session({
