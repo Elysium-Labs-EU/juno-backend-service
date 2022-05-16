@@ -17,7 +17,6 @@ const redisStore = redis(session)
 const redisClient = initiateRedis()
 
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
-assertNonNullish(process.env.COOKIE_DOMAIN, 'No Cookie Domain.')
 app.use(
   session({
     store: new redisStore({ client: redisClient }),
