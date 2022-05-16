@@ -111,7 +111,7 @@ export const authenticate = async ({
       const response = await authorize({ session, requestAccessToken })
       return response
     }
-    console.log(session, 'User session is invalid')
+    console.log(typeof session, session, 'User session is invalid')
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {
