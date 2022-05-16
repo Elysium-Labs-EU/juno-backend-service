@@ -28,7 +28,7 @@ app.use(
       httpOnly: true,
       // maxAge: 1000 * 60 * 1,
       maxAge: 1000 * 60 * 10080,
-      sameSite: 'none',
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })
 )
