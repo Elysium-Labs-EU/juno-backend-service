@@ -1,20 +1,39 @@
 import express from 'express'
-// import cors from 'cors'
 import 'dotenv/config'
-// import supertokens from 'supertokens-node'
-// import superTokenInit from '../google/superToken'
-// import { errorHandler, middleware } from 'supertokens-node/framework/express'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 import indexRoute from './index'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
 import assertNonNullish from '../utils/assertNonNullish'
+import session from 'express-session'
+import redis from 'connect-redis'
+import initiateRedis from '../data/redis'
 
-// SuperToken Init file
-// superTokenInit()
+process.env.NODE_ENV !== 'production' && console.log('Booted')
 
 const app = express()
+const redisStore = redis(session)
+const redisClient = initiateRedis()
+
+app.set('trust proxy', 1)
+
+assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+app.use(
+  session({
+    store: new redisStore({ client: redisClient }),
+    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    cookie: {
+      secure: process.env.NODE_ENV !== 'production' ? false : true,
+      httpOnly: true,
+      // maxAge: 1000 * 60 * 1,
+      maxAge: 1000 * 60 * 10080,
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+    },
+  })
+)
 
 app.use((req, res, next) => {
   assertNonNullish(
@@ -62,8 +81,8 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
-process.env.NODE_ENV !== 'development' &&
-  process.env.SENTRY_DSN &&
+// process.env.NODE_ENV !== 'development' &&
+process.env.SENTRY_DSN &&
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     integrations: [
@@ -79,17 +98,6 @@ process.env.NODE_ENV !== 'development' &&
     tracesSampleRate: 1.0,
   })
 
-// SuperToken Cors
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL,
-//     allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
-//     credentials: true,
-//   })
-// )
-// SuperToken Middleware
-// app.use(middleware())
-
 app.use('/', indexRoute)
 
 // RequestHandler creates a separate execution context using domains, so that every
@@ -100,9 +108,6 @@ app.use(Sentry.Handlers.tracingHandler())
 
 // The error handler must be before any other error middleware and after all controllers
 app.use(Sentry.Handlers.errorHandler())
-
-// SuperToken Error Handler
-// app.use(errorHandler())
 
 // Optional fallthrough error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

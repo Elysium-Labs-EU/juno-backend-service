@@ -7,3 +7,4 @@ const awaitHandler = (middleware) => async (req, res, next) => {
 }
 
 export default awaitHandler
+// TODO: Check validity of function

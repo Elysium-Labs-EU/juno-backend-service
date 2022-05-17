@@ -1,6 +1,5 @@
-// import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
+import { authMiddleware } from '../../middleware/authMiddleware'
 import requestBodyCreator from './threadRequest'
 
 const getThreads = async (auth, req) => {
@@ -20,12 +19,5 @@ const getThreads = async (auth, req) => {
 }
 
 export const fetchThreads = async (req, res) => {
-  // export const fetchThreads = async (req: SessionRequest, res) => {
-  try {
-    const auth = await authenticated(req.headers.authorization)
-    const response = await getThreads(auth, req)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(getThreads)(req, res)
 }

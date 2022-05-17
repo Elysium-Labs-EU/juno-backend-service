@@ -1,7 +1,6 @@
-// import { SessionRequest } from 'supertokens-node/framework/express'
 import { google } from 'googleapis'
-import { authenticated } from '../../google/index'
 import { USER } from '../../constants/globalConstants'
+import { authMiddleware } from '../../middleware/authMiddleware'
 
 const deleteMessage = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -20,11 +19,5 @@ const deleteMessage = async (auth, req) => {
   }
 }
 export const deleteSingleMessage = async (req, res) => {
-  try {
-    const auth = await authenticated(req.headers.authorization)
-    const response = await deleteMessage(auth, req)
-    return res.status(200).json(response)
-  } catch (err) {
-    res.status(401).json(err)
-  }
+  authMiddleware(deleteMessage)(req, res)
 }
