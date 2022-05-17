@@ -111,7 +111,6 @@ export const authenticate = async ({
       const response = await authorize({ session, requestAccessToken })
       return response
     }
-    console.log(typeof session, session, 'User session is invalid')
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {
@@ -132,7 +131,6 @@ export const getAuthenticateClient = async (req, res) => {
       const response = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
-      console.log(oAuth2Client.credentials)
       req.session.oAuthClient = oAuth2Client.credentials
       return res.status(200).json({
         access_token: oAuth2Client.credentials.access_token,
