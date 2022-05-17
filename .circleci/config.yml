@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@5.0.2
-    heroku: circleci/heroku@1.2.6
+  node: circleci/node@5.0.2
+  heroku: circleci/heroku@1.2.6
 
 commands:
   deploy-command:
