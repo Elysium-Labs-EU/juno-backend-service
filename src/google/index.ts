@@ -123,7 +123,7 @@ export const authenticate = async ({
  * Create a new OAuth2Client, and go through the OAuth2 content
  * workflow.  Return the partial client to the callback.
  */
-export const getauthenticateClient = async (req, res) => {
+export const getAuthenticateClient = async (req, res) => {
   try {
     const { code } = req.body
     // Now that we have the code, use that to acquire tokens.
@@ -132,6 +132,7 @@ export const getauthenticateClient = async (req, res) => {
       const response = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
+      console.log(oAuth2Client.credentials)
       req.session.oAuthClient = oAuth2Client.credentials
       return res.status(200).json({
         access_token: oAuth2Client.credentials.access_token,
