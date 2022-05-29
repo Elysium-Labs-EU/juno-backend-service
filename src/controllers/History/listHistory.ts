@@ -8,9 +8,10 @@ const fetchHistory = async (auth, req) => {
     const { startHistoryId } = req.query
     const response = await gmail.users.history.list({
       userId: USER,
+      historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],
       startHistoryId,
     })
-    if (response && response.status === 200) {
+    if (response?.status === 200) {
       return response.data
     }
     return new Error('No history found...')
