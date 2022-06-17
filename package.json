@@ -59,7 +59,7 @@
     "prettier": "2.6.2",
     "ts-node": "10.7.0",
     "tsc-files": "1.1.3",
-    "typescript": "4.6.3"
+    "typescript": "4.7.4"
   },
   "nodemonConfig": {
     "ignore": [
