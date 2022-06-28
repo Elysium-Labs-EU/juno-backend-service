@@ -10,7 +10,6 @@ const setupDraft = async (auth, req) => {
   try {
     const response = await gmail.users.drafts.create({
       userId: USER,
-      // id: draftId,
       requestBody: {
         message: {
           raw: messageEncoding(req.body),
