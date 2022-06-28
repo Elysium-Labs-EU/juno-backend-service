@@ -23,7 +23,7 @@
     "node": "16.x"
   },
   "dependencies": {
-    "@google-cloud/local-auth": "^1.0.1",
+    "@google-cloud/local-auth": "^2.0.0",
     "@sentry/node": "^7.0.0",
     "@sentry/tracing": "^7.0.0",
     "connect-redis": "^6.1.3",
