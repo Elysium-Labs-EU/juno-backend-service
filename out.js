@@ -1,3 +1,4 @@
+'use strict'
 var __create = Object.create
 var __defProp = Object.defineProperty
 var __defProps = Object.defineProperties
@@ -162,13 +163,12 @@ var authenticate = (_0) =>
         })
         return response
       }
-      console.log(session2, 'User session is invalid')
       return INVALID_SESSION
     } catch (err) {
       console.error(err)
     }
   })
-var getauthenticateClient = (req, res) =>
+var getAuthenticateClient = (req, res) =>
   __async(void 0, null, function* () {
     try {
       const { code } = req.body
@@ -888,9 +888,10 @@ var fetchHistory = (auth, req) =>
       const { startHistoryId } = req.query
       const response = yield gmail.users.history.list({
         userId: USER,
+        historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],
         startHistoryId,
       })
-      if (response && response.status === 200) {
+      if ((response == null ? void 0 : response.status) === 200) {
         return response.data
       }
       return new Error('No history found...')
@@ -963,7 +964,7 @@ router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
 router.get('/api/auth/oauth/google/', getAuthUrl)
-router.post('/api/auth/oauth/google/callback/', getauthenticateClient)
+router.post('/api/auth/oauth/google/callback/', getAuthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
@@ -971,8 +972,8 @@ router.get('/api/health', health)
 var routes_default = router
 
 // src/routes/app.ts
-var Sentry = __toESM(require('./node_modules/@sentry/node/dist/index.js'))
-var Tracing = __toESM(require('./node_modules/@sentry/tracing/dist/index.js'))
+var Sentry = __toESM(require('./node_modules/@sentry/node/cjs/index.js'))
+var Tracing = __toESM(require('./node_modules/@sentry/tracing/cjs/index.js'))
 var import_express_session = __toESM(
   require('./node_modules/express-session/index.js')
 )
@@ -1010,8 +1011,8 @@ var redisStore = (0, import_connect_redis.default)(
   import_express_session.default
 )
 var redisClient = redis_default()
+app.set('trust proxy', 1)
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
-assertNonNullish(process.env.COOKIE_DOMAIN, 'No Cookie Domain.')
 app.use(
   (0, import_express_session.default)({
     store: new redisStore({ client: redisClient }),
@@ -1019,9 +1020,10 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: 1e3 * 60 * 10080,
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })
 )
