@@ -34,7 +34,7 @@
     "express": "^4.18.1",
     "express-session": "^1.17.3",
     "gaxios": "^5.0.1",
-    "googleapis": "^104.0.0",
+    "googleapis": "^105.0.0",
     "redis": "^4.1.1",
     "swagger-jsdoc": "^6.2.1",
     "swagger-ui-express": "^4.4.0",
