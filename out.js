@@ -556,13 +556,13 @@ var deleteDraft = (req, res) =>
     authMiddleware(removeDraft)(req, res)
   })
 
-// src/controllers/Message/updateSingleMessage.ts
+// src/controllers/Message/updateMessage.ts
 var import_googleapis10 = require('./node_modules/googleapis/build/src/index.js')
-var updateMessage = (auth, req) =>
+var modifyMessage = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = import_googleapis10.google.gmail({ version: 'v1', auth })
     try {
-      const response = yield gmail.users.threads.modify({
+      const response = yield gmail.users.messages.modify({
         userId: USER,
         id: req.params.id,
         requestBody: req.body,
@@ -575,18 +575,18 @@ var updateMessage = (auth, req) =>
       throw Error(`Single message returned an error: ${err}`)
     }
   })
-var updateSingleMessage = (req, res) =>
+var updateMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(updateMessage)(req, res)
+    authMiddleware(modifyMessage)(req, res)
   })
 
-// src/controllers/Message/thrashSingleMessage.ts
+// src/controllers/Message/thrashMessage.ts
 var import_googleapis11 = require('./node_modules/googleapis/build/src/index.js')
-var thrashMessage = (auth, req) =>
+var thrashSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = import_googleapis11.google.gmail({ version: 'v1', auth })
     try {
-      const response = yield gmail.users.threads.trash({
+      const response = yield gmail.users.messages.trash({
         userId: USER,
         id: req.params.id,
       })
@@ -598,21 +598,21 @@ var thrashMessage = (auth, req) =>
       throw Error(`Single message return an error: ${err}`)
     }
   })
-var thrashSingleMessage = (req, res) =>
+var thrashMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(thrashMessage)(req, res)
+    authMiddleware(thrashSingleMessage)(req, res)
   })
 
-// src/controllers/Message/deleteSingleMessage.ts
+// src/controllers/Message/deleteMessage.ts
 var import_googleapis12 = require('./node_modules/googleapis/build/src/index.js')
-var deleteMessage = (auth, req) =>
+var deleteSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = import_googleapis12.google.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
     try {
-      const response = yield gmail.users.threads.delete({
+      const response = yield gmail.users.messages.delete({
         userId: USER,
         id,
       })
@@ -621,9 +621,9 @@ var deleteMessage = (auth, req) =>
       throw Error('Message not removed...')
     }
   })
-var deleteSingleMessage = (req, res) =>
+var deleteMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(deleteMessage)(req, res)
+    authMiddleware(deleteSingleMessage)(req, res)
   })
 
 // src/controllers/Message/fetchMessageAttachment.ts
@@ -934,6 +934,76 @@ var health = (req, res) =>
     }
   })
 
+// src/controllers/Threads/deleteThread.ts
+var import_googleapis24 = require('./node_modules/googleapis/build/src/index.js')
+var deleteSingleThread = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = import_googleapis24.google.gmail({ version: 'v1', auth })
+    const {
+      body: { id },
+    } = req
+    try {
+      const response = yield gmail.users.threads.delete({
+        userId: USER,
+        id,
+      })
+      return response
+    } catch (err) {
+      throw Error('Message not removed...')
+    }
+  })
+var deleteThread = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(deleteSingleThread)(req, res)
+  })
+
+// src/controllers/Threads/thrashThread.ts
+var import_googleapis25 = require('./node_modules/googleapis/build/src/index.js')
+var thrashSingleThread = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = import_googleapis25.google.gmail({ version: 'v1', auth })
+    try {
+      const response = yield gmail.users.threads.trash({
+        userId: USER,
+        id: req.params.id,
+      })
+      if (response && response.data) {
+        return response.data
+      }
+      return new Error('No message found...')
+    } catch (err) {
+      throw Error(`Single message return an error: ${err}`)
+    }
+  })
+var thrashThread = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(thrashSingleThread)(req, res)
+  })
+
+// src/controllers/Threads/updateThread.ts
+var import_googleapis26 = require('./node_modules/googleapis/build/src/index.js')
+var updateSingleThread = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = import_googleapis26.google.gmail({ version: 'v1', auth })
+    try {
+      const response = yield gmail.users.threads.modify({
+        userId: USER,
+        id: req.params.id,
+        requestBody: req.body,
+      })
+      if (response && response.data) {
+        return response.data
+      }
+      return new Error('Message not found...')
+    } catch (err) {
+      throw Error(`Single message returned an error: ${err}`)
+    }
+  })
+var updateThread = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(updateSingleThread)(req, res)
+  })
+
 // src/routes/index.ts
 var router = import_express.default.Router()
 router.get(
@@ -946,6 +1016,9 @@ router.get(
   fetchFullThreads
 )
 router.get('/api/threads/:labelIds?/:maxResults?/:nextPageToken?', fetchThreads)
+router.patch('/api/thread/:id?', updateThread)
+router.post('/api/thread/thrash/:id?', thrashThread)
+router.delete('/api/thread/', deleteThread)
 router.get('/api/thread/:id?', fetchSingleThread)
 router.post('/api/create-draft', createDraft)
 router.get('/api/drafts/:maxResults?/:nextPageToken?', fetchDrafts)
@@ -953,9 +1026,9 @@ router.get('/api/draft/:id?', fetchSingleDraft)
 router.delete('/api/draft/', deleteDraft)
 router.post('/api/send-draft', sendDraft)
 router.put('/api/update-draft/?:id?', updateDraft)
-router.patch('/api/message/:id?', updateSingleMessage)
-router.post('/api/message/thrash/:id?', thrashSingleMessage)
-router.delete('/api/message/', deleteSingleMessage)
+router.patch('/api/message/:id?', updateMessage)
+router.post('/api/message/thrash/:id?', thrashMessage)
+router.delete('/api/message/', deleteMessage)
 router.get('/api/message/attachment/:messageId?/:id?', fetchMessageAttachment)
 router.post('/api/send-message', sendMessage)
 router.post('/api/labels', createLabels)
