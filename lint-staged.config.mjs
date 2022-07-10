@@ -16,6 +16,6 @@ export default {
     const filesToLint = await removeIgnoredFiles(files)
     return [`eslint --max-warnings=0 ${filesToLint}`]
   },
-  '*.{js,jsx,ts,tsx,json,css}': ['prettier --write'],
+  '*.{js,jsx,ts,tsx,json,css}': ['dprint check'],
   '*.{ts,tsx}': ['tsc-files --noEmit'],
 }
