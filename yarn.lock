@@ -1039,7 +1039,7 @@ dotenv@^16.0.1:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.1.tgz#8f8f9d94876c35dac989876a5d3a82a267fdce1d"
   integrity sha512-1K6hR6wtk2FviQ4kEiSjFiH5rpzEVi8WW0x96aztHVMhEspNpc4DVOUTEHtEva5VThQ8IaBX1Pe4gSzpVVUsKQ==
 
-dprint@^0.30.3:
+dprint@0.30.3:
   version "0.30.3"
   resolved "https://registry.yarnpkg.com/dprint/-/dprint-0.30.3.tgz#8ae0584cadf79195d2079acd232b50bfc4d5870d"
   integrity sha512-IycVHkxpf/le4YGmyev4IK1HMsrbKhzubpeZQDeQ72J8LXt0yKzYesj0NMFOONJwbDuK3vnxBK19TpI3FLG/xw==
