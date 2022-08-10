@@ -1,4 +1,8 @@
 SHELL := /bin/bash
+env-setup:
+	brew install redis
+	yarn
+
 run-server:
 	yarn
 	yarn start:watch

@@ -81,6 +81,12 @@ const createAuthClientObject = () => {
   )
 }
 
+/**
+ * @function authorize
+ * @param {object} - takes in an object of the active Cookie session and requestAccessToken, the token is send by the user. Compares the saved session's accessToken with the requestAccessToken. If it is a match, it uses the session to authorize the user.
+ * @returns an OAuth2Client object if session exists, an error otherwise.
+ */
+
 export const authorize = async ({
   session,
   requestAccessToken,
@@ -101,6 +107,12 @@ export const authorize = async ({
     return global.INVALID_TOKEN
   }
 }
+
+/**
+ * @function authenticate
+ * @param {object} - takes in an object of the active Cookie session and requestAccessToken, the token is send by the user
+ * @returns a string 'INVALID Session' if the session doesn't exist, the response of the function 'Authorize' in case the function is called. Or console logs the error if there is a problem.
+ */
 
 export const authenticate = async ({
   session,
