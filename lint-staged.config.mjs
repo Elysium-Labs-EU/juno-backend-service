@@ -17,5 +17,5 @@ export default {
     return [`eslint --max-warnings=0 ${filesToLint}`]
   },
   '*.{js,jsx,ts,tsx,json,css}': ['dprint check'],
-  '*.{ts,tsx}': ['tsc-files --noEmit'],
+  // '*.{ts,tsx}': ['tsc-files --noEmit'],
 }
