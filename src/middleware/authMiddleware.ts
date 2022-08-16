@@ -6,6 +6,6 @@ export const authMiddleware = (requestFunction) => async (req, res) => {
     const response = await requestFunction(auth, req)
     return res.status(200).json(response)
   } catch (err) {
-    res.status(401).json(err.message)
+    res.status(401).json(err?.message)
   }
 }
