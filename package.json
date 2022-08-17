@@ -12,7 +12,8 @@
     "start:watch:dev:win": "copy .env .env.dev  && nodemon",
     "lint": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\"",
     "lint-fix": "eslint \"src/**/*.{js,jsx,json,md,tsx,ts}\" --fix",
-    "format": "dprint check",
+    "format-check": "dprint check",
+    "format": "dprint fmt",
     "lint-staged": "lint-staged --config lint-staged.config.mjs",
     "husky-install": "husky install",
     "update-deps": "yarn upgrade-interactive --latest"
