@@ -15,40 +15,6 @@ const SCOPES = [
   'https://www.googleapis.com/auth/contacts.other.readonly',
 ]
 
-// const refreshSession = async ({ req, requestAccessToken }: any) => {
-//
-//   try {
-//     const oAuth2Client = new OAuth2Client(
-//       process.env.GOOGLE_CLIENT_ID,
-//       process.env.GOOGLE_CLIENT_SECRET,
-//       `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
-//     )
-//     oAuth2Client.setCredentials(requestAccessToken)
-//
-//     req.session.oAuthClient = oAuth2Client.credentials
-//     return oAuth2Client
-//   } catch (err) {
-//     return getAuthUrl(req)
-//     console.log('err', JSON.stringify(err))
-//   }
-// }
-// const refreshSession = async () => {
-//
-//   const oAuth2Client: any = await getauthenticateClient()
-//   if (oAuth2Client) {
-//     // After acquiring an access_token, you may want to check on the audience, expiration,
-//     // or original scopes requested.  You can do that with the `getTokenInfo` method.
-//     const tokenInfo = await oAuth2Client.getTokenInfo(
-//       oAuth2Client.credentials.access_token
-//     )
-
-//     if (tokenInfo.expiry_date > Math.floor(new Date().getTime())) {
-//       return oAuth2Client
-//     }
-//     throw Error(`Expiration date before current date.`)
-//   }
-// }
-
 interface IAuthClient {
   access_token: string
   refresh_token: string
@@ -60,7 +26,7 @@ interface IAuthClient {
 
 interface IAuthorize {
   session: IAuthClient | null
-  requestAccessToken: string | null
+  idToken?: string
 }
 
 const createAuthClientObject = () => {
@@ -83,24 +49,19 @@ const createAuthClientObject = () => {
 
 /**
  * @function authorize
- * @param {object} - takes in an object of the active Cookie session and requestAccessToken, the token is send by the user. Compares the saved session's accessToken with the requestAccessToken. If it is a match, it uses the session to authorize the user.
+ * @param {object} - takes in an object of the active Cookie session and requestAccessToken, the token is send by the user.
+ * Compares the saved session's accessToken with the requestAccessToken. If it is a match, it uses the session to authorize the user.
  * @returns an OAuth2Client object if session exists, an error otherwise.
  */
 
-export const authorize = async ({
-  session,
-  requestAccessToken,
-}: IAuthorize) => {
-  if (
-    requestAccessToken &&
-    session?.access_token === requestAccessToken.replace(/['"]+/g, '')
-  ) {
+export const authorize = async ({ session }: IAuthorize) => {
+  if (session) {
     const oAuth2Client = createAuthClientObject()
     try {
       oAuth2Client.setCredentials(session)
       return oAuth2Client
     } catch (err) {
-      // return getNewRefreshToken(session.access_token)
+      return 'Error during authorization'
       console.log('err', JSON.stringify(err))
     }
   } else {
@@ -110,17 +71,18 @@ export const authorize = async ({
 
 /**
  * @function authenticate
- * @param {object} - takes in an object of the active Cookie session and requestAccessToken, the token is send by the user
+ * @param {object} - takes in an object of the active Cookie session and idToken, the token is send by the user
  * @returns a string 'INVALID Session' if the session doesn't exist, the response of the function 'Authorize' in case the function is called. Or console logs the error if there is a problem.
  */
 
-export const authenticate = async ({
-  session,
-  requestAccessToken,
-}: IAuthorize) => {
+export const authenticate = async ({ session, idToken }: IAuthorize) => {
   try {
-    if (typeof session !== 'undefined' && requestAccessToken) {
-      const response = await authorize({ session, requestAccessToken })
+    if (
+      typeof session !== 'undefined' &&
+      idToken &&
+      (await checkIdValidity(idToken))
+    ) {
+      const response = await authorize({ session })
       return response
     }
     // If session is invalid, require the user to sign in again.
@@ -131,8 +93,9 @@ export const authenticate = async ({
 }
 
 /**
+ * @function getAuthenticateClient
  * Create a new OAuth2Client, and go through the OAuth2 content
- * workflow.  Return the partial client to the callback.
+ * workflow. Return the partial client to the callback.
  */
 export const getAuthenticateClient = async (req, res) => {
   try {
@@ -144,12 +107,13 @@ export const getAuthenticateClient = async (req, res) => {
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
       req.session.oAuthClient = oAuth2Client.credentials
+      // Send back the id token to later use to verify the ID Token.
       return res.status(200).json({
-        access_token: oAuth2Client.credentials.access_token,
-        refresh_token: oAuth2Client.credentials.refresh_token,
+        idToken: oAuth2Client.credentials.id_token,
       })
     }
   } catch (err) {
+    process.env.NODE_ENV === 'development' && console.log('ERROR', err)
     res.status(401).json(err)
     throw Error(err)
   }
@@ -166,10 +130,29 @@ export const getAuthUrl = async (req, res) => {
       access_type: 'offline',
       scope: SCOPES,
       // prompt: 'consent',
+      // include_granted_scopes: true,
     })
 
     return res.status(200).json(authorizeUrl)
   } catch (err) {
     res.status(401).json(err)
+  }
+}
+
+/**
+ * @function checkIdValidity
+ * @param token received ID token from the API call
+ * @returns true if the token is valid, false otherwise
+ */
+const checkIdValidity = async (token: string) => {
+  const oAuth2Client = createAuthClientObject()
+  try {
+    await oAuth2Client.verifyIdToken({
+      idToken: token.replace(/['"]+/g, ''),
+    })
+    return true
+  } catch (err) {
+    console.log(err)
+    return false
   }
 }

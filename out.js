@@ -113,9 +113,9 @@ var SCOPES = [
   'https://mail.google.com',
   'https://www.googleapis.com/auth/gmail.addons.current.message.action',
   'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/contacts.other.readonly',
 ]
@@ -136,17 +136,14 @@ var createAuthClientObject = () => {
   )
 }
 var authorize = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, requestAccessToken }) {
-    if (
-      requestAccessToken &&
-      (session2 == null ? void 0 : session2.access_token) ===
-        requestAccessToken.replace(/['"]+/g, '')
-    ) {
+  __async(void 0, [_0], function* ({ session: session2 }) {
+    if (session2) {
       const oAuth2Client = createAuthClientObject()
       try {
         oAuth2Client.setCredentials(session2)
         return oAuth2Client
       } catch (err) {
+        return 'Error during authorization'
         console.log('err', JSON.stringify(err))
       }
     } else {
@@ -154,13 +151,14 @@ var authorize = (_0) =>
     }
   })
 var authenticate = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, requestAccessToken }) {
+  __async(void 0, [_0], function* ({ session: session2, idToken }) {
     try {
-      if (typeof session2 !== 'undefined' && requestAccessToken) {
-        const response = yield authorize({
-          session: session2,
-          requestAccessToken,
-        })
+      if (
+        typeof session2 !== 'undefined' &&
+        idToken &&
+        (yield checkIdValidity(idToken))
+      ) {
+        const response = yield authorize({ session: session2 })
         return response
       }
       return INVALID_SESSION
@@ -178,11 +176,11 @@ var getAuthenticateClient = (req, res) =>
         oAuth2Client.setCredentials(response.tokens)
         req.session.oAuthClient = oAuth2Client.credentials
         return res.status(200).json({
-          access_token: oAuth2Client.credentials.access_token,
-          refresh_token: oAuth2Client.credentials.refresh_token,
+          idToken: oAuth2Client.credentials.id_token,
         })
       }
     } catch (err) {
+      process.env.NODE_ENV === 'development' && console.log('ERROR', err)
       res.status(401).json(err)
       throw Error(err)
     }
@@ -200,6 +198,19 @@ var getAuthUrl = (req, res) =>
       res.status(401).json(err)
     }
   })
+var checkIdValidity = (token) =>
+  __async(void 0, null, function* () {
+    const oAuth2Client = createAuthClientObject()
+    try {
+      yield oAuth2Client.verifyIdToken({
+        idToken: token.replace(/['"]+/g, ''),
+      })
+      return true
+    } catch (err) {
+      console.log(err)
+      return false
+    }
+  })
 
 // src/controllers/Users/authenticateUser.ts
 var authenticateUser = (req) =>
@@ -207,13 +218,15 @@ var authenticateUser = (req) =>
     var _a, _b
     const response = yield authenticate({
       session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-      requestAccessToken:
-        (_b = req.headers) == null ? void 0 : _b.authorization,
+      idToken: (_b = req.headers) == null ? void 0 : _b.authorization,
     })
     if (response === INVALID_TOKEN) {
       throw Error(response)
     }
     if (response === INVALID_SESSION) {
+      throw Error(response)
+    }
+    if (response === 'Error during authorization') {
       throw Error(response)
     }
     return response
@@ -227,7 +240,8 @@ var authMiddleware = (requestFunction) => (req, res) =>
       const response = yield requestFunction(auth, req)
       return res.status(200).json(response)
     } catch (err) {
-      res.status(401).json(err.message)
+      process.env.NODE_ENV !== 'production' && console.error(err)
+      res.status(401).json(err == null ? void 0 : err.message)
     }
   })
 
@@ -1045,8 +1059,7 @@ router.get('/api/health', health)
 var routes_default = router
 
 // src/routes/app.ts
-var Sentry = __toESM(require('./node_modules/@sentry/node/cjs/index.js'))
-var Tracing = __toESM(require('./node_modules/@sentry/tracing/cjs/index.js'))
+var Sentry2 = __toESM(require('./node_modules/@sentry/node/cjs/index.js'))
 var import_express_session = __toESM(
   require('./node_modules/express-session/index.js')
 )
@@ -1059,7 +1072,7 @@ var import_redis = require('./node_modules/redis/dist/index.js')
 var initiateRedis = () => {
   assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
   const redisClient2 =
-    process.env.REDIS_MODE === 'development'
+    process.env.NODE_ENV === 'development'
       ? (0, import_redis.createClient)({
           legacyMode: true,
         })
@@ -1076,6 +1089,23 @@ var initiateRedis = () => {
   return redisClient2
 }
 var redis_default = initiateRedis
+
+// src/utils/initSentry.ts
+var Sentry = __toESM(require('./node_modules/@sentry/node/cjs/index.js'))
+var Tracing = __toESM(require('./node_modules/@sentry/tracing/cjs/index.js'))
+function initSentry(app2) {
+  assertNonNullish(process.env.SENTRY_DSN, 'No Sentry DSN provided')
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      integrations: [
+        new Sentry.Integrations.Http({ tracing: true }),
+        new Tracing.Integrations.Express({ app: app2 }),
+      ],
+      tracesSampleRate: 1,
+    })
+  }
+}
 
 // src/routes/app.ts
 process.env.NODE_ENV !== 'production' && console.log('Booted')
@@ -1144,19 +1174,11 @@ app.use(
   import_swagger_ui_express.default.serve,
   import_swagger_ui_express.default.setup(swaggerDocs)
 )
-process.env.SENTRY_DSN &&
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true }),
-      new Tracing.Integrations.Express({ app }),
-    ],
-    tracesSampleRate: 1,
-  })
+process.env.NODE_ENV !== 'development' && initSentry(app)
 app.use('/', routes_default)
-app.use(Sentry.Handlers.requestHandler())
-app.use(Sentry.Handlers.tracingHandler())
-app.use(Sentry.Handlers.errorHandler())
+app.use(Sentry2.Handlers.requestHandler())
+app.use(Sentry2.Handlers.tracingHandler())
+app.use(Sentry2.Handlers.errorHandler())
 app.use(function onError(err, req, res, next) {
   res.statusCode = 500
   res.end(res.sentry + '\n')
