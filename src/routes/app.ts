@@ -25,6 +25,7 @@ app.use(
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
     resave: false,
+    proxy: true,
     // rolling: true,
     cookie: {
       secure: process.env.NODE_ENV !== 'production' ? false : true,
