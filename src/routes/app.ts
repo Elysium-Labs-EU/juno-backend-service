@@ -41,6 +41,8 @@ app.use((req, res, next) => {
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
+  res.setHeader('credentials', 'include')
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL)
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -50,7 +52,6 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, PATCH, OPTIONS'
   )
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
   next()
 })
 
