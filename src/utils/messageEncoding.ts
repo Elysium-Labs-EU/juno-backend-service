@@ -6,6 +6,7 @@ interface IMessageEncoding {
   bcc: string | null | undefined
   sender: string | null | undefined
   signature: string | null | undefined
+  from: string | null | undefined
 }
 
 const messageEncoding = ({
@@ -14,15 +15,16 @@ const messageEncoding = ({
   to,
   cc,
   bcc,
-  sender,
   signature,
-}: IMessageEncoding): string => {
+}: // from,
+IMessageEncoding): string => {
   const utf8Subject = `=?utf-8?B?${Buffer.from(subject ?? '').toString(
     'base64'
   )}?=`
 
+  // TODO: Check the from sending pattern - to have the name of the sender as a display name
   const messageParts = [
-    `From: ${sender}`,
+    // `From: ${from}`,
     `To: ${to}`,
     `Cc: ${cc}`,
     `Bcc: ${bcc}`,
