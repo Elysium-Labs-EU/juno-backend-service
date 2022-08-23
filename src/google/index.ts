@@ -6,13 +6,15 @@ const SCOPES = [
   'openid',
   'profile',
   'https://mail.google.com',
-  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
-  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
+  // 'https://www.googleapis.com/auth/gmail.addons.current.message.action',
+  // 'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/contacts.other.readonly',
+  'https://www.googleapis.com/auth/gmail.settings.basic',
+  'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
 
 interface IAuthClient {
@@ -85,6 +87,7 @@ export const authenticate = async ({ session, idToken }: IAuthorize) => {
       const response = await authorize({ session })
       return response
     }
+    console.log(session, idToken)
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {

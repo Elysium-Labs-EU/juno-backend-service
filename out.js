@@ -111,13 +111,13 @@ var SCOPES = [
   'openid',
   'profile',
   'https://mail.google.com',
-  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
-  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/contacts.other.readonly',
+  'https://www.googleapis.com/auth/gmail.settings.basic',
+  'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
 var createAuthClientObject = () => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
@@ -161,6 +161,7 @@ var authenticate = (_0) =>
         const response = yield authorize({ session: session2 })
         return response
       }
+      console.log(session2, idToken)
       return INVALID_SESSION
     } catch (err) {
       console.error(err)
@@ -371,8 +372,7 @@ var fetchSingleThread = (req, res) =>
 var import_googleapis4 = require('./node_modules/googleapis/build/src/index.js')
 
 // src/utils/messageEncoding.ts
-var messageEncoding = (props) => {
-  const { body, subject, to, cc, bcc, sender } = props
+var messageEncoding = ({ body, subject, to, cc, bcc, sender, signature }) => {
   const utf8Subject = `=?utf-8?B?${Buffer.from(
     subject != null ? subject : ''
   ).toString('base64')}?=`
@@ -386,6 +386,7 @@ var messageEncoding = (props) => {
     `Subject: ${utf8Subject}`,
     '',
     `${body}`,
+    `${signature && signature.length > 0 && signature}`,
   ]
   const message = messageParts.join('\n')
   const encodedMessage = Buffer.from(message)
@@ -1018,6 +1019,57 @@ var updateThread = (req, res) =>
     authMiddleware(updateSingleThread)(req, res)
   })
 
+// src/controllers/Users/getSendAs.ts
+var import_googleapis27 = require('./node_modules/googleapis/build/src/index.js')
+var fetchSendAs = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = import_googleapis27.google.gmail({ version: 'v1', auth })
+    const { emailId } = req.query
+    try {
+      const response = yield gmail.users.settings.sendAs.get({
+        userId: USER,
+        sendAsEmail: emailId,
+      })
+      if ((response == null ? void 0 : response.status) === 200) {
+        return response.data
+      }
+      return new Error('No data found...')
+    } catch (err) {
+      throw Error(`Send as returned an error: ${err}`)
+    }
+  })
+var getSendAs = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(fetchSendAs)(req, res)
+  })
+
+// src/controllers/Users/updateSendAs.ts
+var import_googleapis28 = require('./node_modules/googleapis/build/src/index.js')
+var updateSendAsGmail = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = import_googleapis28.google.gmail({ version: 'v1', auth })
+    const { emailId, request } = req.body.params
+    try {
+      const response = yield gmail.users.settings.sendAs.update({
+        userId: USER,
+        sendAsEmail: emailId,
+        requestBody: {
+          signature: request.signature,
+        },
+      })
+      if ((response == null ? void 0 : response.status) === 200) {
+        return response.data
+      }
+      return new Error('No data found...')
+    } catch (err) {
+      throw Error(`Send as returned an error: ${err}`)
+    }
+  })
+var updateSendAs = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(updateSendAsGmail)(req, res)
+  })
+
 // src/routes/index.ts
 var router = import_express.default.Router()
 router.get(
@@ -1056,6 +1108,8 @@ router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
 router.get('/api/health', health)
+router.get('/api/settings/getSendAs', getSendAs)
+router.put('/api/settings/updateSendAs', updateSendAs)
 var routes_default = router
 
 // src/routes/app.ts
@@ -1122,6 +1176,7 @@ app.use(
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
     resave: false,
+    proxy: true,
     cookie: {
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
@@ -1135,6 +1190,8 @@ app.use((req, res, next) => {
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
+  res.setHeader('credentials', 'include')
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL)
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -1144,7 +1201,6 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, PATCH, OPTIONS'
   )
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
   next()
 })
 app.use(import_express2.default.json())
