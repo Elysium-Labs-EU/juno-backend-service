@@ -31,6 +31,8 @@ import { health } from '../controllers/health'
 import { deleteThread } from '../controllers/Threads/deleteThread'
 import { thrashThread } from '../controllers/Threads/thrashThread'
 import { updateThread } from '../controllers/Threads/updateThread'
+import { getSendAs } from '../controllers/Users/getSendAs'
+import { updateSendAs } from '../controllers/Users/updateSendAs'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -86,5 +88,7 @@ router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
 router.get('/api/health', health)
+router.get('/api/settings/getSendAs', getSendAs)
+router.put('/api/settings/updateSendAs', updateSendAs)
 
 export default router
