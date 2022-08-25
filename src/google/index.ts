@@ -87,7 +87,6 @@ export const authenticate = async ({ session, idToken }: IAuthorize) => {
       const response = await authorize({ session })
       return response
     }
-    console.log(session, idToken)
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {
@@ -111,9 +110,15 @@ export const getAuthenticateClient = async (req, res) => {
       oAuth2Client.setCredentials(response.tokens)
       req.session.oAuthClient = oAuth2Client.credentials
       // Send back the id token to later use to verify the ID Token.
-      return res.status(200).json({
-        idToken: oAuth2Client.credentials.id_token,
-      })
+      const idToken = oAuth2Client.credentials.id_token
+      //
+      if (idToken) {
+        return res.status(200).json({
+          idToken: idToken.replace(/['"]+/g, ''),
+        })
+      } else {
+        return res.status(400).json('Id Token not found')
+      }
     }
   } catch (err) {
     process.env.NODE_ENV === 'development' && console.log('ERROR', err)

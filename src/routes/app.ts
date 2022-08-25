@@ -10,7 +10,8 @@ import redis from 'connect-redis'
 import initiateRedis from '../data/redis'
 import initSentry from '../utils/initSentry'
 
-process.env.NODE_ENV !== 'production' && console.log('Booted')
+process.env.NODE_ENV !== 'production' &&
+  console.log('Booted and ready for usage')
 
 const app = express()
 const redisStore = redis(session)
