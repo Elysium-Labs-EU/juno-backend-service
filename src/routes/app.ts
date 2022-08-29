@@ -9,6 +9,7 @@ import session from 'express-session'
 import redis from 'connect-redis'
 import initiateRedis from '../data/redis'
 import initSentry from '../utils/initSentry'
+import compression from 'compression'
 
 process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
@@ -16,6 +17,9 @@ process.env.NODE_ENV !== 'production' &&
 const app = express()
 const redisStore = redis(session)
 const redisClient = initiateRedis()
+
+// Compress all HTTP responses
+app.use(compression())
 
 app.set('trust proxy', 1)
 

@@ -2,7 +2,7 @@ import express from 'express'
 
 const router = express.Router()
 
-import { fetchThreads } from '../controllers/Threads/fetchThreads'
+import { fetchSimpleThreads } from '../controllers/Threads/fetchSimpleThreads'
 import { fetchFullThreads } from '../controllers/Threads/fetchFullThreads'
 import { fetchSingleThread } from '../controllers/Threads/fetchSingleThread'
 import { createDraft } from '../controllers/Drafts/createDraft'
@@ -52,7 +52,7 @@ router.get(
 router.get(
   '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
 
-  fetchThreads
+  fetchSimpleThreads
 )
 router.patch('/api/thread/:id?', updateThread)
 router.post('/api/thread/thrash/:id?', thrashThread)

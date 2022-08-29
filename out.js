@@ -1,12 +1,7 @@
-'use strict'
-var __create = Object.create
 var __defProp = Object.defineProperty
 var __defProps = Object.defineProperties
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors
-var __getOwnPropNames = Object.getOwnPropertyNames
 var __getOwnPropSymbols = Object.getOwnPropertySymbols
-var __getProtoOf = Object.getPrototypeOf
 var __hasOwnProp = Object.prototype.hasOwnProperty
 var __propIsEnum = Object.prototype.propertyIsEnumerable
 var __defNormalProp = (obj, key, value) =>
@@ -28,26 +23,6 @@ var __spreadValues = (a, b) => {
   return a
 }
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b))
-var __copyProps = (to, from, except, desc) => {
-  if ((from && typeof from === 'object') || typeof from === 'function') {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, {
-          get: () => from[key],
-          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
-        })
-  }
-  return to
-}
-var __toESM = (mod, isNodeMode, target) => (
-  (target = mod != null ? __create(__getProtoOf(mod)) : {}),
-  __copyProps(
-    isNodeMode || !mod || !mod.__esModule
-      ? __defProp(target, 'default', { value: mod, enumerable: true })
-      : target,
-    mod
-  )
-)
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -73,26 +48,50 @@ var __async = (__this, __arguments, generator) => {
 }
 
 // src/server.ts
-var import_http = __toESM(require('http'))
+import http from 'http'
 
 // src/routes/app.ts
-var import_express2 = __toESM(require('./node_modules/express/index.js'))
-var import_config = require('./node_modules/dotenv/config.js')
-var import_swagger_jsdoc = __toESM(
-  require('./node_modules/swagger-jsdoc/index.js')
-)
-var import_swagger_ui_express = __toESM(
-  require('./node_modules/swagger-ui-express/index.js')
-)
+import express2 from './node_modules/express/index.js'
+import './node_modules/dotenv/config.js'
+import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
+import swaggerUI from './node_modules/swagger-ui-express/index.js'
 
 // src/routes/index.ts
-var import_express = __toESM(require('./node_modules/express/index.js'))
+import express from './node_modules/express/index.js'
 
-// src/controllers/Threads/fetchThreads.ts
-var import_googleapis = require('./node_modules/googleapis/build/src/index.js')
+// src/controllers/Threads/fetchSimpleThreads.ts
+import { google } from './node_modules/googleapis/build/src/index.js'
+
+// src/constants/globalConstants.ts
+var USER = 'me'
+var INVALID_TOKEN = 'Invalid token'
+var INVALID_SESSION = 'Invalid session'
+var MIME_TYPE_NO_INLINE = 'application/octet-stream'
+
+// src/controllers/Threads/threadRequest.ts
+var requestBodyCreator = (req) => {
+  const requestBody = {
+    userId: USER,
+  }
+  requestBody.maxResults =
+    typeof Number(req.query.maxResults) !== 'number'
+      ? 20
+      : Number(req.query.maxResults)
+  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
+    requestBody.labelIds = req.query.labelIds
+  }
+  if (req.query.pageToken) {
+    requestBody.pageToken = req.query.pageToken
+  }
+  if (req.query.q) {
+    requestBody.q = req.query.q
+  }
+  return requestBody
+}
+var threadRequest_default = requestBodyCreator
 
 // src/google/index.ts
-var import_google_auth_library = require('./node_modules/google-auth-library/build/src/index.js')
+import { OAuth2Client } from './node_modules/google-auth-library/build/src/index.js'
 
 // src/utils/assertNonNullish.ts
 function assertNonNullish(value, message) {
@@ -100,11 +99,6 @@ function assertNonNullish(value, message) {
     throw Error(message)
   }
 }
-
-// src/constants/globalConstants.ts
-var USER = 'me'
-var INVALID_TOKEN = 'Invalid token'
-var INVALID_SESSION = 'Invalid session'
 
 // src/google/index.ts
 var SCOPES = [
@@ -129,7 +123,7 @@ var createAuthClientObject = () => {
     process.env.GOOGLE_REDIRECT_URL,
     'No Google Redirect URL found'
   )
-  return new import_google_auth_library.OAuth2Client(
+  return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
@@ -161,7 +155,6 @@ var authenticate = (_0) =>
         const response = yield authorize({ session: session2 })
         return response
       }
-      console.log(session2, idToken)
       return INVALID_SESSION
     } catch (err) {
       console.error(err)
@@ -176,9 +169,14 @@ var getAuthenticateClient = (req, res) =>
         const response = yield oAuth2Client.getToken(code)
         oAuth2Client.setCredentials(response.tokens)
         req.session.oAuthClient = oAuth2Client.credentials
-        return res.status(200).json({
-          idToken: oAuth2Client.credentials.id_token,
-        })
+        const idToken = oAuth2Client.credentials.id_token
+        if (idToken) {
+          return res.status(200).json({
+            idToken: idToken.replace(/['"]+/g, ''),
+          })
+        } else {
+          return res.status(400).json('Id Token not found')
+        }
       }
     } catch (err) {
       process.env.NODE_ENV === 'development' && console.log('ERROR', err)
@@ -246,51 +244,598 @@ var authMiddleware = (requestFunction) => (req, res) =>
     }
   })
 
-// src/controllers/Threads/threadRequest.ts
-var requestBodyCreator = (req) => {
-  const requestBody = {
-    userId: USER,
+// src/utils/findHeader.ts
+function findHeader(rawMessage, query) {
+  var _a, _b, _c, _d, _e, _f
+  if (
+    ((_a = rawMessage == null ? void 0 : rawMessage.payload) == null
+      ? void 0
+      : _a.headers) &&
+    ((_c =
+      (_b = rawMessage == null ? void 0 : rawMessage.payload) == null
+        ? void 0
+        : _b.headers) == null
+      ? void 0
+      : _c.find((e) => e.name === query))
+  ) {
+    return (_d = rawMessage.payload.headers.find((e) => e.name === query)) ==
+      null
+      ? void 0
+      : _d.value
   }
-  requestBody.maxResults =
-    typeof Number(req.query.maxResults) !== 'number'
-      ? 20
-      : Number(req.query.maxResults)
-  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    requestBody.labelIds = req.query.labelIds
+  if (
+    ((_e = rawMessage == null ? void 0 : rawMessage.payload) == null
+      ? void 0
+      : _e.headers) &&
+    rawMessage.payload.headers.find((e) => e.name === query.toLowerCase())
+  ) {
+    return (_f = rawMessage.payload.headers.find(
+      (e) => e.name === query.toLowerCase()
+    )) == null
+      ? void 0
+      : _f.value
   }
-  if (req.query.pageToken) {
-    requestBody.pageToken = req.query.pageToken
-  }
-  if (req.query.q) {
-    requestBody.q = req.query.q
-  }
-  return requestBody
 }
-var threadRequest_default = requestBodyCreator
 
-// src/controllers/Threads/fetchThreads.ts
-var getThreads = (auth, req) =>
+// src/utils/threadSimpleRemap.ts
+var remapPayloadHeaders = (rawMessage) => {
+  return {
+    deliveredTo: findHeader(rawMessage, 'Delivered-To'),
+    date: findHeader(rawMessage, 'Date'),
+    from: findHeader(rawMessage, 'From'),
+    subject: findHeader(rawMessage, 'Subject'),
+    to: findHeader(rawMessage, 'To'),
+    cc: findHeader(rawMessage, 'Cc'),
+    bcc: findHeader(rawMessage, 'Bcc'),
+  }
+}
+var remapFullMessage = (rawMessage) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis.google.gmail({ version: 'v1', auth })
-    const requestBody = threadRequest_default(req)
-    try {
-      const response = yield gmail.users.threads.list(requestBody)
-      if (response && response.data) {
-        return response.data
+    return {
+      id: rawMessage.id,
+      threadId: rawMessage.threadId,
+      labelIds: rawMessage.labelIds,
+      snippet: rawMessage.snippet,
+      payload: __spreadProps(__spreadValues({}, rawMessage.payload), {
+        headers: remapPayloadHeaders(rawMessage),
+      }),
+      sizeEstimate: rawMessage.sizeEstimate,
+      historyId: rawMessage.historyId,
+      internalDate: rawMessage.internalDate,
+    }
+  })
+function threadSimpleRemap(rawObject) {
+  return __async(this, null, function* () {
+    if (rawObject.messages) {
+      const mappedMessages = rawObject.messages.map((message) =>
+        remapFullMessage(message)
+      )
+      return {
+        id: rawObject.id,
+        historyId: rawObject.historyId,
+        messages: yield Promise.all(mappedMessages),
       }
-      return new Error('No threads found...')
+    }
+    return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
+  })
+}
+
+// src/controllers/Threads/fetchSimpleThreads.ts
+function singleThread(thread, gmail) {
+  return __async(this, null, function* () {
+    const { id } = thread
+    try {
+      if (id) {
+        const response = yield gmail.users.threads.get({
+          userId: USER,
+          id,
+          format: 'metadata',
+        })
+        if (response && response.data) {
+          return response.data
+        }
+      }
+      throw Error('Thread not found...')
     } catch (err) {
       throw Error(`Threads returned an error: ${err}`)
     }
   })
-var fetchThreads = (req, res) =>
+}
+var getSimpleThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    authMiddleware(getThreads)(req, res)
+    const gmail = google.gmail({ version: 'v1', auth })
+    const requestBody = threadRequest_default(req)
+    try {
+      const response = yield gmail.users.threads.list(requestBody)
+      if (response && response.data) {
+        const hydrateMetaList = () =>
+          __async(void 0, null, function* () {
+            const results = []
+            const threads = response.data.threads
+            if (threads) {
+              for (const thread of threads) {
+                results.push(singleThread(thread, gmail))
+              }
+              const timeStampLastFetch = Date.now()
+              const fetchedThreads = yield Promise.all(results)
+              return __spreadProps(__spreadValues({}, response.data), {
+                threads: yield Promise.all(
+                  fetchedThreads.map((thread) => threadSimpleRemap(thread))
+                ),
+                timestamp: timeStampLastFetch,
+              })
+            }
+          })
+        return hydrateMetaList()
+      }
+    } catch (err) {
+      throw Error(`Threads returned an error: ${err}`)
+    }
+  })
+var fetchSimpleThreads = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(getSimpleThreads)(req, res)
   })
 
 // src/controllers/Threads/fetchFullThreads.ts
-var import_googleapis2 = require('./node_modules/googleapis/build/src/index.js')
-function singleThread(thread, gmail) {
+import { google as google2 } from './node_modules/googleapis/build/src/index.js'
+
+// src/utils/bodyDecoder.ts
+import * as cheerio3 from './node_modules/cheerio/lib/esm/index.js'
+import AutoLinker from './node_modules/autolinker/dist/commonjs/index.js'
+
+// src/utils/removeTrackers.ts
+import * as cheerio from './node_modules/cheerio/lib/esm/index.js'
+var TRACKERS_SELECTORS = [
+  { attribute: 'width', value: '0' },
+  { attribute: 'width', value: '0 !important' },
+  { attribute: 'width', value: '1' },
+  { attribute: 'width', value: '1 !important' },
+  { attribute: 'width', value: '1px !important' },
+  { attribute: 'height', value: '0' },
+  { attribute: 'height', value: '0 !important' },
+  { attribute: 'height', value: '1' },
+  { attribute: 'height', value: '1 !important' },
+  { attribute: 'height', value: '1px !important' },
+  { attribute: 'display', value: 'none' },
+  { attribute: 'display', value: 'none !important' },
+]
+var TRACKERS_SELECTORS_INCLUDES = [
+  { attribute: 'src', value: 'http://mailstat.us' },
+  { attribute: 'src', value: 'https://open.convertkit-' },
+]
+function parseStyleIntoObject(documentImage) {
+  let foundImage = null
+  const fetchedStyle = documentImage.attributes.filter(
+    (attribute) => attribute.name === 'style'
+  )
+  if (fetchedStyle.length > 0) {
+    const parsedStyle = fetchedStyle
+      .map((item) => {
+        var _a
+        return (_a = item.value) == null ? void 0 : _a.split(/\s*;\s*/g)
+      })
+      .flat(1)
+    for (let i = 0; parsedStyle.length > i; i += 1) {
+      if (parsedStyle[i]) {
+        const parts = parsedStyle[i].match(/^([^:]+)\s*:\s*(.+)/)
+        if (
+          parts &&
+          TRACKERS_SELECTORS.some(
+            (checkValue) => parts[1] === checkValue.attribute
+          ) &&
+          TRACKERS_SELECTORS.some((checkValue) => parts[2] === checkValue.value)
+        ) {
+          foundImage = documentImage
+          break
+        }
+      }
+    }
+  }
+  return foundImage
+}
+function detectAndRemove(documentImage) {
+  let foundImage = null
+  if (
+    TRACKERS_SELECTORS.filter(
+      (checkValue) =>
+        documentImage.attributes.some((item) => {
+          if (item.name === checkValue.attribute) {
+            return item.value === checkValue.value
+          }
+        }) === true
+    ).length > 0 ||
+    TRACKERS_SELECTORS_INCLUDES.filter((checkValueInclude) =>
+      documentImage.attributes.some((item) => {
+        if (item.name === checkValueInclude.attribute) {
+          return item.value === checkValueInclude.value
+        }
+      })
+    ).length > 0
+  ) {
+    foundImage = documentImage
+  }
+  return foundImage
+}
+function removeTrackers(orderedObject) {
+  const localCopyOrderedObject = __spreadProps(
+    __spreadValues({}, orderedObject),
+    { removedTrackers: [] }
+  )
+  const $ = cheerio.load(orderedObject.emailHTML)
+  let foundImage = null
+  $('img').each((_, documentImage) => {
+    const imageWithInlineSrc = documentImage.attributes.filter(
+      (item) => item.name === 'style'
+    )
+    if (imageWithInlineSrc !== null && imageWithInlineSrc.length > 0) {
+      const response = parseStyleIntoObject(documentImage)
+      if (response) {
+        foundImage = response
+      }
+    } else {
+      const response = detectAndRemove(documentImage)
+      if (response) {
+        foundImage = response
+      }
+    }
+    if (foundImage) {
+      $(foundImage).remove()
+      const srcOfTracker =
+        documentImage == null
+          ? void 0
+          : documentImage.attributes.filter(
+              (attribute) => attribute.name === 'src'
+            )[0]
+      if (srcOfTracker) {
+        localCopyOrderedObject.removedTrackers.push(srcOfTracker.value)
+      }
+    }
+  })
+  localCopyOrderedObject.emailHTML = $.html()
+  return localCopyOrderedObject
+}
+
+// src/utils/decodeBase64.ts
+import base64url from './node_modules/base64url/index.js'
+function baseBase64(base64Data) {
+  const b64 = base64url.toBase64(base64Data)
+  return b64
+}
+function decodeBase64(base64Data) {
+  if (base64Data !== void 0 && base64Data !== 'undefined') {
+    const checkedString = base64Data.replaceAll(/-/g, '+')
+    const b64 = base64url.decode(checkedString)
+    return b64
+  }
+  return void 0
+}
+
+// src/utils/removeScripts.ts
+import * as cheerio2 from './node_modules/cheerio/lib/esm/index.js'
+function removeScripts(orderedObject) {
+  const $ = cheerio2.load(orderedObject.emailHTML)
+  $('script').each((_, foundScript) => {
+    $(foundScript).remove()
+  })
+  return orderedObject
+}
+
+// src/utils/bodyDecoder.ts
+var decodedString
+var localMessageId
+var decodedResult = []
+var localGmail = null
+var enhancePlainText = (localString) => {
+  const enhancedText = () => {
+    var _a
+    const lineBreakRegex = /(?:\r\n|\r|\n)/g
+    return (_a = AutoLinker.link(localString, { email: false }).replace(
+      lineBreakRegex,
+      '<br>'
+    )) != null
+      ? _a
+      : ''
+  }
+  return enhancedText()
+}
+var inlineImageDecoder = (_0) =>
+  __async(void 0, [_0], function* ({ attachmentData, messageId }) {
+    var _a, _b
+    const { body, filename, mimeType, headers } = attachmentData
+    const getAttachment2 = () =>
+      __async(void 0, null, function* () {
+        if (localGmail && (body == null ? void 0 : body.attachmentId)) {
+          try {
+            const response2 = yield localGmail.users.messages.attachments.get({
+              userId: USER,
+              messageId,
+              id: body == null ? void 0 : body.attachmentId,
+            })
+            if (response2 && response2.data) {
+              return response2.data
+            }
+            return 'Message attachment not found...'
+          } catch (err) {
+            throw Error(`Get Attachment returned an error: ${err}`)
+          }
+        }
+      })
+    const response = yield getAttachment2()
+    if (
+      response &&
+      typeof response !== 'string' &&
+      (response == null ? void 0 : response.data)
+    ) {
+      const decodedB64 = baseBase64(response.data)
+      const contentID =
+        (_b =
+          (_a =
+            headers == null
+              ? void 0
+              : headers.find(
+                  (e) => e.name === 'Content-ID' || e.name === 'Content-Id'
+                )) == null
+            ? void 0
+            : _a.value) == null
+          ? void 0
+          : _b.replace(/<|>/gi, '')
+      if (contentID) {
+        const attachment = {
+          mimeType,
+          decodedB64,
+          filename,
+          contentID,
+        }
+        return attachment
+      }
+    }
+    return 'Message attachment not found...'
+  })
+var loopThroughBodyParts = (_0) =>
+  __async(void 0, [_0], function* ({ inputObject, signal }) {
+    if (signal == null ? void 0 : signal.aborted) {
+      throw new Error('Decoding aborted')
+    }
+    const loopingFunction = (_02) =>
+      __async(void 0, [_02], function* ({ loopObject }) {
+        var _a, _b, _c, _d, _e
+        try {
+          const objectKeys = Object.keys(loopObject)
+          for (const objectKey of objectKeys) {
+            if (objectKey === 'body') {
+              if (
+                ((_a = loopObject == null ? void 0 : loopObject.body) == null
+                  ? void 0
+                  : _a.size) &&
+                ((_b = loopObject == null ? void 0 : loopObject.body) == null
+                  ? void 0
+                  : _b.size) > 0
+              ) {
+                if (
+                  ((_c = loopObject.body) == null ? void 0 : _c.attachmentId) &&
+                  localMessageId
+                ) {
+                  const imageObjectPromise = inlineImageDecoder({
+                    attachmentData: loopObject,
+                    messageId: localMessageId,
+                  })
+                  if (imageObjectPromise) {
+                    decodedResult.push(imageObjectPromise)
+                  }
+                }
+                decodedString = decodeBase64(
+                  `${
+                    (_d = loopObject == null ? void 0 : loopObject.body) == null
+                      ? void 0
+                      : _d.data
+                  }`
+                )
+                if (loopObject.mimeType !== 'text/plain' && decodedString) {
+                  decodedResult.push(decodedString)
+                } else if (
+                  loopObject.mimeType === 'text/plain' &&
+                  decodedString
+                ) {
+                  const localString = decodedString
+                  const check = enhancePlainText(localString)
+                  decodedResult.push(check)
+                }
+              }
+            }
+            if (objectKey === 'parts') {
+              if (
+                (((_e = loopObject == null ? void 0 : loopObject.body) == null
+                  ? void 0
+                  : _e.size) === 0 ||
+                  !Object.prototype.hasOwnProperty.call(loopObject, 'body')) &&
+                (loopObject == null ? void 0 : loopObject.parts)
+              ) {
+                loopObject.parts.forEach((part) => {
+                  loopingFunction({
+                    loopObject: part,
+                  })
+                })
+              }
+            }
+          }
+          if (!(signal == null ? void 0 : signal.aborted)) {
+            const result = yield Promise.all(decodedResult)
+            return result
+          }
+          return null
+        } catch (err) {
+          console.log('ANOTHER ERROR', err)
+          decodedResult = []
+          return err
+        }
+      })
+    return loopingFunction({ loopObject: inputObject })
+  })
+var orderArrayPerType = (response) => {
+  const firstStringOnly = []
+  const objectOnly = []
+  for (const item of response) {
+    if (typeof item === 'string') {
+      firstStringOnly.push(item)
+    }
+    if (typeof item === 'object') {
+      objectOnly.push(item)
+    }
+  }
+  return { emailHTML: firstStringOnly, emailFileHTML: objectOnly }
+}
+var prioritizeHTMLbodyObject = (response) => {
+  let htmlObject = ''
+  let noHtmlObject = ''
+  if (response.emailHTML.length === 1) {
+    return __spreadProps(__spreadValues({}, response), {
+      emailHTML: response.emailHTML[0],
+    })
+  }
+  if (response.emailHTML.length > 1) {
+    for (const item of response.emailHTML) {
+      if (item.includes('</html>')) {
+        htmlObject = item
+      } else if (item.startsWith('<')) {
+        noHtmlObject = item
+      } else {
+        noHtmlObject = item
+      }
+    }
+  }
+  if (htmlObject.length > 0) {
+    return __spreadProps(__spreadValues({}, response), {
+      emailHTML: htmlObject,
+    })
+  }
+  return __spreadProps(__spreadValues({}, response), {
+    emailHTML: noHtmlObject,
+  })
+}
+var placeInlineImage = (orderedObject) => {
+  if (orderedObject.emailFileHTML.length > 0) {
+    const processedObjectArray = []
+    const $ = cheerio3.load(orderedObject.emailHTML)
+    for (const emailFileHTML of orderedObject.emailFileHTML) {
+      const matchString = `cid:${emailFileHTML.contentID}`
+      $('img').each((_, documentImage) => {
+        if (documentImage.attribs.src === matchString) {
+          $(documentImage).attr(
+            'src',
+            `data:${emailFileHTML.mimeType};base64,${emailFileHTML.decodedB64}`
+          )
+          processedObjectArray.push(emailFileHTML)
+        }
+      })
+    }
+    const unprocessedValidObjects = orderedObject.emailFileHTML
+      .filter((item) => !processedObjectArray.includes(item))
+      .filter((item) => item.mimeType !== MIME_TYPE_NO_INLINE)
+    return { emailFileHTML: unprocessedValidObjects, emailHTML: $.html() }
+  }
+  return orderedObject
+}
+var bodyDecoder = (_0) =>
+  __async(void 0, [_0], function* ({ messageId, inputObject, signal, gmail }) {
+    try {
+      if (inputObject) {
+        if (messageId) {
+          localMessageId = messageId
+        }
+        if (gmail) {
+          localGmail = gmail
+        }
+        const response = yield loopThroughBodyParts({
+          inputObject,
+          signal,
+        })
+        decodedResult = []
+        const ordered = orderArrayPerType(response)
+        const prioritized = prioritizeHTMLbodyObject(ordered)
+        const inlinedImages = placeInlineImage(prioritized)
+        const removedTrackers = removeTrackers(inlinedImages)
+        const removedScript = removeScripts(removedTrackers)
+        return removedScript
+      }
+      return { emailHTML: '', emailFileHTML: [] }
+    } catch (err) {
+      console.log('error', err)
+      return err
+    }
+  })
+var bodyDecoder_default = bodyDecoder
+
+// src/utils/threadFullRemap.ts
+function handleListUnsubscribe(unsubscribeLink) {
+  if (unsubscribeLink) {
+    const splittedUnsubscribe = unsubscribeLink
+      .split(',')
+      .map((link) => link.trim().replace(/(<|>)+/g, ''))
+    if (splittedUnsubscribe.length === 1) {
+      return splittedUnsubscribe[0]
+    }
+    const preferNoMailLink = splittedUnsubscribe.filter(
+      (item) => !item.startsWith('mailto')
+    )
+    if (preferNoMailLink.length === 0) {
+      return splittedUnsubscribe[0]
+    }
+    return preferNoMailLink[0]
+  }
+}
+var remapPayloadHeaders2 = (rawMessage) => {
+  return {
+    deliveredTo: findHeader(rawMessage, 'Delivered-To'),
+    date: findHeader(rawMessage, 'Date'),
+    from: findHeader(rawMessage, 'From'),
+    subject: findHeader(rawMessage, 'Subject'),
+    listUnsubscribe: handleListUnsubscribe(
+      findHeader(rawMessage, 'List-Unsubscribe')
+    ),
+    to: findHeader(rawMessage, 'To'),
+    cc: findHeader(rawMessage, 'Cc'),
+    bcc: findHeader(rawMessage, 'Bcc'),
+  }
+}
+var remapFullMessage2 = (rawMessage, gmail) =>
+  __async(void 0, null, function* () {
+    return {
+      id: rawMessage.id,
+      threadId: rawMessage.threadId,
+      labelIds: rawMessage.labelIds,
+      snippet: rawMessage.snippet,
+      payload: __spreadProps(__spreadValues({}, rawMessage.payload), {
+        headers: remapPayloadHeaders2(rawMessage),
+        body: yield bodyDecoder_default({
+          inputObject: rawMessage.payload,
+          messageId: rawMessage == null ? void 0 : rawMessage.id,
+          gmail,
+        }),
+      }),
+      sizeEstimate: rawMessage.sizeEstimate,
+      historyId: rawMessage.historyId,
+      internalDate: rawMessage.internalDate,
+    }
+  })
+function threadFullRemap(rawObject, gmail) {
+  return __async(this, null, function* () {
+    if (rawObject.messages) {
+      const mappedMessages = rawObject.messages.map((message) =>
+        remapFullMessage2(message, gmail)
+      )
+      return {
+        id: rawObject.id,
+        historyId: rawObject.historyId,
+        messages: yield Promise.all(mappedMessages),
+      }
+    }
+    return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
+  })
+}
+
+// src/controllers/Threads/fetchFullThreads.ts
+function singleThread2(thread, gmail) {
   return __async(this, null, function* () {
     const { id } = thread
     try {
@@ -312,7 +857,7 @@ function singleThread(thread, gmail) {
 }
 var getFullThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis2.google.gmail({ version: 'v1', auth })
+    const gmail = google2.gmail({ version: 'v1', auth })
     const requestBody = threadRequest_default(req)
     try {
       const response = yield gmail.users.threads.list(requestBody)
@@ -323,11 +868,14 @@ var getFullThreads = (auth, req) =>
             const threads = response.data.threads
             if (threads) {
               for (const thread of threads) {
-                results.push(singleThread(thread, gmail))
+                results.push(singleThread2(thread, gmail))
               }
               const timeStampLastFetch = Date.now()
+              const fetchedThreads = yield Promise.all(results)
               return __spreadProps(__spreadValues({}, response.data), {
-                threads: yield Promise.all(results),
+                threads: yield Promise.all(
+                  fetchedThreads.map((thread) => threadFullRemap(thread, gmail))
+                ),
                 timestamp: timeStampLastFetch,
               })
             }
@@ -344,10 +892,10 @@ var fetchFullThreads = (req, res) =>
   })
 
 // src/controllers/Threads/fetchSingleThread.ts
-var import_googleapis3 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google3 } from './node_modules/googleapis/build/src/index.js'
 var getThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis3.google.gmail({ version: 'v1', auth })
+    const gmail = google3.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.threads.get({
@@ -356,7 +904,8 @@ var getThread = (auth, req) =>
         format: 'full',
       })
       if (response && response.data) {
-        return response.data
+        const expandedResponse = yield threadFullRemap(response.data, gmail)
+        return expandedResponse
       }
       return new Error('Thread not found...')
     } catch (err) {
@@ -369,15 +918,14 @@ var fetchSingleThread = (req, res) =>
   })
 
 // src/controllers/Drafts/createDraft.ts
-var import_googleapis4 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google4 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/messageEncoding.ts
-var messageEncoding = ({ body, subject, to, cc, bcc, sender, signature }) => {
+var messageEncoding = ({ body, subject, to, cc, bcc, signature }) => {
   const utf8Subject = `=?utf-8?B?${Buffer.from(
     subject != null ? subject : ''
   ).toString('base64')}?=`
   const messageParts = [
-    `From: ${sender}`,
     `To: ${to}`,
     `Cc: ${cc}`,
     `Bcc: ${bcc}`,
@@ -401,7 +949,7 @@ var messageEncoding_default = messageEncoding
 // src/controllers/Drafts/createDraft.ts
 var setupDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis4.google.gmail({ version: 'v1', auth })
+    const gmail = google4.gmail({ version: 'v1', auth })
     const { threadId, messageId, labelIds } = req.body
     try {
       const response = yield gmail.users.drafts.create({
@@ -437,10 +985,10 @@ var createDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/fetchDrafts.ts
-var import_googleapis5 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google5 } from './node_modules/googleapis/build/src/index.js'
 var getDrafts = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis5.google.gmail({ version: 'v1', auth })
+    const gmail = google5.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.list({
         userId: USER,
@@ -459,10 +1007,10 @@ var fetchDrafts = (req, res) =>
   })
 
 // src/controllers/Drafts/fetchSingleDraft.ts
-var import_googleapis6 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google6 } from './node_modules/googleapis/build/src/index.js'
 var getDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis6.google.gmail({ version: 'v1', auth })
+    const gmail = google6.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.get({
         userId: USER,
@@ -470,7 +1018,11 @@ var getDraft = (auth, req) =>
         format: 'full',
       })
       if (response && response.data) {
-        return response.data
+        const decodedResult2 = yield remapFullMessage2(
+          response.data.message,
+          gmail
+        )
+        return { id: response.data.id, message: decodedResult2 }
       }
       return new Error('Draft not found...')
     } catch (err) {
@@ -483,10 +1035,10 @@ var fetchSingleDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/sendDraft.ts
-var import_googleapis7 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google7 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis7.google.gmail({ version: 'v1', auth })
+    const gmail = google7.gmail({ version: 'v1', auth })
     const { id } = req.body
     try {
       const response = yield gmail.users.drafts.send({
@@ -509,10 +1061,10 @@ var sendDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/updateDraft.ts
-var import_googleapis8 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google8 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft2 = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis8.google.gmail({ version: 'v1', auth })
+    const gmail = google8.gmail({ version: 'v1', auth })
     const { draftId, threadId, messageId, labelIds } = req.body
     try {
       const response = yield gmail.users.drafts.update({
@@ -535,7 +1087,7 @@ var exportDraft2 = (auth, req) =>
           },
         },
       })
-      if (response) {
+      if ((response == null ? void 0 : response.status) === 200) {
         return response
       }
       return new Error('Draft is not updated...')
@@ -549,10 +1101,10 @@ var updateDraft = (req, res) =>
   })
 
 // src/controllers/Drafts/deleteDraft.ts
-var import_googleapis9 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google9 } from './node_modules/googleapis/build/src/index.js'
 var removeDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis9.google.gmail({ version: 'v1', auth })
+    const gmail = google9.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -572,10 +1124,10 @@ var deleteDraft = (req, res) =>
   })
 
 // src/controllers/Message/updateMessage.ts
-var import_googleapis10 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google10 } from './node_modules/googleapis/build/src/index.js'
 var modifyMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis10.google.gmail({ version: 'v1', auth })
+    const gmail = google10.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.messages.modify({
         userId: USER,
@@ -596,10 +1148,10 @@ var updateMessage = (req, res) =>
   })
 
 // src/controllers/Message/thrashMessage.ts
-var import_googleapis11 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google11 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis11.google.gmail({ version: 'v1', auth })
+    const gmail = google11.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.messages.trash({
         userId: USER,
@@ -619,10 +1171,10 @@ var thrashMessage = (req, res) =>
   })
 
 // src/controllers/Message/deleteMessage.ts
-var import_googleapis12 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google12 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis12.google.gmail({ version: 'v1', auth })
+    const gmail = google12.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -642,10 +1194,10 @@ var deleteMessage = (req, res) =>
   })
 
 // src/controllers/Message/fetchMessageAttachment.ts
-var import_googleapis13 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google13 } from './node_modules/googleapis/build/src/index.js'
 var getAttachment = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis13.google.gmail({ version: 'v1', auth })
+    const gmail = google13.gmail({ version: 'v1', auth })
     const { messageId } = req.params
     const attachmentId = req.params.id
     try {
@@ -668,10 +1220,10 @@ var fetchMessageAttachment = (req, res) =>
   })
 
 // src/controllers/Message/sendMessage.ts
-var import_googleapis14 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google14 } from './node_modules/googleapis/build/src/index.js'
 var exportMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis14.google.gmail({ version: 'v1', auth })
+    const gmail = google14.gmail({ version: 'v1', auth })
     const { id, threadId } = req.body
     try {
       const response = yield gmail.users.messages.send({
@@ -696,10 +1248,10 @@ var sendMessage = (req, res) =>
   })
 
 // src/controllers/Labels/createLabels.ts
-var import_googleapis15 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google15 } from './node_modules/googleapis/build/src/index.js'
 var newLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis15.google.gmail({ version: 'v1', auth })
+    const gmail = google15.gmail({ version: 'v1', auth })
     try {
       const {
         body: { labelListVisibility, messageListVisibility, name },
@@ -723,10 +1275,10 @@ var createLabels = (req, res) =>
   })
 
 // src/controllers/Labels/fetchLabels.ts
-var import_googleapis16 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google16 } from './node_modules/googleapis/build/src/index.js'
 var getLabels = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis16.google.gmail({ version: 'v1', auth })
+    const gmail = google16.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.labels.list({
         userId: USER,
@@ -745,10 +1297,10 @@ var fetchLabels = (req, res) =>
   })
 
 // src/controllers/Labels/fetchSingleLabel.ts
-var import_googleapis17 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google17 } from './node_modules/googleapis/build/src/index.js'
 var getLabel = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis17.google.gmail({ version: 'v1', auth })
+    const gmail = google17.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.labels.get({
@@ -769,10 +1321,10 @@ var fetchSingleLabel = (req, res) =>
   })
 
 // src/controllers/Labels/updateLabels.ts
-var import_googleapis18 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google18 } from './node_modules/googleapis/build/src/index.js'
 var refreshLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis18.google.gmail({ version: 'v1', auth })
+    const gmail = google18.gmail({ version: 'v1', auth })
     const {
       body: { id, requestBody },
     } = req
@@ -796,10 +1348,10 @@ var updateLabels = (req, res) =>
   })
 
 // src/controllers/Labels/removeLabels.ts
-var import_googleapis19 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google19 } from './node_modules/googleapis/build/src/index.js'
 var removeTheLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis19.google.gmail({ version: 'v1', auth })
+    const gmail = google19.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -819,16 +1371,28 @@ var removeLabels = (req, res) =>
   })
 
 // src/controllers/Users/getProfile.ts
-var import_googleapis20 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google20 } from './node_modules/googleapis/build/src/index.js'
+import jwt from './node_modules/jsonwebtoken/index.js'
 var fetchProfile = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis20.google.gmail({ version: 'v1', auth })
+    const gmail = google20.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.getProfile({
         userId: USER,
       })
-      if ((response == null ? void 0 : response.status) === 200) {
-        return response.data
+      const decodedJWT = jwt.decode(auth.credentials.id_token)
+      if (
+        decodedJWT &&
+        typeof decodedJWT !== 'string' &&
+        (response == null ? void 0 : response.status) === 200
+      ) {
+        return __spreadValues(
+          {
+            name: decodedJWT.name,
+            picture: decodedJWT.picture,
+          },
+          response.data
+        )
       }
       return new Error('No Profile found...')
     } catch (err) {
@@ -841,10 +1405,10 @@ var getProfile = (req, res) =>
   })
 
 // src/controllers/Contacts/fetchAllContacts.ts
-var import_googleapis21 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google21 } from './node_modules/googleapis/build/src/index.js'
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
-    const people = import_googleapis21.google.people({ version: 'v1', auth })
+    const people = google21.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.pageSize =
       typeof Number(req.query.pageSize) !== 'number'
@@ -872,10 +1436,10 @@ var fetchAllContacts = (req, res) =>
   })
 
 // src/controllers/Contacts/queryContacts.ts
-var import_googleapis22 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google22 } from './node_modules/googleapis/build/src/index.js'
 var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
-    const people = import_googleapis22.google.people({ version: 'v1', auth })
+    const people = google22.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.query = req.query.query
     requestBody.readMask = req.query.readMask
@@ -895,10 +1459,10 @@ var queryContacts = (req, res) =>
   })
 
 // src/controllers/History/listHistory.ts
-var import_googleapis23 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google23 } from './node_modules/googleapis/build/src/index.js'
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis23.google.gmail({ version: 'v1', auth })
+    const gmail = google23.gmail({ version: 'v1', auth })
     try {
       const { startHistoryId } = req.query
       const response = yield gmail.users.history.list({
@@ -950,10 +1514,10 @@ var health = (req, res) =>
   })
 
 // src/controllers/Threads/deleteThread.ts
-var import_googleapis24 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google24 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis24.google.gmail({ version: 'v1', auth })
+    const gmail = google24.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -973,10 +1537,10 @@ var deleteThread = (req, res) =>
   })
 
 // src/controllers/Threads/thrashThread.ts
-var import_googleapis25 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google25 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis25.google.gmail({ version: 'v1', auth })
+    const gmail = google25.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.threads.trash({
         userId: USER,
@@ -996,10 +1560,10 @@ var thrashThread = (req, res) =>
   })
 
 // src/controllers/Threads/updateThread.ts
-var import_googleapis26 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google26 } from './node_modules/googleapis/build/src/index.js'
 var updateSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis26.google.gmail({ version: 'v1', auth })
+    const gmail = google26.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.threads.modify({
         userId: USER,
@@ -1020,10 +1584,10 @@ var updateThread = (req, res) =>
   })
 
 // src/controllers/Users/getSendAs.ts
-var import_googleapis27 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google27 } from './node_modules/googleapis/build/src/index.js'
 var fetchSendAs = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis27.google.gmail({ version: 'v1', auth })
+    const gmail = google27.gmail({ version: 'v1', auth })
     const { emailId } = req.query
     try {
       const response = yield gmail.users.settings.sendAs.get({
@@ -1044,10 +1608,10 @@ var getSendAs = (req, res) =>
   })
 
 // src/controllers/Users/updateSendAs.ts
-var import_googleapis28 = require('./node_modules/googleapis/build/src/index.js')
+import { google as google28 } from './node_modules/googleapis/build/src/index.js'
 var updateSendAsGmail = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = import_googleapis28.google.gmail({ version: 'v1', auth })
+    const gmail = google28.gmail({ version: 'v1', auth })
     const { emailId, request } = req.body.params
     try {
       const response = yield gmail.users.settings.sendAs.update({
@@ -1071,7 +1635,7 @@ var updateSendAs = (req, res) =>
   })
 
 // src/routes/index.ts
-var router = import_express.default.Router()
+var router = express.Router()
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
   fetchAllContacts
@@ -1081,7 +1645,10 @@ router.get(
   '/api/threads_full/:labelIds?/:maxResults?/:nextPageToken?',
   fetchFullThreads
 )
-router.get('/api/threads/:labelIds?/:maxResults?/:nextPageToken?', fetchThreads)
+router.get(
+  '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
+  fetchSimpleThreads
+)
 router.patch('/api/thread/:id?', updateThread)
 router.post('/api/thread/thrash/:id?', thrashThread)
 router.delete('/api/thread/', deleteThread)
@@ -1113,24 +1680,20 @@ router.put('/api/settings/updateSendAs', updateSendAs)
 var routes_default = router
 
 // src/routes/app.ts
-var Sentry2 = __toESM(require('./node_modules/@sentry/node/cjs/index.js'))
-var import_express_session = __toESM(
-  require('./node_modules/express-session/index.js')
-)
-var import_connect_redis = __toESM(
-  require('./node_modules/connect-redis/index.js')
-)
+import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
+import session from './node_modules/express-session/index.js'
+import redis from './node_modules/connect-redis/index.js'
 
 // src/data/redis.ts
-var import_redis = require('./node_modules/redis/dist/index.js')
+import { createClient } from './node_modules/redis/dist/index.js'
 var initiateRedis = () => {
   assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
   const redisClient2 =
     process.env.NODE_ENV === 'development'
-      ? (0, import_redis.createClient)({
+      ? createClient({
           legacyMode: true,
         })
-      : (0, import_redis.createClient)({
+      : createClient({
           username: process.env.REDIS_USER,
           password: process.env.REDIS_PASS,
           socket: {
@@ -1145,8 +1708,8 @@ var initiateRedis = () => {
 var redis_default = initiateRedis
 
 // src/utils/initSentry.ts
-var Sentry = __toESM(require('./node_modules/@sentry/node/cjs/index.js'))
-var Tracing = __toESM(require('./node_modules/@sentry/tracing/cjs/index.js'))
+import * as Sentry from './node_modules/@sentry/node/cjs/index.js'
+import * as Tracing from './node_modules/@sentry/tracing/cjs/index.js'
 function initSentry(app2) {
   assertNonNullish(process.env.SENTRY_DSN, 'No Sentry DSN provided')
   if (process.env.SENTRY_DSN) {
@@ -1162,16 +1725,17 @@ function initSentry(app2) {
 }
 
 // src/routes/app.ts
-process.env.NODE_ENV !== 'production' && console.log('Booted')
-var app = (0, import_express2.default)()
-var redisStore = (0, import_connect_redis.default)(
-  import_express_session.default
-)
+import compression from './node_modules/compression/index.js'
+process.env.NODE_ENV !== 'production' &&
+  console.log('Booted and ready for usage')
+var app = express2()
+var redisStore = redis(session)
 var redisClient = redis_default()
+app.use(compression())
 app.set('trust proxy', 1)
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 app.use(
-  (0, import_express_session.default)({
+  session({
     store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
@@ -1203,7 +1767,7 @@ app.use((req, res, next) => {
   )
   next()
 })
-app.use(import_express2.default.json())
+app.use(express2.json())
 var swaggerDefinition = {
   info: {
     title: 'Juno API',
@@ -1224,12 +1788,8 @@ var swaggerOptions = {
   swaggerDefinition,
   apis: ['./index.ts', './doc/definitions.yaml'],
 }
-var swaggerDocs = (0, import_swagger_jsdoc.default)(swaggerOptions)
-app.use(
-  '/swagger',
-  import_swagger_ui_express.default.serve,
-  import_swagger_ui_express.default.setup(swaggerDocs)
-)
+var swaggerDocs = swaggerJSDoc(swaggerOptions)
+app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 process.env.NODE_ENV !== 'development' && initSentry(app)
 app.use('/', routes_default)
 app.use(Sentry2.Handlers.requestHandler())
@@ -1243,5 +1803,5 @@ var app_default = app
 
 // src/server.ts
 var PORT = process.env.PORT || 5001
-var server = import_http.default.createServer(app_default)
+var server = http.createServer(app_default)
 server.listen(PORT)

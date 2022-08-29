@@ -2,7 +2,7 @@ import { gmail_v1, google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import requestBodyCreator from './threadRequest'
 import { authMiddleware } from '../../middleware/authMiddleware'
-import threadFullRemap from '../../utils/threadFullRemap'
+import threadSimpleRemap from '../../utils/threadSimpleRemap'
 
 async function singleThread(
   thread: gmail_v1.Schema$Thread,
@@ -14,7 +14,7 @@ async function singleThread(
       const response = await gmail.users.threads.get({
         userId: USER,
         id,
-        format: 'full',
+        format: 'metadata',
       })
       if (response && response.data) {
         return response.data
@@ -26,7 +26,7 @@ async function singleThread(
   }
 }
 
-const getFullThreads = async (auth, req) => {
+const getSimpleThreads = async (auth, req) => {
   const gmail: gmail_v1.Gmail = google.gmail({ version: 'v1', auth })
   const requestBody = requestBodyCreator(req)
 
@@ -46,7 +46,7 @@ const getFullThreads = async (auth, req) => {
           return {
             ...response.data,
             threads: await Promise.all(
-              fetchedThreads.map((thread) => threadFullRemap(thread, gmail))
+              fetchedThreads.map((thread) => threadSimpleRemap(thread))
             ),
             timestamp: timeStampLastFetch,
           }
@@ -59,6 +59,6 @@ const getFullThreads = async (auth, req) => {
   }
 }
 
-export const fetchFullThreads = async (req, res) => {
-  authMiddleware(getFullThreads)(req, res)
+export const fetchSimpleThreads = async (req, res) => {
+  authMiddleware(getSimpleThreads)(req, res)
 }
