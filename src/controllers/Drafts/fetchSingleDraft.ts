@@ -1,6 +1,7 @@
 import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { remapFullMessage } from '../../utils/threadFullRemap'
 
 const getDraft = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -12,7 +13,8 @@ const getDraft = async (auth, req) => {
       format: 'full',
     })
     if (response && response.data) {
-      return response.data
+      const decodedResult = await remapFullMessage(response.data.message, gmail)
+      return { id: response.data.id, message: decodedResult }
     }
     return new Error('Draft not found...')
   } catch (err) {
