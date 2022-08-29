@@ -150,7 +150,6 @@ export const loopThroughBodyParts = async ({
       }
       return null
     } catch (err) {
-      console.log('ANOTHER ERROR', err)
       decodedResult = []
       return err
     }
@@ -301,7 +300,6 @@ const bodyDecoder = async ({
     // If there is no input object, return an empty object back
     return { emailHTML: '', emailFileHTML: [] }
   } catch (err) {
-    console.log('error', err)
     return err
   }
 }

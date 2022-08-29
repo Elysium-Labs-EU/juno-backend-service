@@ -665,7 +665,6 @@ var loopThroughBodyParts = (_0) =>
           }
           return null
         } catch (err) {
-          console.log('ANOTHER ERROR', err)
           decodedResult = []
           return err
         }
@@ -760,7 +759,6 @@ var bodyDecoder = (_0) =>
       }
       return { emailHTML: '', emailFileHTML: [] }
     } catch (err) {
-      console.log('error', err)
       return err
     }
   })
