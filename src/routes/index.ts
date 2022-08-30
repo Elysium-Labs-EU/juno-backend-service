@@ -2,7 +2,7 @@ import express from 'express'
 
 const router = express.Router()
 
-import { fetchThreads } from '../controllers/Threads/fetchThreads'
+import { fetchSimpleThreads } from '../controllers/Threads/fetchSimpleThreads'
 import { fetchFullThreads } from '../controllers/Threads/fetchFullThreads'
 import { fetchSingleThread } from '../controllers/Threads/fetchSingleThread'
 import { createDraft } from '../controllers/Drafts/createDraft'
@@ -31,6 +31,8 @@ import { health } from '../controllers/health'
 import { deleteThread } from '../controllers/Threads/deleteThread'
 import { thrashThread } from '../controllers/Threads/thrashThread'
 import { updateThread } from '../controllers/Threads/updateThread'
+import { getSendAs } from '../controllers/Users/getSendAs'
+import { updateSendAs } from '../controllers/Users/updateSendAs'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -50,7 +52,7 @@ router.get(
 router.get(
   '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
 
-  fetchThreads
+  fetchSimpleThreads
 )
 router.patch('/api/thread/:id?', updateThread)
 router.post('/api/thread/thrash/:id?', thrashThread)
@@ -86,5 +88,7 @@ router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
 router.get('/api/health', health)
+router.get('/api/settings/getSendAs', getSendAs)
+router.put('/api/settings/updateSendAs', updateSendAs)
 
 export default router

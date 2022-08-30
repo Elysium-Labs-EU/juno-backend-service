@@ -8,6 +8,7 @@ run-server:
 	yarn start:watch
 
 run-clean-server:
+	redis-cli flushall
 	brew services restart redis
 	yarn
 	yarn start:watch

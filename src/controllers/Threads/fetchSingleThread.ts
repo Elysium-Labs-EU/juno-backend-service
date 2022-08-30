@@ -1,6 +1,7 @@
 import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import threadFullRemap from '../../utils/threadFullRemap'
 
 const getThread = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -13,7 +14,8 @@ const getThread = async (auth, req) => {
       format: 'full',
     })
     if (response && response.data) {
-      return response.data
+      const expandedResponse = await threadFullRemap(response.data, gmail)
+      return expandedResponse
     }
     return new Error('Thread not found...')
   } catch (err) {

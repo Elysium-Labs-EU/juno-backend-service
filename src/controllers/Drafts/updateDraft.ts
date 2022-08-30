@@ -28,7 +28,7 @@ const exportDraft = async (auth, req) => {
         },
       },
     })
-    if (response) {
+    if (response?.status === 200) {
       return response
     }
     return new Error('Draft is not updated...')
