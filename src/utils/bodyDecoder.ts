@@ -220,6 +220,7 @@ export const prioritizeHTMLbodyObject = (response: {
  * @returns {Object} - an object with emailHTML and emailFileHTML
  */
 
+// TODO: Possible enhancement: Check for header on file: Content-Disposition "attachment"
 // Check the string body for CID (files) if there is a match, replace the img tag with the fetched file
 export const placeInlineImage = (orderedObject: {
   emailHTML: string

@@ -244,6 +244,56 @@ var authMiddleware = (requestFunction) => (req, res) =>
     }
   })
 
+// src/utils/fetchAttachments.ts
+var foundAttachments = []
+var loopThroughParts = ({ input, reset = false }) => {
+  var _a, _b
+  if (reset) {
+    foundAttachments = []
+  }
+  if (input) {
+    for (let i = 0; input.length > i; i += 1) {
+      if (Object.prototype.hasOwnProperty.call(input[i], 'parts')) {
+        loopThroughParts({ input: input[i].parts })
+      }
+      if (
+        !Object.prototype.hasOwnProperty.call(input[i], 'parts') &&
+        Object.prototype.hasOwnProperty.call(input[i], 'filename') &&
+        ((_b = (_a = input[i]) == null ? void 0 : _a.headers) == null
+          ? void 0
+          : _b.find((header) => {
+              var _a2
+              return (_a2 = header == null ? void 0 : header.name) == null
+                ? void 0
+                : _a2.includes('Content-Disposition')
+            }))
+      ) {
+        foundAttachments.push(input[i])
+      }
+    }
+  }
+  return foundAttachments
+}
+function checkAttachment(message) {
+  var _a, _b
+  if (
+    Object.prototype.hasOwnProperty.call(
+      message == null ? void 0 : message.payload,
+      'parts'
+    )
+  ) {
+    const parts =
+      (_b =
+        (_a = message == null ? void 0 : message.payload) == null
+          ? void 0
+          : _a.parts) == null
+        ? void 0
+        : _b.filter((item) => item !== void 0)
+    return loopThroughParts({ input: parts, reset: true })
+  }
+  return []
+}
+
 // src/utils/findHeader.ts
 function findHeader(rawMessage, query) {
   var _a, _b, _c, _d, _e, _f
@@ -289,16 +339,22 @@ var remapPayloadHeaders = (rawMessage) => {
     bcc: findHeader(rawMessage, 'Bcc'),
   }
 }
-var remapFullMessage = (rawMessage) =>
+var remapSimpleMessage = (rawMessage) =>
   __async(void 0, null, function* () {
+    var _a
     return {
       id: rawMessage.id,
       threadId: rawMessage.threadId,
       labelIds: rawMessage.labelIds,
       snippet: rawMessage.snippet,
-      payload: __spreadProps(__spreadValues({}, rawMessage.payload), {
+      payload: {
+        mimeType:
+          (_a = rawMessage == null ? void 0 : rawMessage.payload) == null
+            ? void 0
+            : _a.mimeType,
         headers: remapPayloadHeaders(rawMessage),
-      }),
+        files: checkAttachment(rawMessage),
+      },
       sizeEstimate: rawMessage.sizeEstimate,
       historyId: rawMessage.historyId,
       internalDate: rawMessage.internalDate,
@@ -308,7 +364,7 @@ function threadSimpleRemap(rawObject) {
   return __async(this, null, function* () {
     if (rawObject.messages) {
       const mappedMessages = rawObject.messages.map((message) =>
-        remapFullMessage(message)
+        remapSimpleMessage(message)
       )
       return {
         id: rawObject.id,
@@ -329,7 +385,7 @@ function singleThread(thread, gmail) {
         const response = yield gmail.users.threads.get({
           userId: USER,
           id,
-          format: 'metadata',
+          format: 'full',
         })
         if (response && response.data) {
           return response.data
@@ -796,7 +852,7 @@ var remapPayloadHeaders2 = (rawMessage) => {
     bcc: findHeader(rawMessage, 'Bcc'),
   }
 }
-var remapFullMessage2 = (rawMessage, gmail) =>
+var remapFullMessage = (rawMessage, gmail) =>
   __async(void 0, null, function* () {
     return {
       id: rawMessage.id,
@@ -820,7 +876,7 @@ function threadFullRemap(rawObject, gmail) {
   return __async(this, null, function* () {
     if (rawObject.messages) {
       const mappedMessages = rawObject.messages.map((message) =>
-        remapFullMessage2(message, gmail)
+        remapFullMessage(message, gmail)
       )
       return {
         id: rawObject.id,
@@ -1016,7 +1072,7 @@ var getDraft = (auth, req) =>
         format: 'full',
       })
       if (response && response.data) {
-        const decodedResult2 = yield remapFullMessage2(
+        const decodedResult2 = yield remapFullMessage(
           response.data.message,
           gmail
         )
