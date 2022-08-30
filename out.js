@@ -247,49 +247,48 @@ var authMiddleware = (requestFunction) => (req, res) =>
 // src/utils/fetchAttachments.ts
 var foundAttachments = []
 var loopThroughParts = ({ input, reset = false }) => {
-  var _a, _b
+  var _a
   if (reset) {
     foundAttachments = []
   }
   if (input) {
-    for (let i = 0; input.length > i; i += 1) {
-      if (Object.prototype.hasOwnProperty.call(input[i], 'parts')) {
-        loopThroughParts({ input: input[i].parts })
+    for (const inputParts of input) {
+      if (Object.prototype.hasOwnProperty.call(inputParts, 'parts')) {
+        loopThroughParts({ input: inputParts.parts })
       }
       if (
-        !Object.prototype.hasOwnProperty.call(input[i], 'parts') &&
-        Object.prototype.hasOwnProperty.call(input[i], 'filename') &&
-        ((_b = (_a = input[i]) == null ? void 0 : _a.headers) == null
+        !Object.prototype.hasOwnProperty.call(inputParts, 'parts') &&
+        Object.prototype.hasOwnProperty.call(inputParts, 'filename') &&
+        ((_a = inputParts == null ? void 0 : inputParts.headers) == null
           ? void 0
-          : _b.find((header) => {
+          : _a.find((header) => {
               var _a2
               return (_a2 = header == null ? void 0 : header.name) == null
                 ? void 0
                 : _a2.includes('Content-Disposition')
             }))
       ) {
-        foundAttachments.push(input[i])
+        foundAttachments.push(inputParts)
       }
     }
   }
   return foundAttachments
 }
 function checkAttachment(message) {
-  var _a, _b
+  var _a
   if (
     Object.prototype.hasOwnProperty.call(
       message == null ? void 0 : message.payload,
       'parts'
     )
   ) {
-    const parts =
-      (_b =
+    return loopThroughParts({
+      input:
         (_a = message == null ? void 0 : message.payload) == null
           ? void 0
-          : _a.parts) == null
-        ? void 0
-        : _b.filter((item) => item !== void 0)
-    return loopThroughParts({ input: parts, reset: true })
+          : _a.parts,
+      reset: true,
+    })
   }
   return []
 }

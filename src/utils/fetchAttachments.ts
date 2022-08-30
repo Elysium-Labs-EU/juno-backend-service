@@ -13,18 +13,18 @@ const loopThroughParts = ({
     foundAttachments = []
   }
   if (input) {
-    for (let i = 0; input.length > i; i += 1) {
-      if (Object.prototype.hasOwnProperty.call(input[i], 'parts')) {
-        loopThroughParts({ input: input[i].parts })
+    for (const inputParts of input) {
+      if (Object.prototype.hasOwnProperty.call(inputParts, 'parts')) {
+        loopThroughParts({ input: inputParts.parts })
       }
       if (
-        !Object.prototype.hasOwnProperty.call(input[i], 'parts') &&
-        Object.prototype.hasOwnProperty.call(input[i], 'filename') &&
-        input[i]?.headers?.find((header) =>
+        !Object.prototype.hasOwnProperty.call(inputParts, 'parts') &&
+        Object.prototype.hasOwnProperty.call(inputParts, 'filename') &&
+        inputParts?.headers?.find((header) =>
           header?.name?.includes('Content-Disposition')
         )
       ) {
-        foundAttachments.push(input[i])
+        foundAttachments.push(inputParts)
       }
     }
   }
@@ -40,8 +40,7 @@ const loopThroughParts = ({
 
 export default function checkAttachment(message: gmail_v1.Schema$Message) {
   if (Object.prototype.hasOwnProperty.call(message?.payload, 'parts')) {
-    const parts = message?.payload?.parts?.filter((item) => item !== undefined)
-    return loopThroughParts({ input: parts, reset: true })
+    return loopThroughParts({ input: message?.payload?.parts, reset: true })
   }
   return []
 }
