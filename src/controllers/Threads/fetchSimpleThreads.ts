@@ -14,7 +14,7 @@ async function singleThread(
       const response = await gmail.users.threads.get({
         userId: USER,
         id,
-        format: 'metadata',
+        format: 'full',
       })
       if (response && response.data) {
         return response.data

@@ -1,4 +1,5 @@
 import { gmail_v1 } from 'googleapis'
+import checkAttachment from './fetchAttachments'
 import findHeader from './findHeader'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
@@ -13,15 +14,16 @@ const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   }
 }
 
-const remapFullMessage = async (rawMessage: gmail_v1.Schema$Message) => {
+const remapSimpleMessage = async (rawMessage: gmail_v1.Schema$Message) => {
   return {
     id: rawMessage.id,
     threadId: rawMessage.threadId,
     labelIds: rawMessage.labelIds,
     snippet: rawMessage.snippet,
     payload: {
-      ...rawMessage.payload,
+      mimeType: rawMessage?.payload?.mimeType,
       headers: remapPayloadHeaders(rawMessage),
+      files: checkAttachment(rawMessage),
     },
     sizeEstimate: rawMessage.sizeEstimate,
     historyId: rawMessage.historyId,
@@ -34,7 +36,7 @@ export default async function threadSimpleRemap(
 ) {
   if (rawObject.messages) {
     const mappedMessages = rawObject.messages.map((message) =>
-      remapFullMessage(message)
+      remapSimpleMessage(message)
     )
 
     return {
