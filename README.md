@@ -35,9 +35,11 @@ Thank you for using Juno 😎 . With the help of its contributors, your experien
 Looking for a first issue to tackle?
 
 - Issues tagged with `good first issue` are a good place to start.
-- Or contact me via Discord: `Dhr_RT#5882`
+- Or contact me via [Discord](https://discord.gg/773bDh4X)
 
 Contributing guidelines
 
 - When encountering a bug, create a Github issue with the bug label in the active project. Be as specific as possible.
 - To suggest a new feature, create a Github issue with the enhancement label in the active project.
+
+Your system should run on the development `dev` branch to be in sync with the latest development changes.
