@@ -1,5 +1,6 @@
 import { gmail_v1 } from 'googleapis'
 import bodyDecoder from './bodyDecoder'
+import checkAttachment from './fetchAttachments'
 import findHeader from './findHeader'
 
 /**
@@ -51,13 +52,15 @@ export const remapFullMessage = async (
     labelIds: rawMessage.labelIds,
     snippet: rawMessage.snippet,
     payload: {
-      ...rawMessage.payload,
+      mimeType: rawMessage?.payload?.mimeType,
       headers: remapPayloadHeaders(rawMessage),
       body: await bodyDecoder({
         inputObject: rawMessage.payload,
         messageId: rawMessage?.id,
         gmail,
       }),
+      files: checkAttachment(rawMessage),
+      parts: rawMessage?.payload?.parts,
     },
     sizeEstimate: rawMessage.sizeEstimate,
     historyId: rawMessage.historyId,

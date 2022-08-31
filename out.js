@@ -856,19 +856,29 @@ var remapPayloadHeaders2 = (rawMessage) => {
 }
 var remapFullMessage = (rawMessage, gmail) =>
   __async(void 0, null, function* () {
+    var _a, _b
     return {
       id: rawMessage.id,
       threadId: rawMessage.threadId,
       labelIds: rawMessage.labelIds,
       snippet: rawMessage.snippet,
-      payload: __spreadProps(__spreadValues({}, rawMessage.payload), {
+      payload: {
+        mimeType:
+          (_a = rawMessage == null ? void 0 : rawMessage.payload) == null
+            ? void 0
+            : _a.mimeType,
         headers: remapPayloadHeaders2(rawMessage),
         body: yield bodyDecoder_default({
           inputObject: rawMessage.payload,
           messageId: rawMessage == null ? void 0 : rawMessage.id,
           gmail,
         }),
-      }),
+        files: checkAttachment(rawMessage),
+        parts:
+          (_b = rawMessage == null ? void 0 : rawMessage.payload) == null
+            ? void 0
+            : _b.parts,
+      },
       sizeEstimate: rawMessage.sizeEstimate,
       historyId: rawMessage.historyId,
       internalDate: rawMessage.internalDate,
