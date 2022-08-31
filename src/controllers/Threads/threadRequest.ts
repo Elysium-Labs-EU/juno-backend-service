@@ -1,5 +1,5 @@
 import { gmail_v1 } from 'googleapis'
-import { USER } from '../../constants/globalConstants'
+import { ALL_LABEL, USER } from '../../constants/globalConstants'
 
 const requestBodyCreator = (req) => {
   const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {
@@ -10,7 +10,10 @@ const requestBodyCreator = (req) => {
       ? 20
       : Number(req.query.maxResults)
   if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    requestBody.labelIds = req.query.labelIds
+    // If the label ALL is sent, don't send a label.
+    if (req.query.labelIds !== ALL_LABEL) {
+      requestBody.labelIds = req.query.labelIds
+    }
   }
   if (req.query.pageToken) {
     requestBody.pageToken = req.query.pageToken
