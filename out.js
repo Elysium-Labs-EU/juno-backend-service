@@ -67,6 +67,7 @@ var USER = 'me'
 var INVALID_TOKEN = 'Invalid token'
 var INVALID_SESSION = 'Invalid session'
 var MIME_TYPE_NO_INLINE = 'application/octet-stream'
+var ALL_LABEL = 'ALL'
 
 // src/controllers/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
@@ -78,7 +79,9 @@ var requestBodyCreator = (req) => {
       ? 20
       : Number(req.query.maxResults)
   if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    requestBody.labelIds = req.query.labelIds
+    if (req.query.labelIds !== ALL_LABEL) {
+      requestBody.labelIds = req.query.labelIds
+    }
   }
   if (req.query.pageToken) {
     requestBody.pageToken = req.query.pageToken
