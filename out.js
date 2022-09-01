@@ -67,7 +67,7 @@ var USER = 'me'
 var INVALID_TOKEN = 'Invalid token'
 var INVALID_SESSION = 'Invalid session'
 var MIME_TYPE_NO_INLINE = 'application/octet-stream'
-var ALL_LABEL = 'ALL'
+var ARCHIVE_LABEL = 'ARCHIVE'
 
 // src/controllers/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
@@ -79,8 +79,10 @@ var requestBodyCreator = (req) => {
       ? 20
       : Number(req.query.maxResults)
   if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    if (req.query.labelIds !== ALL_LABEL) {
+    if (req.query.labelIds !== ARCHIVE_LABEL) {
       requestBody.labelIds = req.query.labelIds
+    } else {
+      requestBody.q = '-label:inbox -label:sent -label:drafts -label:Juno/To Do'
     }
   }
   if (req.query.pageToken) {

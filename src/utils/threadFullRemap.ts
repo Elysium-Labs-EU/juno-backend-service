@@ -45,7 +45,6 @@ export const remapFullMessage = async (
   rawMessage: gmail_v1.Schema$Message,
   gmail: gmail_v1.Gmail
 ) => {
-  // This mapping doesn't takes files into account.
   return {
     id: rawMessage.id,
     threadId: rawMessage.threadId,
