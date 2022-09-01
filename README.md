@@ -1,4 +1,4 @@
-# Juno backend - [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bd0d77d77497483dae29b0360594c0fe)](https://www.codacy.com/gh/Elysium-Labs-EU/juno-backend-service/dashboard?utm_source=github.com&utm_medium=referral&utm_content=Elysium-Labs-EU/juno-backend-service&utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/ca475727f33352dffbfb/maintainability)](https://codeclimate.com/github/Elysium-Labs-EU/juno-backend-service/maintainability) [![CircleCI](https://circleci.com/gh/Elysium-Labs-EU/juno-backend-service/tree/main.svg?style=svg)](https://circleci.com/gh/Elysium-Labs-EU/juno-backend-service/tree/main) [![discord](https://img.shields.io/badge/Discord-Community-blueviolet)](https://discord.gg/773bDh4X) 
+# Juno backend - [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bd0d77d77497483dae29b0360594c0fe)](https://www.codacy.com/gh/Elysium-Labs-EU/juno-backend-service/dashboard?utm_source=github.com&utm_medium=referral&utm_content=Elysium-Labs-EU/juno-backend-service&utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/ca475727f33352dffbfb/maintainability)](https://codeclimate.com/github/Elysium-Labs-EU/juno-backend-service/maintainability) [![CircleCI](https://circleci.com/gh/Elysium-Labs-EU/juno-backend-service/tree/main.svg?style=svg)](https://circleci.com/gh/Elysium-Labs-EU/juno-backend-service/tree/main) [![discord](https://img.shields.io/badge/Discord-Community-blueviolet)](https://discord.gg/peRDGMn9xa) 
 
 The backend code for the application Juno, build in NodeJS. This serves as an API layer connecting the React frontend to the Gmail API services.
 
@@ -35,7 +35,7 @@ Thank you for using Juno 😎 . With the help of its contributors, your experien
 Looking for a first issue to tackle?
 
 - Issues tagged with `good first issue` are a good place to start.
-- Or contact me via [Discord](https://discord.gg/773bDh4X)
+- Or contact me via [Discord](https://discord.gg/peRDGMn9xa)
 
 Contributing guidelines
 
