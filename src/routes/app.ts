@@ -4,17 +4,22 @@ import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 import indexRoute from './index'
 import * as Sentry from '@sentry/node'
-import * as Tracing from '@sentry/tracing'
 import assertNonNullish from '../utils/assertNonNullish'
 import session from 'express-session'
 import redis from 'connect-redis'
 import initiateRedis from '../data/redis'
+import initSentry from '../utils/initSentry'
+import compression from 'compression'
 
-process.env.NODE_ENV !== 'production' && console.log('Booted')
+process.env.NODE_ENV !== 'production' &&
+  console.log('Booted and ready for usage')
 
 const app = express()
 const redisStore = redis(session)
 const redisClient = initiateRedis()
+
+// Compress all HTTP responses
+app.use(compression())
 
 app.set('trust proxy', 1)
 
@@ -25,6 +30,8 @@ app.use(
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
     resave: false,
+    proxy: true,
+    // rolling: true,
     cookie: {
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
@@ -40,6 +47,8 @@ app.use((req, res, next) => {
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
+  res.setHeader('credentials', 'include')
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL)
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -49,7 +58,6 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, PATCH, OPTIONS'
   )
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
   next()
 })
 
@@ -81,22 +89,7 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
-// process.env.NODE_ENV !== 'development' &&
-process.env.SENTRY_DSN &&
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    integrations: [
-      // enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true }),
-      // enable Express.js middleware tracing
-      new Tracing.Integrations.Express({ app }),
-    ],
-
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
-    tracesSampleRate: 1.0,
-  })
+process.env.NODE_ENV !== 'development' && initSentry(app)
 
 app.use('/', indexRoute)
 

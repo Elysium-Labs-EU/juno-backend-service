@@ -2,7 +2,7 @@ import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const deleteMessage = async (auth, req) => {
+const deleteSingleThread = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
   const {
     body: { id },
@@ -18,6 +18,6 @@ const deleteMessage = async (auth, req) => {
     throw Error('Message not removed...')
   }
 }
-export const deleteSingleMessage = async (req, res) => {
-  authMiddleware(deleteMessage)(req, res)
+export const deleteThread = async (req, res) => {
+  authMiddleware(deleteSingleThread)(req, res)
 }

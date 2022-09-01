@@ -1,4 +1,14 @@
 SHELL := /bin/bash
+env-setup:
+	brew install redis
+	yarn
+
 run-server:
-	export GOOGLE_APPLICATION_CREDENTIALS="/Users/r.tuerlings/Coding/juno-backend-service/juno-d50a9-firebase-adminsdk-kp20s-8c1ea515e7.json"
+	yarn
+	yarn start:watch
+
+run-clean-server:
+	redis-cli flushall
+	brew services restart redis
+	yarn
 	yarn start:watch

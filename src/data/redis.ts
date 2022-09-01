@@ -5,7 +5,7 @@ const initiateRedis = () => {
   assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
 
   const redisClient =
-    process.env.REDIS_MODE === 'development'
+    process.env.NODE_ENV === 'development'
       ? createClient({
           legacyMode: true,
         })

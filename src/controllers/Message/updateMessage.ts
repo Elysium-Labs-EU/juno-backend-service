@@ -2,10 +2,10 @@ import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const updateMessage = async (auth, req) => {
+const modifyMessage = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
   try {
-    const response = await gmail.users.threads.modify({
+    const response = await gmail.users.messages.modify({
       userId: USER,
       id: req.params.id,
       requestBody: req.body,
@@ -18,6 +18,6 @@ const updateMessage = async (auth, req) => {
     throw Error(`Single message returned an error: ${err}`)
   }
 }
-export const updateSingleMessage = async (req, res) => {
-  authMiddleware(updateMessage)(req, res)
+export const updateMessage = async (req, res) => {
+  authMiddleware(modifyMessage)(req, res)
 }

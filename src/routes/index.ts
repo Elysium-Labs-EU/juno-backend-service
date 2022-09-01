@@ -2,7 +2,7 @@ import express from 'express'
 
 const router = express.Router()
 
-import { fetchThreads } from '../controllers/Threads/fetchThreads'
+import { fetchSimpleThreads } from '../controllers/Threads/fetchSimpleThreads'
 import { fetchFullThreads } from '../controllers/Threads/fetchFullThreads'
 import { fetchSingleThread } from '../controllers/Threads/fetchSingleThread'
 import { createDraft } from '../controllers/Drafts/createDraft'
@@ -11,9 +11,9 @@ import { fetchSingleDraft } from '../controllers/Drafts/fetchSingleDraft'
 import { sendDraft } from '../controllers/Drafts/sendDraft'
 import { updateDraft } from '../controllers/Drafts/updateDraft'
 import { deleteDraft } from '../controllers/Drafts/deleteDraft'
-import { updateSingleMessage } from '../controllers/Message/updateSingleMessage'
-import { thrashSingleMessage } from '../controllers/Message/thrashSingleMessage'
-import { deleteSingleMessage } from '../controllers/Message/deleteSingleMessage'
+import { updateMessage } from '../controllers/Message/updateMessage'
+import { thrashMessage } from '../controllers/Message/thrashMessage'
+import { deleteMessage } from '../controllers/Message/deleteMessage'
 import { fetchMessageAttachment } from '../controllers/Message/fetchMessageAttachment'
 import { sendMessage } from '../controllers/Message/sendMessage'
 import { createLabels } from '../controllers/Labels/createLabels'
@@ -28,6 +28,11 @@ import { listHistory } from '../controllers/History/listHistory'
 import { getAuthenticateClient, getAuthUrl } from '../google/index'
 import { logoutUser } from '../controllers/Users/logoutUser'
 import { health } from '../controllers/health'
+import { deleteThread } from '../controllers/Threads/deleteThread'
+import { thrashThread } from '../controllers/Threads/thrashThread'
+import { updateThread } from '../controllers/Threads/updateThread'
+import { getSendAs } from '../controllers/Users/getSendAs'
+import { updateSendAs } from '../controllers/Users/updateSendAs'
 
 router.get(
   '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
@@ -47,8 +52,11 @@ router.get(
 router.get(
   '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
 
-  fetchThreads
+  fetchSimpleThreads
 )
+router.patch('/api/thread/:id?', updateThread)
+router.post('/api/thread/thrash/:id?', thrashThread)
+router.delete('/api/thread/', deleteThread)
 router.get('/api/thread/:id?', fetchSingleThread)
 router.post('/api/create-draft', createDraft)
 router.get(
@@ -60,9 +68,9 @@ router.get('/api/draft/:id?', fetchSingleDraft)
 router.delete('/api/draft/', deleteDraft)
 router.post('/api/send-draft', sendDraft)
 router.put('/api/update-draft/?:id?', updateDraft)
-router.patch('/api/message/:id?', updateSingleMessage)
-router.post('/api/message/thrash/:id?', thrashSingleMessage)
-router.delete('/api/message/', deleteSingleMessage)
+router.patch('/api/message/:id?', updateMessage)
+router.post('/api/message/thrash/:id?', thrashMessage)
+router.delete('/api/message/', deleteMessage)
 router.get(
   '/api/message/attachment/:messageId?/:id?',
 
@@ -80,5 +88,7 @@ router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
 router.get('/api/history/:startHistoryId?', listHistory)
 router.get('/api/health', health)
+router.get('/api/settings/getSendAs', getSendAs)
+router.put('/api/settings/updateSendAs', updateSendAs)
 
 export default router
