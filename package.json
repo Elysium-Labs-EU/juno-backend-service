@@ -45,8 +45,7 @@
     "swagger-jsdoc": "^6.2.5",
     "swagger-ui-express": "^4.5.0",
     "ts-loader": "^9.3.1",
-    "typesync": "^0.9.2",
-    "worker-farm": "^1.7.0"
+    "typesync": "^0.9.2"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",
