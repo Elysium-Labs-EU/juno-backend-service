@@ -1,6 +1,7 @@
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 import * as global from '../constants/globalConstants'
+import { IAuthorize } from './types'
 
 const SCOPES = [
   'openid',
@@ -10,26 +11,12 @@ const SCOPES = [
   // 'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/gmail.readonly',
+  // 'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/contacts.other.readonly',
-  'https://www.googleapis.com/auth/gmail.settings.basic',
-  'https://www.googleapis.com/auth/gmail.settings.sharing',
+  // 'https://www.googleapis.com/auth/gmail.settings.basic',
+  // 'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
-
-interface IAuthClient {
-  access_token: string
-  refresh_token: string
-  scope: string
-  token_type: 'Bearer'
-  id_token: string
-  expiry_date: number
-}
-
-interface IAuthorize {
-  session: IAuthClient | null
-  idToken?: string
-}
 
 const createAuthClientObject = () => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
@@ -137,7 +124,7 @@ export const getAuthUrl = async (req, res) => {
     const authorizeUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES,
-      // prompt: 'consent',
+      prompt: 'consent',
       // include_granted_scopes: true,
     })
 
