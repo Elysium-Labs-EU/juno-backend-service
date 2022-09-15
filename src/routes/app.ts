@@ -24,6 +24,7 @@ app.use(compression())
 app.set('trust proxy', 1)
 
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+const SEVEN_DAYS = 1000 * 60 * 10080
 app.use(
   session({
     store: new redisStore({ client: redisClient }),
@@ -31,12 +32,11 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     proxy: true,
-    // rolling: true,
     cookie: {
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       // maxAge: 1000 * 60 * 1,
-      maxAge: 1000 * 60 * 10080,
+      maxAge: SEVEN_DAYS,
       sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })

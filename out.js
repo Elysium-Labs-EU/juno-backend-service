@@ -110,6 +110,8 @@ var SCOPES = [
   'openid',
   'profile',
   'https://mail.google.com',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -242,6 +244,7 @@ var authMiddleware = (requestFunction) => (req, res) =>
     try {
       const auth = yield authenticateUser(req)
       const response = yield requestFunction(auth, req)
+      console.log('final response', response)
       return res.status(200).json(response)
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
@@ -989,22 +992,46 @@ var fetchSingleThread = (req, res) =>
 import { google as google4 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/messageEncoding.ts
-var messageEncoding = ({ body, subject, to, cc, bcc, signature }) => {
-  const utf8Subject = `=?utf-8?B?${Buffer.from(
-    subject != null ? subject : ''
-  ).toString('base64')}?=`
+import fs from 'fs'
+var messageEncoding = ({ body, subject, to, cc, bcc, signature, files }) => {
+  var _a
+  const nl = '\n'
+  const boundary = '__juno__'
+  const utf8Subject = subject
+    ? `=?utf-8?B?${Buffer.from((_a = subject[0]) != null ? _a : '').toString(
+        'base64'
+      )}?=`
+    : ''
   const messageParts = [
     `To: ${to}`,
     `Cc: ${cc}`,
     `Bcc: ${bcc}`,
-    'Content-Type: text/html; charset=utf-8',
     'MIME-Version: 1.0',
     `Subject: ${utf8Subject}`,
+    'Content-Type: multipart/alternative; boundary=' + boundary + nl,
+    '--' + boundary,
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64' + nl,
+    `${body}` + nl,
     '',
-    `${body}`,
     `${signature && signature.length > 0 && signature}`,
   ]
-  const message = messageParts.join('\n')
+  if ('file' in files && files.file.length > 0) {
+    for (const file of files.file) {
+      const content = fs.readFileSync(file.filepath)
+      const toBase64 = Buffer.from(content).toString('base64')
+      const attachment = [
+        `--${boundary}`,
+        `Content-Type: ${file.mimetype}; name="${file.originalFilename}"`,
+        `Content-Disposition: attachment; filename="${file.originalFilename}"`,
+        `Content-Transfer-Encoding: base64${nl}`,
+        toBase64,
+      ]
+      messageParts.push(attachment.join(nl))
+    }
+  }
+  messageParts.push('--' + boundary + '--')
+  const message = messageParts.join(nl)
   const encodedMessage = Buffer.from(message)
     .toString('base64')
     .replace(/\+/g, '-')
@@ -1014,39 +1041,56 @@ var messageEncoding = ({ body, subject, to, cc, bcc, signature }) => {
 }
 var messageEncoding_default = messageEncoding
 
+// src/utils/formFieldParser.ts
+import formidable from './node_modules/formidable/src/index.js'
+function formFieldParser(req) {
+  return __async(this, null, function* () {
+    const form = formidable({ multiples: true })
+    const formFields = yield new Promise(function (resolve, reject) {
+      form.parse(req, function (err, fields, files) {
+        if (err) {
+          reject(err)
+          return
+        }
+        console.log('the files', files)
+        resolve(__spreadValues({ files }, fields))
+      })
+    })
+    console.log('formFields', formFields)
+    return formFields
+  })
+}
+
 // src/controllers/Drafts/createDraft.ts
-var setupDraft = (auth, req) =>
-  __async(void 0, null, function* () {
+function setupDraft(auth, req) {
+  return __async(this, null, function* () {
     const gmail = google4.gmail({ version: 'v1', auth })
-    const { threadId, messageId, labelIds } = req.body
     try {
-      const response = yield gmail.users.drafts.create({
-        userId: USER,
-        requestBody: {
-          message: {
-            raw: messageEncoding_default(req.body),
-            id: messageId,
-            threadId,
-            labelIds,
-            payload: {
-              partId: '',
-              mimeType: 'text/html',
-              filename: '',
-              body: {
-                data: messageEncoding_default(req.body),
-              },
+      if ('body' in req) {
+        const parsedResult = yield formFieldParser(req)
+        const { threadId, messageId } = parsedResult
+        const response = yield gmail.users.drafts.create({
+          userId: USER,
+          requestBody: {
+            message: {
+              raw: messageEncoding_default(parsedResult),
+              id: messageId,
+              threadId,
             },
           },
-        },
-      })
-      if (response) {
-        return response
+        })
+        if ((response == null ? void 0 : response.status) === 200) {
+          console.log('START RESPONSE', response)
+          return response
+        } else {
+          return new Error('Draft is not created...')
+        }
       }
-      return new Error('Draft is not created...')
     } catch (err) {
       throw Error(`Create Draft returned an error ${err}`)
     }
   })
+}
 var createDraft = (req, res) =>
   __async(void 0, null, function* () {
     authMiddleware(setupDraft)(req, res)
@@ -1133,32 +1177,29 @@ import { google as google8 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft2 = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google8.gmail({ version: 'v1', auth })
-    const { draftId, threadId, messageId, labelIds } = req.body
+    console.log('here2')
     try {
-      const response = yield gmail.users.drafts.update({
-        userId: USER,
-        id: draftId,
-        requestBody: {
-          message: {
-            raw: messageEncoding_default(req.body),
-            id: messageId,
-            threadId,
-            labelIds,
-            payload: {
-              partId: '',
-              mimeType: 'text/html',
-              filename: '',
-              body: {
-                data: messageEncoding_default(req.body),
-              },
+      if ('body' in req) {
+        const parsedResult = yield formFieldParser(req)
+        const { draftId, threadId, messageId, labelIds } = parsedResult
+        const response = yield gmail.users.drafts.update({
+          userId: USER,
+          id: draftId,
+          requestBody: {
+            message: {
+              raw: messageEncoding_default(parsedResult),
+              id: messageId,
+              threadId,
+              labelIds,
             },
           },
-        },
-      })
-      if ((response == null ? void 0 : response.status) === 200) {
-        return response
+        })
+        if ((response == null ? void 0 : response.status) === 200) {
+          return response
+        } else {
+          return new Error('Draft is not updated...')
+        }
       }
-      return new Error('Draft is not updated...')
     } catch (err) {
       throw Error(`Draft update encountered an error ${err}`)
     }
@@ -1802,6 +1843,7 @@ var redisClient = redis_default()
 app.use(compression())
 app.set('trust proxy', 1)
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+var SEVEN_DAYS = 1e3 * 60 * 10080
 app.use(
   session({
     store: new redisStore({ client: redisClient }),
@@ -1812,7 +1854,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
-      maxAge: 1e3 * 60 * 10080,
+      maxAge: SEVEN_DAYS,
       sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })
