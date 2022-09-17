@@ -110,8 +110,6 @@ var SCOPES = [
   'openid',
   'profile',
   'https://mail.google.com',
-  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
-  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -244,7 +242,6 @@ var authMiddleware = (requestFunction) => (req, res) =>
     try {
       const auth = yield authenticateUser(req)
       const response = yield requestFunction(auth, req)
-      console.log('final response', response)
       return res.status(200).json(response)
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
@@ -652,8 +649,9 @@ var inlineImageDecoder = (_0) =>
         }
         return attachment
       }
+      return
     }
-    return 'Message attachment not found...'
+    return
   })
 var loopThroughBodyParts = (_0) =>
   __async(void 0, [_0], function* ({ inputObject, signal }) {
@@ -993,7 +991,16 @@ import { google as google4 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/messageEncoding.ts
 import fs from 'fs'
-var messageEncoding = ({ body, subject, to, cc, bcc, signature, files }) => {
+var messageEncoding = ({
+  from,
+  body,
+  subject,
+  to,
+  cc,
+  bcc,
+  signature,
+  files,
+}) => {
   var _a
   const nl = '\n'
   const boundary = '__juno__'
@@ -1003,6 +1010,7 @@ var messageEncoding = ({ body, subject, to, cc, bcc, signature, files }) => {
       )}?=`
     : ''
   const messageParts = [
+    `From: ${from}`,
     `To: ${to}`,
     `Cc: ${cc}`,
     `Bcc: ${bcc}`,
@@ -1052,11 +1060,9 @@ function formFieldParser(req) {
           reject(err)
           return
         }
-        console.log('the files', files)
         resolve(__spreadValues({ files }, fields))
       })
     })
-    console.log('formFields', formFields)
     return formFields
   })
 }
@@ -1080,7 +1086,6 @@ function setupDraft(auth, req) {
           },
         })
         if ((response == null ? void 0 : response.status) === 200) {
-          console.log('START RESPONSE', response)
           return response
         } else {
           return new Error('Draft is not created...')
@@ -1122,6 +1127,7 @@ var fetchDrafts = (req, res) =>
 import { google as google6 } from './node_modules/googleapis/build/src/index.js'
 var getDraft = (auth, req) =>
   __async(void 0, null, function* () {
+    var _a
     const gmail = google6.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.get({
@@ -1129,7 +1135,7 @@ var getDraft = (auth, req) =>
         id: req.params.id,
         format: 'full',
       })
-      if (response && response.data) {
+      if (response && ((_a = response.data) == null ? void 0 : _a.message)) {
         const decodedResult2 = yield remapFullMessage(
           response.data.message,
           gmail
@@ -1181,7 +1187,7 @@ var exportDraft2 = (auth, req) =>
     try {
       if ('body' in req) {
         const parsedResult = yield formFieldParser(req)
-        const { draftId, threadId, messageId, labelIds } = parsedResult
+        const { draftId, threadId, messageId } = parsedResult
         const response = yield gmail.users.drafts.update({
           userId: USER,
           id: draftId,
@@ -1190,7 +1196,6 @@ var exportDraft2 = (auth, req) =>
               raw: messageEncoding_default(parsedResult),
               id: messageId,
               threadId,
-              labelIds,
             },
           },
         })
@@ -1318,7 +1323,7 @@ var getAttachment = (auth, req) =>
       if (response && response.data) {
         return response.data
       }
-      return new Error('Message attachment not found...')
+      return new Error('Message attachment not found4...')
     } catch (err) {
       throw Error(`Get Attachment returned an error: ${err}`)
     }

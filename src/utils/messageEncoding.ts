@@ -60,6 +60,7 @@ export interface IMessageEncoding {
 }
 
 const messageEncoding = ({
+  from,
   body,
   subject,
   to,
@@ -67,8 +68,7 @@ const messageEncoding = ({
   bcc,
   signature,
   files,
-}: // from,
-IMessageEncoding): string => {
+}: IMessageEncoding): string => {
   const nl = '\n'
   const boundary = '__juno__'
 
@@ -78,7 +78,7 @@ IMessageEncoding): string => {
 
   // TODO: Check the from sending pattern - to have the name of the sender as a display name
   const messageParts = [
-    // `From: ${from}`,
+    `From: ${from}`,
     `To: ${to}`,
     `Cc: ${cc}`,
     `Bcc: ${bcc}`,

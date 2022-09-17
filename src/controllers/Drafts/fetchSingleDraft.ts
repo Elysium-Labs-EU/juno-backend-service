@@ -12,7 +12,7 @@ const getDraft = async (auth, req) => {
       id: req.params.id,
       format: 'full',
     })
-    if (response && response.data) {
+    if (response && response.data?.message) {
       const decodedResult = await remapFullMessage(response.data.message, gmail)
       return { id: response.data.id, message: decodedResult }
     }

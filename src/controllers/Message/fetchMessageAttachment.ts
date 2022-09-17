@@ -16,7 +16,7 @@ const getAttachment = async (auth, req) => {
     if (response && response.data) {
       return response.data
     }
-    return new Error('Message attachment not found...')
+    return new Error('Message attachment not found4...')
   } catch (err) {
     throw Error(`Get Attachment returned an error: ${err}`)
   }

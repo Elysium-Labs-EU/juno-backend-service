@@ -12,8 +12,6 @@ async function setupDraft(auth, req) {
       const parsedResult: any = await formFieldParser(req)
       const { threadId, messageId } = parsedResult
 
-      // console.table(req.body)
-
       const response = await gmail.users.drafts.create({
         userId: USER,
         requestBody: {
@@ -21,20 +19,11 @@ async function setupDraft(auth, req) {
             raw: messageEncoding(parsedResult),
             id: messageId,
             threadId,
-            // payload: {
-            //   partId: '',
-            //   // mimeType: 'text/html',
-            //   filename: '',
-            //   body: {
-            //     data: messageEncoding(req.body),
-            //   },
-            // },
           },
         },
       })
 
       if (response?.status === 200) {
-        console.log('START RESPONSE', response)
         return response
       } else {
         return new Error('Draft is not created...')

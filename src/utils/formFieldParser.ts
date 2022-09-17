@@ -9,10 +9,8 @@ export default async function formFieldParser(req) {
         reject(err)
         return
       }
-      console.log('the files', files)
       resolve({ files, ...fields })
     })
   })
-  console.log('formFields', formFields)
   return formFields
 }

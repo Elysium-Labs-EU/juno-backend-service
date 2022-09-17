@@ -6,14 +6,13 @@ import formFieldParser from '../../utils/formFieldParser'
 
 const exportDraft = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
-  // const { draftId, threadId, messageId, labelIds, mimeType } = req.body
 
   console.log('here2')
 
   try {
     if ('body' in req) {
       const parsedResult: any = await formFieldParser(req)
-      const { draftId, threadId, messageId, labelIds } = parsedResult
+      const { draftId, threadId, messageId } = parsedResult
 
       const response = await gmail.users.drafts.update({
         userId: USER,
@@ -23,15 +22,6 @@ const exportDraft = async (auth, req) => {
             raw: messageEncoding(parsedResult),
             id: messageId,
             threadId,
-            labelIds,
-            // payload: {
-            //   partId: '',
-            //   // mimeType: 'text/html',
-            //   filename: '',
-            //   body: {
-            //     data: messageEncoding(req.body),
-            //   },
-            // },
           },
         },
       })
