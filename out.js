@@ -1754,22 +1754,27 @@ import redis from './node_modules/connect-redis/index.js'
 
 // src/data/redis.ts
 import { createClient } from './node_modules/redis/dist/index.js'
-var initiateRedis = () => {
+var cloudRedis = () => {
+  assertNonNullish(process.env.REDIS_USER, 'No Redis User defined')
+  assertNonNullish(process.env.REDIS_PASS, 'No Redis Pass defined')
   assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
+  return createClient({
+    username: process.env.REDIS_USER,
+    password: process.env.REDIS_PASS,
+    socket: {
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT),
+    },
+    legacyMode: true,
+  })
+}
+var initiateRedis = () => {
   const redisClient2 =
     process.env.NODE_ENV === 'development'
       ? createClient({
           legacyMode: true,
         })
-      : createClient({
-          username: process.env.REDIS_USER,
-          password: process.env.REDIS_PASS,
-          socket: {
-            host: process.env.REDIS_HOST,
-            port: parseInt(process.env.REDIS_PORT),
-          },
-          legacyMode: true,
-        })
+      : cloudRedis()
   redisClient2.connect().catch(console.error)
   return redisClient2
 }
