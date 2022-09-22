@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@google-cloud/local-auth": "^2.0.0",
-    "@sentry/node": "^7.11.1",
+    "@sentry/node": "^7.12.0",
     "@sentry/tracing": "^7.11.1",
     "autolinker": "^3.16.0",
     "base64url": "^3.0.1",
