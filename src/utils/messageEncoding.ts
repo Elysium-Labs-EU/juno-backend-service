@@ -76,7 +76,6 @@ const messageEncoding = ({
     ? `=?utf-8?B?${Buffer.from(subject[0] ?? '').toString('base64')}?=`
     : ''
 
-  // TODO: Check the from sending pattern - to have the name of the sender as a display name
   const messageParts = [
     `From: ${from}`,
     `To: ${to}`,
@@ -89,18 +88,11 @@ const messageEncoding = ({
     'Content-Type: multipart/alternative; boundary=' + boundary + nl,
     '--' + boundary,
 
-    // 'Content-Type: text/plain; charset=UTF-8',
-    // 'Content-Transfer-Encoding: base64' + nl,
-    // Utilities.base64Encode(msg.body.text, Utilities.Charset.UTF_8) + nl,
-    // '--' + boundary,
-
     'Content-Type: text/html; charset=UTF-8',
     'Content-Transfer-Encoding: base64' + nl,
-    // Utilities.base64Encode(msg.body.html, Utilities.Charset.UTF_8) + nl,
     `${body}` + nl,
 
     '',
-    // `${body}`,
     `${signature && signature.length > 0 && signature}`,
   ]
 

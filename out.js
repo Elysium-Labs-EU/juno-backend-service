@@ -1074,14 +1074,13 @@ function setupDraft(auth, req) {
     try {
       if ('body' in req) {
         const parsedResult = yield formFieldParser(req)
-        const { threadId, messageId } = parsedResult
+        const { threadId } = parsedResult
         const response = yield gmail.users.drafts.create({
           userId: USER,
           requestBody: {
             message: {
               raw: messageEncoding_default(parsedResult),
-              id: messageId,
-              threadId,
+              threadId: threadId[0],
             },
           },
         })
@@ -1183,7 +1182,6 @@ import { google as google8 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft2 = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google8.gmail({ version: 'v1', auth })
-    console.log('here2')
     try {
       if ('body' in req) {
         const parsedResult = yield formFieldParser(req)
@@ -1194,8 +1192,8 @@ var exportDraft2 = (auth, req) =>
           requestBody: {
             message: {
               raw: messageEncoding_default(parsedResult),
-              id: messageId,
-              threadId,
+              id: messageId[0],
+              threadId: threadId[0],
             },
           },
         })
@@ -1684,7 +1682,7 @@ var updateSingleThread = (auth, req) =>
         id: req.params.id,
         requestBody: req.body,
       })
-      if (response && response.data) {
+      if (response && (response == null ? void 0 : response.data)) {
         return response.data
       }
       return new Error('Message not found...')

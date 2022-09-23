@@ -7,8 +7,6 @@ import formFieldParser from '../../utils/formFieldParser'
 const exportDraft = async (auth, req) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
-  console.log('here2')
-
   try {
     if ('body' in req) {
       const parsedResult: any = await formFieldParser(req)
@@ -20,8 +18,8 @@ const exportDraft = async (auth, req) => {
         requestBody: {
           message: {
             raw: messageEncoding(parsedResult),
-            id: messageId,
-            threadId,
+            id: messageId[0],
+            threadId: threadId[0],
           },
         },
       })

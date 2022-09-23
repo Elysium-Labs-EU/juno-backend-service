@@ -1,7 +1,7 @@
 import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
-import messageEncoding, { IMessageEncoding } from '../../utils/messageEncoding'
+import messageEncoding from '../../utils/messageEncoding'
 import formFieldParser from '../../utils/formFieldParser'
 
 async function setupDraft(auth, req) {
@@ -10,15 +10,14 @@ async function setupDraft(auth, req) {
   try {
     if ('body' in req) {
       const parsedResult: any = await formFieldParser(req)
-      const { threadId, messageId } = parsedResult
+      const { threadId } = parsedResult
 
       const response = await gmail.users.drafts.create({
         userId: USER,
         requestBody: {
           message: {
             raw: messageEncoding(parsedResult),
-            id: messageId,
-            threadId,
+            threadId: threadId[0],
           },
         },
       })
