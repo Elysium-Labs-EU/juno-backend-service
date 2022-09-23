@@ -10,7 +10,7 @@ const updateSingleThread = async (auth, req) => {
       id: req.params.id,
       requestBody: req.body,
     })
-    if (response && response.data) {
+    if (response && response?.data) {
       return response.data
     }
     return new Error('Message not found...')

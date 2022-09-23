@@ -2,35 +2,32 @@ import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import messageEncoding from '../../utils/messageEncoding'
+import formFieldParser from '../../utils/formFieldParser'
 
-const setupDraft = async (auth, req) => {
+async function setupDraft(auth, req) {
   const gmail = google.gmail({ version: 'v1', auth })
-  const { threadId, messageId, labelIds } = req.body
 
   try {
-    const response = await gmail.users.drafts.create({
-      userId: USER,
-      requestBody: {
-        message: {
-          raw: messageEncoding(req.body),
-          id: messageId,
-          threadId,
-          labelIds,
-          payload: {
-            partId: '',
-            mimeType: 'text/html',
-            filename: '',
-            body: {
-              data: messageEncoding(req.body),
-            },
+    if ('body' in req) {
+      const parsedResult: any = await formFieldParser(req)
+      const { threadId } = parsedResult
+
+      const response = await gmail.users.drafts.create({
+        userId: USER,
+        requestBody: {
+          message: {
+            raw: messageEncoding(parsedResult),
+            threadId: threadId[0],
           },
         },
-      },
-    })
-    if (response) {
-      return response
+      })
+
+      if (response?.status === 200) {
+        return response
+      } else {
+        return new Error('Draft is not created...')
+      }
     }
-    return new Error('Draft is not created...')
   } catch (err) {
     throw Error(`Create Draft returned an error ${err}`)
   }

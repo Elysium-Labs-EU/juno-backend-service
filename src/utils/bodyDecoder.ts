@@ -78,8 +78,9 @@ const inlineImageDecoder = async ({
       }
       return attachment
     }
+    return
   }
-  return 'Message attachment not found...'
+  return
 }
 
 // This function recursively loops in the emailbody to find a body to decode. If initially priotizes the last object in a parts array.
