@@ -35,7 +35,6 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
-      // maxAge: 1000 * 60 * 1,
       maxAge: SEVEN_DAYS,
       sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
@@ -49,7 +48,12 @@ app.use((req, res, next) => {
   )
   res.setHeader('credentials', 'include')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL)
+  res.setHeader(
+    'Access-Control-Allow-Origin',
+    process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true'
+      ? 'http://localhost:3000'
+      : process.env.FRONTEND_URL
+  )
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'
