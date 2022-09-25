@@ -28,8 +28,8 @@ export const authorizeSession = async ({ session }: IAuthorizeSession) => {
       oAuth2Client.setCredentials(session)
       return oAuth2Client
     } catch (err) {
-      return 'Error during authorization'
       console.log('err', JSON.stringify(err))
+      return 'Error during authorization'
     }
   } else {
     return global.INVALID_TOKEN
