@@ -1,6 +1,5 @@
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
-import * as global from '../constants/globalConstants'
 
 const SCOPES = [
   'openid',
