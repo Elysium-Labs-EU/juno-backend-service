@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken'
 
 const fetchProfile = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
-  // console.log('AUTH', jwt.decode(auth.credentials.id_token))
   try {
     const response = await gmail.users.getProfile({
       userId: USER,

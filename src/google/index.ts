@@ -17,21 +17,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
 
-interface IAuthClient {
-  access_token: string
-  refresh_token: string
-  scope: string
-  token_type: 'Bearer'
-  id_token: string
-  expiry_date: number
-}
-
-interface IAuthorize {
-  session: IAuthClient | null
-  idToken?: string
-}
-
-const createAuthClientObject = () => {
+export const createAuthClientObject = () => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -50,75 +36,42 @@ const createAuthClientObject = () => {
 }
 
 /**
- * @function authorize
- * @param {object} - takes in an object of the active Cookie session and requestAccessToken, the token is send by the user.
- * Compares the saved session's accessToken with the requestAccessToken. If it is a match, it uses the session to authorize the user.
- * @returns an OAuth2Client object if session exists, an error otherwise.
- */
-
-export const authorize = async ({ session }: IAuthorize) => {
-  if (session) {
-    const oAuth2Client = createAuthClientObject()
-    try {
-      oAuth2Client.setCredentials(session)
-      return oAuth2Client
-    } catch (err) {
-      return 'Error during authorization'
-      console.log('err', JSON.stringify(err))
-    }
-  } else {
-    return global.INVALID_TOKEN
-  }
-}
-
-/**
- * @function authenticate
- * @param {object} - takes in an object of the active Cookie session and idToken, the token is send by the user
- * @returns a string 'INVALID Session' if the session doesn't exist, the response of the function 'Authorize' in case the function is called. Or console logs the error if there is a problem.
- */
-
-export const authenticate = async ({ session, idToken }: IAuthorize) => {
-  try {
-    if (
-      typeof session !== 'undefined' &&
-      idToken &&
-      (await checkIdValidity(idToken))
-    ) {
-      const response = await authorize({ session })
-      return response
-    }
-    // If session is invalid, require the user to sign in again.
-    return global.INVALID_SESSION
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-/**
  * @function getAuthenticateClient
  * Create a new OAuth2Client, and go through the OAuth2 content
  * workflow. Return the partial client to the callback.
+ * And store the oAuthClient to the user express session.
  */
 export const getAuthenticateClient = async (req, res) => {
   try {
-    const { code } = req.body
+    const { code, state } = req.body
     // Now that we have the code, use that to acquire tokens.
     if (code) {
       const oAuth2Client = createAuthClientObject()
       const response = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
-      req.session.oAuthClient = oAuth2Client.credentials
+      if (state !== 'noSession') {
+        req.session.oAuthClient = oAuth2Client.credentials
+      }
       // Send back the id token to later use to verify the ID Token.
       const idToken = oAuth2Client.credentials.id_token
       //
       if (idToken) {
+        // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
+        if (state === 'noSession') {
+          return res.status(200).json({
+            credentials: oAuth2Client.credentials,
+          })
+        }
+        // If the session route is used, only send back the id Token to frontend, and use the session to authorize.
         return res.status(200).json({
           idToken: idToken.replace(/['"]+/g, ''),
         })
       } else {
         return res.status(400).json('Id Token not found')
       }
+    } else {
+      res.status(400).json('Code not found')
     }
   } catch (err) {
     process.env.NODE_ENV === 'development' && console.log('ERROR', err)
@@ -137,8 +90,7 @@ export const getAuthUrl = async (req, res) => {
     const authorizeUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES,
-      // prompt: 'consent',
-      // include_granted_scopes: true,
+      state: req?.body?.noSession ? 'noSession' : undefined,
     })
 
     return res.status(200).json(authorizeUrl)
@@ -152,7 +104,7 @@ export const getAuthUrl = async (req, res) => {
  * @param token received ID token from the API call
  * @returns true if the token is valid, false otherwise
  */
-const checkIdValidity = async (token: string) => {
+export const checkIdValidity = async (token: string) => {
   const oAuth2Client = createAuthClientObject()
   try {
     await oAuth2Client.verifyIdToken({
