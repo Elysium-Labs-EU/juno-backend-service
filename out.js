@@ -134,54 +134,32 @@ var createAuthClientObject = () => {
     `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
   )
 }
-var authorize = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2 }) {
-    if (session2) {
-      const oAuth2Client = createAuthClientObject()
-      try {
-        oAuth2Client.setCredentials(session2)
-        return oAuth2Client
-      } catch (err) {
-        return 'Error during authorization'
-        console.log('err', JSON.stringify(err))
-      }
-    } else {
-      return INVALID_TOKEN
-    }
-  })
-var authenticate = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, idToken }) {
-    try {
-      if (
-        typeof session2 !== 'undefined' &&
-        idToken &&
-        (yield checkIdValidity(idToken))
-      ) {
-        const response = yield authorize({ session: session2 })
-        return response
-      }
-      return INVALID_SESSION
-    } catch (err) {
-      console.error(err)
-    }
-  })
 var getAuthenticateClient = (req, res) =>
   __async(void 0, null, function* () {
     try {
-      const { code } = req.body
+      const { code, state } = req.body
       if (code) {
         const oAuth2Client = createAuthClientObject()
         const response = yield oAuth2Client.getToken(code)
         oAuth2Client.setCredentials(response.tokens)
-        req.session.oAuthClient = oAuth2Client.credentials
+        if (state !== 'noSession') {
+          req.session.oAuthClient = oAuth2Client.credentials
+        }
         const idToken = oAuth2Client.credentials.id_token
         if (idToken) {
+          if (state === 'noSession') {
+            return res.status(200).json({
+              credentials: oAuth2Client.credentials,
+            })
+          }
           return res.status(200).json({
             idToken: idToken.replace(/['"]+/g, ''),
           })
         } else {
           return res.status(400).json('Id Token not found')
         }
+      } else {
+        res.status(400).json('Code not found')
       }
     } catch (err) {
       process.env.NODE_ENV === 'development' && console.log('ERROR', err)
@@ -191,11 +169,17 @@ var getAuthenticateClient = (req, res) =>
   })
 var getAuthUrl = (req, res) =>
   __async(void 0, null, function* () {
+    var _a
     try {
       const oAuth2Client = createAuthClientObject()
       const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: SCOPES,
+        state: (
+          (_a = req == null ? void 0 : req.body) == null ? void 0 : _a.noSession
+        )
+          ? 'noSession'
+          : void 0,
       })
       return res.status(200).json(authorizeUrl)
     } catch (err) {
@@ -216,11 +200,79 @@ var checkIdValidity = (token) =>
     }
   })
 
+// src/google/localRoute.ts
+var authorizeLocal = (_0) =>
+  __async(void 0, [_0], function* ({ credentials }) {
+    if (credentials) {
+      const oAuth2Client = createAuthClientObject()
+      try {
+        oAuth2Client.setCredentials(credentials)
+        return oAuth2Client
+      } catch (err) {
+        return 'Error during authorization'
+        console.log('err', JSON.stringify(err))
+      }
+    } else {
+      return INVALID_TOKEN
+    }
+  })
+var authenticateLocal = (_0) =>
+  __async(void 0, [_0], function* ({ credentials }) {
+    try {
+      if (
+        credentials &&
+        (credentials == null ? void 0 : credentials.id_token) &&
+        (yield checkIdValidity(
+          credentials == null ? void 0 : credentials.id_token
+        ))
+      ) {
+        const response = yield authorizeLocal({ credentials })
+        return response
+      }
+      return INVALID_TOKEN
+    } catch (err) {
+      console.error(err)
+    }
+  })
+
+// src/google/sessionRoute.ts
+var authorizeSession = (_0) =>
+  __async(void 0, [_0], function* ({ session: session2 }) {
+    if (session2) {
+      const oAuth2Client = createAuthClientObject()
+      try {
+        oAuth2Client.setCredentials(session2)
+        return oAuth2Client
+      } catch (err) {
+        return 'Error during authorization'
+        console.log('err', JSON.stringify(err))
+      }
+    } else {
+      return INVALID_TOKEN
+    }
+  })
+var authenticateSession = (_0) =>
+  __async(void 0, [_0], function* ({ session: session2, idToken }) {
+    try {
+      if (
+        typeof session2 !== 'undefined' &&
+        idToken &&
+        (yield checkIdValidity(idToken))
+      ) {
+        const response = yield authorizeSession({ session: session2 })
+        return response
+      }
+      return INVALID_SESSION
+    } catch (err) {
+      console.error(err)
+    }
+  })
+
 // src/controllers/Users/authenticateUser.ts
-var authenticateUser = (req) =>
+var authenticateUserSession = (req) =>
   __async(void 0, null, function* () {
     var _a, _b
-    const response = yield authenticate({
+    const response = yield authenticateSession({
       session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
       idToken: (_b = req.headers) == null ? void 0 : _b.authorization,
     })
@@ -235,12 +287,35 @@ var authenticateUser = (req) =>
     }
     return response
   })
+var authenticateUserLocal = (req) =>
+  __async(void 0, null, function* () {
+    var _a
+    const response = yield authenticateLocal({
+      credentials: JSON.parse(
+        (_a = req.headers) == null ? void 0 : _a.authorization
+      ),
+    })
+    if (response === INVALID_TOKEN) {
+      throw Error(response)
+    }
+    if (response === 'Error during authorization') {
+      throw Error(response)
+    }
+    return response
+  })
 
 // src/middleware/authMiddleware.ts
 var authMiddleware = (requestFunction) => (req, res) =>
   __async(void 0, null, function* () {
+    var _a
     try {
-      const auth = yield authenticateUser(req)
+      const useLocalRoute =
+        typeof JSON.parse(
+          (_a = req.headers) == null ? void 0 : _a.authorization
+        ) === 'object'
+      const auth = useLocalRoute
+        ? yield authenticateUserLocal(req)
+        : yield authenticateUserSession(req)
       const response = yield requestFunction(auth, req)
       return res.status(200).json(response)
     } catch (err) {
@@ -1781,7 +1856,7 @@ router.get('/api/labels', fetchLabels)
 router.get('/api/label/:id?', fetchSingleLabel)
 router.patch('/api/labels', updateLabels)
 router.delete('/api/labels', removeLabels)
-router.get('/api/auth/oauth/google/', getAuthUrl)
+router.post('/api/auth/oauth/google/', getAuthUrl)
 router.post('/api/auth/oauth/google/callback/', getAuthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
