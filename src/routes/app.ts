@@ -60,9 +60,12 @@ function determineAllowOrigin(req) {
   return process.env.FRONTEND_URL
 }
 
-function determineAllowCredentials() {
+function determineAllowCredentials(req) {
   if (process.env.NODE_ENV === 'production') {
-    if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
+    if (
+      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+      req.headers?.referer.includes('localhost')
+    ) {
       return 'false'
     }
     return 'true'
@@ -72,7 +75,10 @@ function determineAllowCredentials() {
 
 app.use((req, res, next) => {
   res.setHeader('credentials', 'include')
-  res.setHeader('Access-Control-Allow-Credentials', determineAllowCredentials())
+  res.setHeader(
+    'Access-Control-Allow-Credentials',
+    determineAllowCredentials(req)
+  )
   res.setHeader('Access-Control-Allow-Origin', determineAllowOrigin(req))
   res.setHeader(
     'Access-Control-Allow-Headers',
