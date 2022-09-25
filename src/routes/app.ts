@@ -44,14 +44,14 @@ if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true') {
   )
 }
 
-function determineAllowOrigin() {
+function determineAllowOrigin(req) {
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
   if (process.env.NODE_ENV === 'production') {
     if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-      return '*'
+      return req.headers?.referer
     }
     return process.env.FRONTEND_URL
   }
@@ -71,7 +71,7 @@ function determineAllowCredentials() {
 app.use((req, res, next) => {
   res.setHeader('credentials', 'include')
   res.setHeader('Access-Control-Allow-Credentials', determineAllowCredentials())
-  res.setHeader('Access-Control-Allow-Origin', determineAllowOrigin())
+  res.setHeader('Access-Control-Allow-Origin', determineAllowOrigin(req))
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'

@@ -47,17 +47,15 @@ export const authenticateSession = async ({
   idToken,
 }: IAuthorizeSession) => {
   try {
-    if (
-      typeof session !== 'undefined' &&
-      idToken &&
-      (await checkIdValidity(idToken))
-    ) {
-      const response = await authorizeSession({ session })
-      return response
+    if (typeof session !== 'undefined') {
+      if (idToken && (await checkIdValidity(idToken))) {
+        const response = await authorizeSession({ session })
+        return response
+      }
     }
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {
-    console.error(err)
+    console.error('CHECK IT HERE', err)
   }
 }
