@@ -31,7 +31,11 @@ export const createAuthClientObject = () => {
   return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
+    `${
+      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true'
+        ? 'http://localhost:3000'
+        : process.env.FRONTEND_URL
+    }${process.env.GOOGLE_REDIRECT_URL}`
   )
 }
 
