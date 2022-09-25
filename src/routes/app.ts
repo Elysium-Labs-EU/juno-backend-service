@@ -23,23 +23,25 @@ app.use(compression())
 
 app.set('trust proxy', 1)
 
-assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
-const SEVEN_DAYS = 1000 * 60 * 10080
-app.use(
-  session({
-    store: new redisStore({ client: redisClient }),
-    saveUninitialized: false,
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    proxy: true,
-    cookie: {
-      secure: process.env.NODE_ENV !== 'production' ? false : true,
-      httpOnly: true,
-      maxAge: SEVEN_DAYS,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
-    },
-  })
-)
+if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true') {
+  assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+  const SEVEN_DAYS = 1000 * 60 * 10080
+  app.use(
+    session({
+      store: new redisStore({ client: redisClient }),
+      saveUninitialized: false,
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      proxy: true,
+      cookie: {
+        secure: process.env.NODE_ENV !== 'production' ? false : true,
+        httpOnly: true,
+        maxAge: SEVEN_DAYS,
+        sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      },
+    })
+  )
+}
 
 function determineAllowOrigin() {
   assertNonNullish(
