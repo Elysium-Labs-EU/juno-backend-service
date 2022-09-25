@@ -51,7 +51,9 @@ function determineAllowOrigin(req) {
   )
   if (process.env.NODE_ENV === 'production') {
     if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-      return req.headers?.referer
+      return req.headers?.referer.endsWith('/')
+        ? req.headers?.referer.slice(0, -1)
+        : req.headers?.referer
     }
     return process.env.FRONTEND_URL
   }
