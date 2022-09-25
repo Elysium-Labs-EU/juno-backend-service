@@ -41,19 +41,24 @@ app.use(
   })
 )
 
-app.use((req, res, next) => {
+function determineAllowOrigin() {
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
+  if (process.env.NODE_ENV !== 'production') {
+    if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
+      return '*'
+    }
+    return process.env.FRONTEND_URL
+  }
+  return process.env.FRONTEND_URL
+}
+
+app.use((req, res, next) => {
   res.setHeader('credentials', 'include')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
-  res.setHeader(
-    'Access-Control-Allow-Origin',
-    process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true'
-      ? 'http://localhost:3000'
-      : process.env.FRONTEND_URL
-  )
+  res.setHeader('Access-Control-Allow-Origin', determineAllowOrigin())
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'
