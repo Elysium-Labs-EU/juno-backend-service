@@ -10,6 +10,11 @@ import redis from 'connect-redis'
 import initiateRedis from '../data/redis'
 import initSentry from '../utils/initSentry'
 import compression from 'compression'
+import pinoHTTP from 'pino-http'
+
+import logger from './logger'
+
+logger.info('Hello, world!')
 
 process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
@@ -122,6 +127,13 @@ app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 process.env.NODE_ENV !== 'development' && initSentry(app)
 
 app.use('/', indexRoute)
+
+// Use Pino to log HTTP requests
+app.use(
+  pinoHTTP({
+    logger,
+  })
+)
 
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance

@@ -131,8 +131,15 @@ var createAuthClientObject = (req) => {
   function determineAuthURLStructure() {
     var _a, _b, _c
     if (process.env.NODE_ENV === 'production') {
-      if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-        return ((_a = req.headers) == null ? void 0 : _a.referer.endsWith('/'))
+      if (
+        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        req
+      ) {
+        return (
+          (_a = req == null ? void 0 : req.headers) == null
+            ? void 0
+            : _a.referer.endsWith('/')
+        )
           ? (_b = req.headers) == null
             ? void 0
             : _b.referer.slice(0, -1)
@@ -253,12 +260,27 @@ var authenticateLocal = (_0) =>
 
 // src/google/sessionRoute.ts
 var authorizeSession = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2 }) {
+  __async(void 0, [_0], function* ({ session: session2, idToken }) {
+    var _a
     if (session2) {
       const oAuth2Client = createAuthClientObject()
       try {
-        oAuth2Client.setCredentials(session2)
-        return oAuth2Client
+        oAuth2Client.setCredentials({ refresh_token: session2.refresh_token })
+        const accessToken = yield oAuth2Client.getAccessToken()
+        console.log('accessToken', accessToken)
+        if (accessToken.res) {
+          oAuth2Client.setCredentials(accessToken.res.data)
+        } else {
+          const refreshedToken = yield oAuth2Client.refreshAccessToken()
+          oAuth2Client.setCredentials(
+            (_a = refreshedToken == null ? void 0 : refreshedToken.res) == null
+              ? void 0
+              : _a.data
+          )
+        }
+        if (idToken && (yield checkIdValidity(idToken))) {
+          return oAuth2Client
+        }
       } catch (err) {
         console.log('err', JSON.stringify(err))
         return 'Error during authorization'
@@ -271,10 +293,8 @@ var authenticateSession = (_0) =>
   __async(void 0, [_0], function* ({ session: session2, idToken }) {
     try {
       if (typeof session2 !== 'undefined') {
-        if (idToken && (yield checkIdValidity(idToken))) {
-          const response = yield authorizeSession({ session: session2 })
-          return response
-        }
+        const response = yield authorizeSession({ session: session2, idToken })
+        return response
       }
       return INVALID_SESSION
     } catch (err) {
@@ -1932,6 +1952,18 @@ function initSentry(app2) {
 
 // src/routes/app.ts
 import compression from './node_modules/compression/index.js'
+import pinoHTTP from './node_modules/pino-http/logger.js'
+
+// src/routes/logger.ts
+import pino from './node_modules/pino/pino.js'
+import path from 'path'
+var logger_default = pino(
+  { level: process.env.PINO_LOG_LEVEL || 'info' },
+  pino.destination(`${path.dirname('')}/combined.log`)
+)
+
+// src/routes/app.ts
+logger_default.info('Hello, world!')
 process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
 var app = express2()
@@ -2033,6 +2065,11 @@ var swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 process.env.NODE_ENV !== 'development' && initSentry(app)
 app.use('/', routes_default)
+app.use(
+  pinoHTTP({
+    logger: logger_default,
+  })
+)
 app.use(Sentry2.Handlers.requestHandler())
 app.use(Sentry2.Handlers.tracingHandler())
 app.use(Sentry2.Handlers.errorHandler())
