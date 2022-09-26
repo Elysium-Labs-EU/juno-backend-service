@@ -21,12 +21,26 @@ interface IAuthorizeSession {
  * @returns an OAuth2Client object if session exists, an error otherwise.
  */
 
-export const authorizeSession = async ({ session }: IAuthorizeSession) => {
+export const authorizeSession = async ({
+  session,
+  idToken,
+}: IAuthorizeSession) => {
   if (session) {
     const oAuth2Client = createAuthClientObject()
     try {
-      oAuth2Client.setCredentials(session)
-      return oAuth2Client
+      oAuth2Client.setCredentials({ refresh_token: session.refresh_token })
+      const accessToken = await oAuth2Client.getAccessToken()
+      console.log('accessToken', accessToken)
+      // oAuth2Client.setCredentials(session)
+      if (accessToken.res) {
+        oAuth2Client.setCredentials(accessToken.res.data)
+      } else {
+        const refreshedToken = await oAuth2Client.refreshAccessToken()
+        oAuth2Client.setCredentials(refreshedToken?.res?.data)
+      }
+      if (idToken && (await checkIdValidity(idToken))) {
+        return oAuth2Client
+      }
     } catch (err) {
       console.log('err', JSON.stringify(err))
       return 'Error during authorization'
@@ -48,10 +62,8 @@ export const authenticateSession = async ({
 }: IAuthorizeSession) => {
   try {
     if (typeof session !== 'undefined') {
-      if (idToken && (await checkIdValidity(idToken))) {
-        const response = await authorizeSession({ session })
-        return response
-      }
+      const response = await authorizeSession({ session, idToken })
+      return response
     }
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
