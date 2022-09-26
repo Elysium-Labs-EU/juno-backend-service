@@ -16,7 +16,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
 
-export const createAuthClientObject = () => {
+export const createAuthClientObject = (req) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -27,14 +27,22 @@ export const createAuthClientObject = () => {
     'No Google Redirect URL found'
   )
 
+  function determineAuthURLStructure() {
+    if (process.env.NODE_ENV === 'production') {
+      if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
+        return req.headers?.referer.endsWith('/')
+          ? req.headers?.referer.slice(0, -1)
+          : req.headers?.referer
+      }
+      return process.env.FRONTEND_URL
+    }
+    return process.env.FRONTEND_URL
+  }
+
   return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true'
-        ? 'http://localhost:3000'
-        : process.env.FRONTEND_URL
-    }${process.env.GOOGLE_REDIRECT_URL}`
+    `${determineAuthURLStructure()}${process.env.GOOGLE_REDIRECT_URL}`
   )
 }
 
@@ -49,7 +57,7 @@ export const getAuthenticateClient = async (req, res) => {
     const { code, state } = req.body
     // Now that we have the code, use that to acquire tokens.
     if (code) {
-      const oAuth2Client = createAuthClientObject()
+      const oAuth2Client = createAuthClientObject(req)
       const response = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
