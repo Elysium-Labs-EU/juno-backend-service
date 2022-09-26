@@ -16,7 +16,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
 
-export const createAuthClientObject = (req) => {
+export const createAuthClientObject = (req?: any) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -30,7 +30,7 @@ export const createAuthClientObject = (req) => {
   function determineAuthURLStructure() {
     if (process.env.NODE_ENV === 'production') {
       if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-        return req.headers?.referer.endsWith('/')
+        return req?.headers?.referer.endsWith('/')
           ? req.headers?.referer.slice(0, -1)
           : req.headers?.referer
       }
