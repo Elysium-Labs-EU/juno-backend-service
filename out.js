@@ -14,7 +14,7 @@ var __defNormalProp = (obj, key, value) =>
       })
     : (obj[key] = value)
 var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
+  for (var prop in (b ||= {}))
     if (__hasOwnProp.call(b, prop)) __defNormalProp(a, prop, b[prop])
   if (__getOwnPropSymbols)
     for (var prop of __getOwnPropSymbols(b)) {
@@ -118,7 +118,7 @@ var SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.basic',
   'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
-var createAuthClientObject = () => {
+var createAuthClientObject = (req) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -128,10 +128,26 @@ var createAuthClientObject = () => {
     process.env.GOOGLE_REDIRECT_URL,
     'No Google Redirect URL found'
   )
+  function determineAuthURLStructure() {
+    var _a, _b, _c
+    if (process.env.NODE_ENV === 'production') {
+      if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
+        return ((_a = req.headers) == null ? void 0 : _a.referer.endsWith('/'))
+          ? (_b = req.headers) == null
+            ? void 0
+            : _b.referer.slice(0, -1)
+          : (_c = req.headers) == null
+          ? void 0
+          : _c.referer
+      }
+      return process.env.FRONTEND_URL
+    }
+    return process.env.FRONTEND_URL
+  }
   return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.FRONTEND_URL}${process.env.GOOGLE_REDIRECT_URL}`
+    `${determineAuthURLStructure()}${process.env.GOOGLE_REDIRECT_URL}`
   )
 }
 var getAuthenticateClient = (req, res) =>
@@ -139,7 +155,7 @@ var getAuthenticateClient = (req, res) =>
     try {
       const { code, state } = req.body
       if (code) {
-        const oAuth2Client = createAuthClientObject()
+        const oAuth2Client = createAuthClientObject(req)
         const response = yield oAuth2Client.getToken(code)
         oAuth2Client.setCredentials(response.tokens)
         if (state !== 'noSession') {
@@ -244,8 +260,8 @@ var authorizeSession = (_0) =>
         oAuth2Client.setCredentials(session2)
         return oAuth2Client
       } catch (err) {
-        return 'Error during authorization'
         console.log('err', JSON.stringify(err))
+        return 'Error during authorization'
       }
     } else {
       return INVALID_TOKEN
@@ -254,17 +270,15 @@ var authorizeSession = (_0) =>
 var authenticateSession = (_0) =>
   __async(void 0, [_0], function* ({ session: session2, idToken }) {
     try {
-      if (
-        typeof session2 !== 'undefined' &&
-        idToken &&
-        (yield checkIdValidity(idToken))
-      ) {
-        const response = yield authorizeSession({ session: session2 })
-        return response
+      if (typeof session2 !== 'undefined') {
+        if (idToken && (yield checkIdValidity(idToken))) {
+          const response = yield authorizeSession({ session: session2 })
+          return response
+        }
       }
       return INVALID_SESSION
     } catch (err) {
-      console.error(err)
+      console.error('CHECK IT HERE', err)
     }
   })
 
@@ -1925,31 +1939,65 @@ var redisStore = redis(session)
 var redisClient = redis_default()
 app.use(compression())
 app.set('trust proxy', 1)
-assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
-var SEVEN_DAYS = 1e3 * 60 * 10080
-app.use(
-  session({
-    store: new redisStore({ client: redisClient }),
-    saveUninitialized: false,
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    proxy: true,
-    cookie: {
-      secure: process.env.NODE_ENV !== 'production' ? false : true,
-      httpOnly: true,
-      maxAge: SEVEN_DAYS,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
-    },
-  })
-)
-app.use((req, res, next) => {
+if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true') {
+  assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+  const SEVEN_DAYS = 1e3 * 60 * 10080
+  app.use(
+    session({
+      store: new redisStore({ client: redisClient }),
+      saveUninitialized: false,
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      proxy: true,
+      cookie: {
+        secure: process.env.NODE_ENV !== 'production' ? false : true,
+        httpOnly: true,
+        maxAge: SEVEN_DAYS,
+        sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      },
+    })
+  )
+}
+function determineAllowOrigin(req) {
+  var _a, _b, _c
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
+      return ((_a = req.headers) == null ? void 0 : _a.referer.endsWith('/'))
+        ? (_b = req.headers) == null
+          ? void 0
+          : _b.referer.slice(0, -1)
+        : (_c = req.headers) == null
+        ? void 0
+        : _c.referer
+    }
+    return process.env.FRONTEND_URL
+  }
+  return process.env.FRONTEND_URL
+}
+function determineAllowCredentials(req) {
+  var _a
+  if (process.env.NODE_ENV === 'production') {
+    if (
+      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+      ((_a = req.headers) == null ? void 0 : _a.referer.includes('localhost'))
+    ) {
+      return 'false'
+    }
+    return 'true'
+  }
+  return 'true'
+}
+app.use((req, res, next) => {
   res.setHeader('credentials', 'include')
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL)
+  res.setHeader(
+    'Access-Control-Allow-Credentials',
+    determineAllowCredentials(req)
+  )
+  res.setHeader('Access-Control-Allow-Origin', determineAllowOrigin(req))
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization, sentry-trace'
