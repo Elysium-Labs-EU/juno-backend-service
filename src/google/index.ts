@@ -113,6 +113,7 @@ export const getAuthUrl = async (req, res) => {
       scope: SCOPES,
       state: req?.body?.noSession ? 'noSession' : undefined,
     })
+    console.log('trigger generation url')
 
     return res.status(200).json(authorizeUrl)
   } catch (err) {
