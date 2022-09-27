@@ -74,6 +74,7 @@ export const getAuthenticateClient = async (req, res) => {
       console.log('idToken looks ok')
       //
       if (idToken) {
+        console.log('we are here')
         // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
         if (state === 'noSession') {
           return res.status(200).json({
@@ -84,9 +85,8 @@ export const getAuthenticateClient = async (req, res) => {
         return res.status(200).json({
           idToken: idToken.replace(/['"]+/g, ''),
         })
-      } else {
-        return res.status(400).json('Id Token not found')
       }
+      return res.status(400).json('Id Token not found')
     } else {
       res.status(400).json('Code not found')
     }
