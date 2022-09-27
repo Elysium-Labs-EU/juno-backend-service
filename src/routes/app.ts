@@ -25,6 +25,7 @@ app.set('trust proxy', 1)
 
 // Disable this option when the flag to use a local route, thus no session, is set and true
 if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true') {
+  console.log('firing this')
   assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
   const SEVEN_DAYS = 1000 * 60 * 10080
   app.use(
