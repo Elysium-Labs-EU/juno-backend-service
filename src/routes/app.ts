@@ -29,7 +29,7 @@ console.log(
   process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true'
 )
 if (
-  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV === 'production' ||
   process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true'
 ) {
   console.log('firing this')
