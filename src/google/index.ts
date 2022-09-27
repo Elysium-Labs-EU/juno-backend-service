@@ -92,7 +92,7 @@ export const getAuthenticateClient = async (req, res) => {
       res.status(400).json('Code not found')
     }
   } catch (err) {
-    process.env.NODE_ENV === 'development' && console.log('ERROR', err)
+    console.log('ERROR', err)
     res.status(401).json(err)
     throw Error(err)
   }
