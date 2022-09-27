@@ -42,6 +42,7 @@ export const authorizeSession = async ({
         return oAuth2Client
       }
     } catch (err) {
+      console.log('blocked here')
       console.log('err', JSON.stringify(err))
       return 'Error during authorization'
     }
