@@ -68,9 +68,10 @@ export const getAuthenticateClient = async (req, res) => {
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
       if (state !== 'noSession') {
-        console.log('req.session.oAuthClient', req.session.oAuthClient)
-        console.log('oAuth2Client.credentials', oAuth2Client.credentials)
-        req.session.oAuthClient = oAuth2Client.credentials
+        console.log('req.session', req?.session)
+        console.log('req.session.oAuthClient', req?.session?.oAuthClient)
+        console.log('oAuth2Client.credentials', oAuth2Client?.credentials)
+        req.session.oAuthClient = oAuth2Client?.credentials
       }
       // Send back the id token to later use to verify the ID Token.
       const idToken = oAuth2Client.credentials.id_token
