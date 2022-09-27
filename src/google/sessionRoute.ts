@@ -29,6 +29,7 @@ export const authorizeSession = async ({
     const oAuth2Client = createAuthClientObject()
     try {
       oAuth2Client.setCredentials({ refresh_token: session.refresh_token })
+      console.log('oAuth2Client inline', oAuth2Client)
       const accessToken = await oAuth2Client.getAccessToken()
       console.log('accessToken', accessToken)
       // oAuth2Client.setCredentials(session)
