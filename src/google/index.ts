@@ -60,6 +60,7 @@ export const getAuthenticateClient = async (req, res) => {
     const { code, state } = req.body
     // Now that we have the code, use that to acquire tokens.
     if (code) {
+      console.log('state 123', state)
       const oAuth2Client = createAuthClientObject(req)
       console.log('oAuth2Client looks ok')
       const response = await oAuth2Client.getToken(code)
