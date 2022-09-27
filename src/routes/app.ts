@@ -24,7 +24,14 @@ app.use(compression())
 app.set('trust proxy', 1)
 
 // Disable this option when the flag to use a local route, thus no session, is set and true
-if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true') {
+console.log(
+  'process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND',
+  process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true'
+)
+if (
+  process.env.NODE_ENV !== 'production' &&
+  process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true'
+) {
   console.log('firing this')
   assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
   const SEVEN_DAYS = 1000 * 60 * 10080
