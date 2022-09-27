@@ -61,7 +61,9 @@ export const getAuthenticateClient = async (req, res) => {
     // Now that we have the code, use that to acquire tokens.
     if (code) {
       const oAuth2Client = createAuthClientObject(req)
+      console.log('oAuth2Client', oAuth2Client)
       const response = await oAuth2Client.getToken(code)
+      console.log('response', response)
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
       if (state !== 'noSession') {
