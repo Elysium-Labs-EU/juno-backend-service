@@ -28,6 +28,7 @@ export const authorizeSession = async ({
   if (session) {
     const oAuth2Client = createAuthClientObject()
     try {
+      console.log('session', session)
       oAuth2Client.setCredentials({ refresh_token: session.refresh_token })
       console.log('oAuth2Client inline', oAuth2Client)
       const accessToken = await oAuth2Client.getAccessToken()
