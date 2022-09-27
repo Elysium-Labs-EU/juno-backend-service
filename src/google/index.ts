@@ -71,6 +71,7 @@ export const getAuthenticateClient = async (req, res) => {
       }
       // Send back the id token to later use to verify the ID Token.
       const idToken = oAuth2Client.credentials.id_token
+      console.log('idToken looks ok')
       //
       if (idToken) {
         // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
