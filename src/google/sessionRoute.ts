@@ -29,6 +29,8 @@ export const authorizeSession = async ({
     const oAuth2Client = createAuthClientObject()
     try {
       console.log('session', session)
+
+      // TODO: Check this part of the flow - it crashes here. The session is a valid authClient object, that contains the refresh token, but setting it like this doesn't trigger the correct flow.
       oAuth2Client.setCredentials({ refresh_token: session.refresh_token })
       console.log('oAuth2Client inline', oAuth2Client)
       const accessToken = await oAuth2Client.getAccessToken()
