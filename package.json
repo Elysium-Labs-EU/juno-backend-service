@@ -50,12 +50,12 @@
     "typesync": "^0.9.2"
   },
   "devDependencies": {
-    "@types/compression": "^1.7.2",
+    "@types/compression": "1.7.2",
     "@types/connect-redis": "0.0.18",
     "@types/express": "4.17.14",
     "@types/express-session": "1.17.5",
-    "@types/formidable": "^2.0.5",
-    "@types/jsonwebtoken": "^8.5.9",
+    "@types/formidable": "2.0.5",
+    "@types/jsonwebtoken": "8.5.9",
     "@types/node": "18.7.23",
     "@types/swagger-jsdoc": "6.0.1",
     "@types/swagger-ui-express": "4.1.3",
