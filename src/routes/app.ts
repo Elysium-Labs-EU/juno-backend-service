@@ -71,8 +71,6 @@ function determineAllowCredentials(req) {
 }
 
 app.use((req, res, next) => {
-  console.log('determineAllowOrigin(req)', determineAllowOrigin(req))
-  console.log('determineAllowCredentials(req)', determineAllowCredentials(req))
   res.setHeader('credentials', 'include')
   res.setHeader(
     'Access-Control-Allow-Credentials',

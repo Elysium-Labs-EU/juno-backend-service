@@ -5,8 +5,6 @@ const SCOPES = [
   'openid',
   'profile',
   'https://mail.google.com',
-  // 'https://www.googleapis.com/auth/gmail.addons.current.message.action',
-  // 'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -60,25 +58,16 @@ export const getAuthenticateClient = async (req, res) => {
     const { code, state } = req.body
     // Now that we have the code, use that to acquire tokens.
     if (code) {
-      console.log('state 123', state)
       const oAuth2Client = createAuthClientObject(req)
-      console.log('oAuth2Client looks ok')
       const response = await oAuth2Client.getToken(code)
-      console.log('response looks ok')
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
       if (state !== 'noSession') {
-        console.log('req.session', req?.session)
-        console.log('req.session.oAuthClient', req?.session?.oAuthClient)
-        console.log('oAuth2Client.credentials', oAuth2Client?.credentials)
         req.session.oAuthClient = oAuth2Client?.credentials
       }
       // Send back the id token to later use to verify the ID Token.
       const idToken = oAuth2Client.credentials.id_token
-      console.log('idToken looks ok')
-      //
       if (idToken) {
-        console.log('we are here')
         // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
         if (state === 'noSession') {
           return res.status(200).json({
@@ -113,7 +102,6 @@ export const getAuthUrl = async (req, res) => {
       scope: SCOPES,
       state: req?.body?.noSession ? 'noSession' : undefined,
     })
-    console.log('trigger generation url')
 
     return res.status(200).json(authorizeUrl)
   } catch (err) {

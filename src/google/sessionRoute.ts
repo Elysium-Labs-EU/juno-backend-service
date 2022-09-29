@@ -28,19 +28,14 @@ export const authorizeSession = async ({
   if (session) {
     const oAuth2Client = createAuthClientObject()
     try {
-      console.log('session', session)
-
       // TODO: Check this part of the flow - it crashes here. The session is a valid authClient object, that contains the refresh token, but setting it like this doesn't trigger the correct flow.
       if (session?.refresh_token) {
-        console.log('this session has a refresh token')
         oAuth2Client.setCredentials({ refresh_token: session?.refresh_token })
       }
       if (!session?.refresh_token) {
         console.log('this session has no refresh token')
       }
-      console.log('oAuth2Client inline', oAuth2Client)
       const accessToken = await oAuth2Client.getAccessToken()
-      console.log('accessToken', accessToken)
       // oAuth2Client.setCredentials(session)
       if (accessToken.res) {
         oAuth2Client.setCredentials(accessToken.res.data)
@@ -52,7 +47,6 @@ export const authorizeSession = async ({
         return oAuth2Client
       }
     } catch (err) {
-      console.log('blocked here')
       console.log('err', JSON.stringify(err))
       return 'Error during authorization'
     }
@@ -79,6 +73,6 @@ export const authenticateSession = async ({
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {
-    console.error('CHECK IT HERE', err)
+    console.error('Error on authenticateSession', err)
   }
 }
