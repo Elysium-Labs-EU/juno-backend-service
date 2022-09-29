@@ -28,7 +28,7 @@ export const authorizeSession = async ({
   if (session) {
     const oAuth2Client = createAuthClientObject()
     try {
-      // TODO: Check this part of the flow - it crashes here. The session is a valid authClient object, that contains the refresh token, but setting it like this doesn't trigger the correct flow.
+      // TODO: Check this part of the flow - it crashes here. The refresh token should be saved somewhere else, since the session is terminated on logout. Thus losogin the access to the refreshToken
       if (session?.refresh_token) {
         console.log('this session has a refresh token')
         oAuth2Client.setCredentials({ refresh_token: session?.refresh_token })
@@ -38,11 +38,16 @@ export const authorizeSession = async ({
       }
       const accessToken = await oAuth2Client.getAccessToken()
       // oAuth2Client.setCredentials(session)
-      if (accessToken.res) {
+      if (accessToken?.res) {
+        console.log('accessToken.res', accessToken.res)
         oAuth2Client.setCredentials(accessToken.res.data)
       } else {
-        const refreshedToken = await oAuth2Client.refreshAccessToken()
-        oAuth2Client.setCredentials(refreshedToken?.res?.data)
+        try {
+          const refreshedToken = await oAuth2Client.refreshAccessToken()
+          oAuth2Client.setCredentials(refreshedToken?.res?.data)
+        } catch (err) {
+          console.error('Cannot refresh the access token')
+        }
       }
       if (idToken && (await checkIdValidity(idToken))) {
         return oAuth2Client
