@@ -2,16 +2,17 @@ import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 
 const SCOPES = [
+  'https://www.googleapis.com/auth/contacts.other.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/gmail.labels',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/gmail.settings.sharing',
   'openid',
   'profile',
   // 'https://mail.google.com',
-  'https://www.googleapis.com/auth/contacts.other.readonly',
-  'https://www.googleapis.com/auth/gmail.compose',
-  'https://www.googleapis.com/auth/gmail.modify',
   // 'https://www.googleapis.com/auth/gmail.readonly',
   // 'https://www.googleapis.com/auth/gmail.send',
   // 'https://www.googleapis.com/auth/gmail.settings.basic',
-  'https://www.googleapis.com/auth/gmail.settings.sharing',
 ]
 
 export const createAuthClientObject = (req?: any) => {
