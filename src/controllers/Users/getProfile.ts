@@ -21,7 +21,7 @@ const fetchProfile = async (auth) => {
         ) {
           return responseContacts.data.names[0].displayName
         }
-        return undefined
+        return null
       }
       return {
         name: getName(),
