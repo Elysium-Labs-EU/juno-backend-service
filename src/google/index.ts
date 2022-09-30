@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 
@@ -15,6 +16,8 @@ const SCOPES = [
   // 'https://www.googleapis.com/auth/gmail.send',
   // 'https://www.googleapis.com/auth/gmail.settings.basic',
 ]
+
+const hashState = createHash('sha256').digest('hex')
 
 export const createAuthClientObject = (req?: any) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
@@ -64,8 +67,12 @@ export const getAuthenticateClient = async (req, res) => {
       const response = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
       oAuth2Client.setCredentials(response.tokens)
-      if (state !== 'noSession') {
-        req.session.oAuthClient = oAuth2Client?.credentials
+      if (state && state !== 'noSession') {
+        if (hashState === state) {
+          req.session.oAuthClient = oAuth2Client?.credentials
+        } else {
+          return res.status(400).json('Invalid state detected')
+        }
       }
       // Send back the id token to later use to verify the ID Token.
       const idToken = oAuth2Client.credentials.id_token
@@ -101,8 +108,13 @@ export const getAuthUrl = async (req, res) => {
     // Generate the url that will be used for the consent dialog.
     const authorizeUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
+      // Use 'select_account' to ensure that the user is always using the wanted user.
+      prompt: 'select_account',
       scope: SCOPES,
-      state: req?.body?.noSession ? 'noSession' : undefined,
+      // Use a SHA256 state for security reasons when the cloud version is used.
+      state: req?.body?.noSession ? 'noSession' : hashState,
+      // code_challenge_method: S256,
+      // code_challenge: createHash('sha256').digest('hex'),
     })
 
     return res.status(200).json(authorizeUrl)

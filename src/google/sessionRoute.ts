@@ -39,7 +39,10 @@ export const authorizeSession = async ({
       const accessToken = await oAuth2Client.getAccessToken()
       // oAuth2Client.setCredentials(session)
       if (accessToken?.res) {
-        // console.log('accessToken.res', accessToken.res)
+        console.log(
+          'accessToken.res refresh_token should be here',
+          accessToken.res?.data?.refresh_token
+        )
         oAuth2Client.setCredentials(accessToken.res.data)
       } else {
         try {
