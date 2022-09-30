@@ -2,6 +2,7 @@ import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 
 const SCOPES = [
+  'email',
   'https://www.googleapis.com/auth/contacts.other.readonly',
   'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/gmail.labels',

@@ -1,24 +1,30 @@
 import { google } from 'googleapis'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
-import jwt from 'jsonwebtoken'
 
 const fetchProfile = async (auth) => {
   const gmail = google.gmail({ version: 'v1', auth })
+  const people = google.people({ version: 'v1', auth })
   try {
     const response = await gmail.users.getProfile({
       userId: USER,
     })
-    // Inject the name and picture from the user based on the received id_token.
-    const decodedJWT = jwt.decode(auth.credentials.id_token)
-    if (
-      decodedJWT &&
-      typeof decodedJWT !== 'string' &&
-      response?.status === 200
-    ) {
+    const responseContacts = await people.people.get({
+      resourceName: 'people/me',
+      personFields: 'emailAddresses,names,photos',
+    })
+    if (response?.status === 200 && responseContacts?.status === 200) {
+      const getName = () => {
+        if (
+          responseContacts?.data?.names &&
+          responseContacts?.data?.names.length > 0
+        ) {
+          return responseContacts.data.names[0].displayName
+        }
+        return null
+      }
       return {
-        name: decodedJWT.name,
-        picture: decodedJWT.picture,
+        name: getName(),
         ...response.data,
       }
     }
