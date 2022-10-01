@@ -32,6 +32,7 @@ export const createAuthClientObject = (req?: any) => {
 
   function determineAuthURLStructure() {
     if (process.env.NODE_ENV === 'production') {
+      console.log('req?.headers?.referer', req?.headers?.referer)
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
         req
