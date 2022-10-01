@@ -26,7 +26,7 @@ export const authorizeSession = async ({
   idToken,
 }: IAuthorizeSession) => {
   if (session) {
-    const oAuth2Client = createAuthClientObject()
+    const oAuth2Client = createAuthClientObject(null)
     try {
       // TODO: Check this part of the flow - it crashes here. The refresh token should be saved somewhere else, since the session is terminated on logout. Thus losogin the access to the refreshToken
       if (session?.refresh_token) {

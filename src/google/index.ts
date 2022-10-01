@@ -19,7 +19,7 @@ const SCOPES = [
 
 const hashState = createHash('sha256').digest('hex')
 
-export const createAuthClientObject = (req?: any) => {
+export const createAuthClientObject = (req: any) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -31,8 +31,8 @@ export const createAuthClientObject = (req?: any) => {
   )
 
   function determineAuthURLStructure() {
+    console.log('req?.headers?.referer', req?.headers?.referer)
     if (process.env.NODE_ENV === 'production') {
-      console.log('req?.headers?.referer', req?.headers?.referer)
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
         req
@@ -104,7 +104,7 @@ export const getAuthUrl = async (req, res) => {
   try {
     // create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
     // which should be fetched from the Google Developers Console.
-    const oAuth2Client = createAuthClientObject()
+    const oAuth2Client = createAuthClientObject(req)
 
     // Generate the url that will be used for the consent dialog.
     const authorizeUrl = oAuth2Client.generateAuthUrl({
@@ -130,7 +130,7 @@ export const getAuthUrl = async (req, res) => {
  * @returns true if the token is valid, false otherwise
  */
 export const checkIdValidity = async (token: string) => {
-  const oAuth2Client = createAuthClientObject()
+  const oAuth2Client = createAuthClientObject(null)
   try {
     await oAuth2Client.verifyIdToken({
       idToken: token.replace(/['"]+/g, ''),
