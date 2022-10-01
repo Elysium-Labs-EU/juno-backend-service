@@ -15,6 +15,7 @@ interface IAuthorizeLocal {
 export const authorizeLocal = async ({ credentials }: IAuthorizeLocal) => {
   if (credentials) {
     const oAuth2Client = createAuthClientObject()
+    console.log('oAuth2Client', oAuth2Client)
     try {
       oAuth2Client.setCredentials(credentials)
       return oAuth2Client
