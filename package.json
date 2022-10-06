@@ -19,7 +19,11 @@
     "husky-install": "husky install",
     "update-deps": "yarn upgrade-interactive --latest"
   },
-  "author": "@sgnilreutR",
+  "author": {
+    "name": "Robbert Tuerlings",
+    "email": "robbert@elysiumlabs.io",
+    "url": "https://elysiumlabs.io"
+  },
   "license": "ISC",
   "engines": {
     "node": "16.x"
