@@ -18,7 +18,9 @@ const onlyLegalLabels = ({
   const newArray: LabelIdName[] = []
   for (let i = 0; i < filterArray.length; i += 1) {
     const pushItem = storageLabels.find((item) => item.id === filterArray[i])
-    if (pushItem) newArray.push(pushItem)
+    if (pushItem) {
+      newArray.push(pushItem)
+    }
   }
 
   return newArray

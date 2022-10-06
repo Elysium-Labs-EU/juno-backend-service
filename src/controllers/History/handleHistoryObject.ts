@@ -9,23 +9,9 @@ export interface LabelIdName {
   id: string
   name: string
 }
-// interface IHistoryMessage {
-//   id: string
-//   labelIds: string[]
-//   threadId: string
-// }
-// interface IHistoryObject {
-//   id: string
-//   messages: IHistoryMessage[]
-//   messagesAdded?: { message: IHistoryMessage }[]
-//   messagesDeleted?: { message: IHistoryMessage }[]
-//   labelsAdded?: { message: IHistoryMessage; labelIds: string[] }[]
-//   labelsRemoved?: { message: IHistoryMessage; labelIds: string[] }[]
-// }
-
 interface IFeedModel {
   labels: string[]
-  threads: any[]
+  threads: (gmail_v1.Schema$Message | undefined)[]
   nextPageToken: string | null
 }
 
@@ -64,7 +50,6 @@ export default function handleHistoryObject({
     threads: [],
     nextPageToken: HISTORY_NEXT_PAGETOKEN,
   }
-  console.log('storageLabels passed here', storageLabels)
   const toDoLabelId = storageLabels.find(
     (label) => label.name === 'Juno/To Do'
   )?.id
@@ -134,14 +119,14 @@ export default function handleHistoryObject({
 
         if (item.labelsRemoved[0]?.labelIds?.includes(global.INBOX_LABEL)) {
           const output = inboxFeed.threads.filter(
-            (filterItem) => filterItem.id !== toHandleObject?.message?.threadId
+            (filterItem) => filterItem?.id !== toHandleObject?.message?.threadId
           )
           inboxFeed.threads = output
         }
 
         if (item.labelsRemoved[0]?.labelIds?.includes(toDoLabelId)) {
           const output = todoFeed.threads.filter(
-            (filterItem) => filterItem.id !== toHandleObject?.message?.threadId
+            (filterItem) => filterItem?.id !== toHandleObject?.message?.threadId
           )
           todoFeed.threads = output
         }
@@ -171,7 +156,7 @@ export default function handleHistoryObject({
     ) {
       const draftThreadIndex = draftFeed.threads.findIndex((thread) => {
         if (item?.messagesAdded) {
-          return thread.threadId === item.messagesAdded[0].message?.threadId
+          return thread?.threadId === item.messagesAdded[0].message?.threadId
         }
         return -1
       })
