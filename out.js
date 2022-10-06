@@ -63,11 +63,14 @@ import express from './node_modules/express/index.js'
 import { google } from './node_modules/googleapis/build/src/index.js'
 
 // src/constants/globalConstants.ts
-var USER = 'me'
-var INVALID_TOKEN = 'Invalid token'
-var INVALID_SESSION = 'Invalid session'
-var MIME_TYPE_NO_INLINE = 'application/octet-stream'
 var ARCHIVE_LABEL = 'ARCHIVE'
+var DRAFT_LABEL = 'DRAFT'
+var INBOX_LABEL = 'INBOX'
+var INVALID_SESSION = 'Invalid session'
+var INVALID_TOKEN = 'Invalid token'
+var SENT_LABEL = 'SENT'
+var UNREAD_LABEL = 'UNREAD'
+var USER = 'me'
 
 // src/controllers/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
@@ -96,6 +99,7 @@ var requestBodyCreator = (req) => {
 var threadRequest_default = requestBodyCreator
 
 // src/google/index.ts
+import { createHash } from 'crypto'
 import { OAuth2Client } from './node_modules/google-auth-library/build/src/index.js'
 
 // src/utils/assertNonNullish.ts
@@ -107,17 +111,17 @@ function assertNonNullish(value, message) {
 
 // src/google/index.ts
 var SCOPES = [
-  'openid',
-  'profile',
-  'https://mail.google.com',
-  'https://www.googleapis.com/auth/gmail.compose',
-  'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.send',
+  'email',
   'https://www.googleapis.com/auth/contacts.other.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/gmail.labels',
+  'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/gmail.settings.basic',
   'https://www.googleapis.com/auth/gmail.settings.sharing',
+  'openid',
+  'profile',
 ]
+var hashState = createHash('sha256').digest('hex')
 var createAuthClientObject = (req) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
@@ -129,16 +133,27 @@ var createAuthClientObject = (req) => {
     'No Google Redirect URL found'
   )
   function determineAuthURLStructure() {
-    var _a, _b, _c
+    var _a, _b, _c, _d
+    console.log(
+      'req?.headers?.referer',
+      (_a = req == null ? void 0 : req.headers) == null ? void 0 : _a.referer
+    )
     if (process.env.NODE_ENV === 'production') {
-      if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-        return ((_a = req.headers) == null ? void 0 : _a.referer.endsWith('/'))
-          ? (_b = req.headers) == null
+      if (
+        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        req
+      ) {
+        return (
+          (_b = req == null ? void 0 : req.headers) == null
             ? void 0
-            : _b.referer.slice(0, -1)
-          : (_c = req.headers) == null
+            : _b.referer.endsWith('/')
+        )
+          ? (_c = req.headers) == null
+            ? void 0
+            : _c.referer.slice(0, -1)
+          : (_d = req.headers) == null
           ? void 0
-          : _c.referer
+          : _d.referer
       }
       return process.env.FRONTEND_URL
     }
@@ -158,8 +173,13 @@ var getAuthenticateClient = (req, res) =>
         const oAuth2Client = createAuthClientObject(req)
         const response = yield oAuth2Client.getToken(code)
         oAuth2Client.setCredentials(response.tokens)
-        if (state !== 'noSession') {
-          req.session.oAuthClient = oAuth2Client.credentials
+        if (state && state !== 'noSession') {
+          if (hashState === state) {
+            req.session.oAuthClient =
+              oAuth2Client == null ? void 0 : oAuth2Client.credentials
+          } else {
+            return res.status(400).json('Invalid state detected')
+          }
         }
         const idToken = oAuth2Client.credentials.id_token
         if (idToken) {
@@ -171,14 +191,13 @@ var getAuthenticateClient = (req, res) =>
           return res.status(200).json({
             idToken: idToken.replace(/['"]+/g, ''),
           })
-        } else {
-          return res.status(400).json('Id Token not found')
         }
+        return res.status(400).json('Id Token not found')
       } else {
         res.status(400).json('Code not found')
       }
     } catch (err) {
-      process.env.NODE_ENV === 'development' && console.log('ERROR', err)
+      console.log('ERROR', err)
       res.status(401).json(err)
       throw Error(err)
     }
@@ -187,15 +206,16 @@ var getAuthUrl = (req, res) =>
   __async(void 0, null, function* () {
     var _a
     try {
-      const oAuth2Client = createAuthClientObject()
+      const oAuth2Client = createAuthClientObject(req)
       const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
+        prompt: 'select_account',
         scope: SCOPES,
         state: (
           (_a = req == null ? void 0 : req.body) == null ? void 0 : _a.noSession
         )
           ? 'noSession'
-          : void 0,
+          : hashState,
       })
       return res.status(200).json(authorizeUrl)
     } catch (err) {
@@ -204,7 +224,7 @@ var getAuthUrl = (req, res) =>
   })
 var checkIdValidity = (token) =>
   __async(void 0, null, function* () {
-    const oAuth2Client = createAuthClientObject()
+    const oAuth2Client = createAuthClientObject(null)
     try {
       yield oAuth2Client.verifyIdToken({
         idToken: token.replace(/['"]+/g, ''),
@@ -221,6 +241,7 @@ var authorizeLocal = (_0) =>
   __async(void 0, [_0], function* ({ credentials }) {
     if (credentials) {
       const oAuth2Client = createAuthClientObject()
+      console.log('oAuth2Client', oAuth2Client)
       try {
         oAuth2Client.setCredentials(credentials)
         return oAuth2Client
@@ -253,12 +274,45 @@ var authenticateLocal = (_0) =>
 
 // src/google/sessionRoute.ts
 var authorizeSession = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2 }) {
+  __async(void 0, [_0], function* ({ session: session2, idToken }) {
+    var _a, _b, _c
     if (session2) {
-      const oAuth2Client = createAuthClientObject()
+      const oAuth2Client = createAuthClientObject(null)
       try {
-        oAuth2Client.setCredentials(session2)
-        return oAuth2Client
+        if (session2 == null ? void 0 : session2.refresh_token) {
+          console.log('this session has a refresh token')
+          oAuth2Client.setCredentials({
+            refresh_token: session2 == null ? void 0 : session2.refresh_token,
+          })
+        }
+        if (!(session2 == null ? void 0 : session2.refresh_token)) {
+          console.log('this session has no refresh token')
+        }
+        const accessToken = yield oAuth2Client.getAccessToken()
+        if (accessToken == null ? void 0 : accessToken.res) {
+          console.log(
+            'accessToken.res refresh_token should be here',
+            (_b = (_a = accessToken.res) == null ? void 0 : _a.data) == null
+              ? void 0
+              : _b.refresh_token
+          )
+          oAuth2Client.setCredentials(accessToken.res.data)
+        } else {
+          try {
+            const refreshedToken = yield oAuth2Client.refreshAccessToken()
+            oAuth2Client.setCredentials(
+              (_c = refreshedToken == null ? void 0 : refreshedToken.res) ==
+                null
+                ? void 0
+                : _c.data
+            )
+          } catch (err) {
+            console.error('Cannot refresh the access token')
+          }
+        }
+        if (idToken && (yield checkIdValidity(idToken))) {
+          return oAuth2Client
+        }
       } catch (err) {
         console.log('err', JSON.stringify(err))
         return 'Error during authorization'
@@ -271,14 +325,12 @@ var authenticateSession = (_0) =>
   __async(void 0, [_0], function* ({ session: session2, idToken }) {
     try {
       if (typeof session2 !== 'undefined') {
-        if (idToken && (yield checkIdValidity(idToken))) {
-          const response = yield authorizeSession({ session: session2 })
-          return response
-        }
+        const response = yield authorizeSession({ session: session2, idToken })
+        return response
       }
       return INVALID_SESSION
     } catch (err) {
-      console.error('CHECK IT HERE', err)
+      console.error('Error on authenticateSession', err)
     }
   })
 
@@ -880,7 +932,7 @@ var placeInlineImage = (orderedObject) => {
     }
     const unprocessedValidObjects = orderedObject.emailFileHTML
       .filter((item) => !processedObjectArray.includes(item))
-      .filter((item) => item.mimeType !== MIME_TYPE_NO_INLINE)
+      .filter((item) => item.mimeType !== void 0)
     return { emailFileHTML: unprocessedValidObjects, emailHTML: $.html() }
   }
   return orderedObject
@@ -1573,24 +1625,41 @@ var removeLabels = (req, res) =>
 
 // src/controllers/Users/getProfile.ts
 import { google as google20 } from './node_modules/googleapis/build/src/index.js'
-import jwt from './node_modules/jsonwebtoken/index.js'
 var fetchProfile = (auth) =>
   __async(void 0, null, function* () {
     const gmail = google20.gmail({ version: 'v1', auth })
+    const people = google20.people({ version: 'v1', auth })
     try {
       const response = yield gmail.users.getProfile({
         userId: USER,
       })
-      const decodedJWT = jwt.decode(auth.credentials.id_token)
+      const responseContacts = yield people.people.get({
+        resourceName: 'people/me',
+        personFields: 'emailAddresses,names,photos',
+      })
       if (
-        decodedJWT &&
-        typeof decodedJWT !== 'string' &&
-        (response == null ? void 0 : response.status) === 200
+        (response == null ? void 0 : response.status) === 200 &&
+        (responseContacts == null ? void 0 : responseContacts.status) === 200
       ) {
+        const getName = () => {
+          var _a, _b
+          if (
+            ((_a = responseContacts == null ? void 0 : responseContacts.data) ==
+            null
+              ? void 0
+              : _a.names) &&
+            ((_b = responseContacts == null ? void 0 : responseContacts.data) ==
+            null
+              ? void 0
+              : _b.names.length) > 0
+          ) {
+            return responseContacts.data.names[0].displayName
+          }
+          return null
+        }
         return __spreadValues(
           {
-            name: decodedJWT.name,
-            picture: decodedJWT.picture,
+            name: getName(),
           },
           response.data
         )
@@ -1661,18 +1730,299 @@ var queryContacts = (req, res) =>
 
 // src/controllers/History/listHistory.ts
 import { google as google23 } from './node_modules/googleapis/build/src/index.js'
+
+// src/utils/onlyLegalLabelObjects.ts
+var onlyLegalLabels = ({ labelNames, storageLabels }) => {
+  const idMapStorageLabels = storageLabels.map((label) => label.id)
+  const filterArray = labelNames.filter((el) => idMapStorageLabels.includes(el))
+  const newArray = []
+  for (let i = 0; i < filterArray.length; i += 1) {
+    const pushItem = storageLabels.find((item) => item.id === filterArray[i])
+    if (pushItem) newArray.push(pushItem)
+  }
+  return newArray
+}
+var onlyLegalLabelObjects_default = onlyLegalLabels
+
+// src/controllers/History/handleHistoryObject.ts
+var HISTORY_NEXT_PAGETOKEN = 'history'
+var restructureObject = (message) => {
+  if (message === void 0) {
+    return
+  }
+  const newObject = __spreadProps(__spreadValues({}, message), {
+    id: message.threadId,
+  })
+  return newObject
+}
+function handleHistoryObject({ history, storageLabels }) {
+  var _a
+  const inboxFeed = {
+    labels: [INBOX_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  console.log('storageLabels passed here', storageLabels)
+  const toDoLabelId =
+    (_a = storageLabels.find((label) => label.name === 'Juno/To Do')) == null
+      ? void 0
+      : _a.id
+  if (!toDoLabelId) {
+    throw Error('Cannot find the to do label')
+  }
+  const todoFeed = {
+    labels: [toDoLabelId],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const sentFeed = {
+    labels: [SENT_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const draftFeed = {
+    labels: [DRAFT_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const archiveFeed = {
+    labels: [ARCHIVE_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const handleRemovalUnreadLabel = (item) => {
+    var _a2, _b, _c
+    if (item.labelsRemoved && item.labelsRemoved[0]) {
+      if (
+        ((_a2 = item.labelsRemoved[0].labelIds) == null
+          ? void 0
+          : _a2.includes(UNREAD_LABEL)) &&
+        ((_c = (_b = item.labelsRemoved[0]) == null ? void 0 : _b.message) ==
+        null
+          ? void 0
+          : _c.labelIds)
+      ) {
+        const staticOnlyLegalLabels = onlyLegalLabelObjects_default({
+          labelNames: item.labelsRemoved[0].message.labelIds,
+          storageLabels,
+        })
+        if (
+          staticOnlyLegalLabels.length > 0 &&
+          staticOnlyLegalLabels.some((label) => label.id === INBOX_LABEL)
+        ) {
+          inboxFeed.threads.push(
+            restructureObject(item.labelsRemoved[0].message)
+          )
+        }
+        if (
+          staticOnlyLegalLabels.length > 0 &&
+          staticOnlyLegalLabels.some((label) => label.id === toDoLabelId)
+        ) {
+          todoFeed.threads.push(
+            restructureObject(item.labelsRemoved[0].message)
+          )
+        }
+        archiveFeed.threads.push(
+          restructureObject(item.labelsRemoved[0].message)
+        )
+      }
+    }
+  }
+  const handleRemovalOriginFeed = (item) => {
+    var _a2, _b, _c, _d, _e, _f
+    if (item.labelsRemoved) {
+      if (
+        (_b = (_a2 = item.labelsRemoved[0]) == null ? void 0 : _a2.message) ==
+        null
+          ? void 0
+          : _b.threadId
+      ) {
+        const toHandleObject = item.labelsRemoved[0]
+        if (
+          (_d = (_c = item.labelsRemoved[0]) == null ? void 0 : _c.labelIds) ==
+          null
+            ? void 0
+            : _d.includes(INBOX_LABEL)
+        ) {
+          const output = inboxFeed.threads.filter((filterItem) => {
+            var _a3
+            return (
+              filterItem.id !==
+              ((_a3 =
+                toHandleObject == null ? void 0 : toHandleObject.message) ==
+              null
+                ? void 0
+                : _a3.threadId)
+            )
+          })
+          inboxFeed.threads = output
+        }
+        if (
+          (_f = (_e = item.labelsRemoved[0]) == null ? void 0 : _e.labelIds) ==
+          null
+            ? void 0
+            : _f.includes(toDoLabelId)
+        ) {
+          const output = todoFeed.threads.filter((filterItem) => {
+            var _a3
+            return (
+              filterItem.id !==
+              ((_a3 =
+                toHandleObject == null ? void 0 : toHandleObject.message) ==
+              null
+                ? void 0
+                : _a3.threadId)
+            )
+          })
+          todoFeed.threads = output
+        }
+      }
+    }
+  }
+  const handleAdditionLabel = (item) => {
+    var _a2, _b, _c, _d
+    if (item.labelsAdded) {
+      if (
+        (_a2 = item.labelsAdded[0].labelIds) == null
+          ? void 0
+          : _a2.includes(INBOX_LABEL)
+      ) {
+        inboxFeed.threads.push(
+          restructureObject(
+            (_b = item == null ? void 0 : item.labelsAdded[0]) == null
+              ? void 0
+              : _b.message
+          )
+        )
+      }
+      if (
+        (_c = item.labelsAdded[0].labelIds) == null
+          ? void 0
+          : _c.includes(toDoLabelId)
+      ) {
+        todoFeed.threads.push(restructureObject(item.labelsAdded[0].message))
+      }
+      if (
+        (_d = item.labelsAdded[0].labelIds) == null
+          ? void 0
+          : _d.includes(SENT_LABEL)
+      ) {
+        sentFeed.threads.push(restructureObject(item.labelsAdded[0].message))
+      }
+    }
+  }
+  const handleAdditionDraftMessage = (item) => {
+    var _a2, _b, _c
+    if (
+      (item == null ? void 0 : item.messagesAdded) &&
+      ((_a2 = item == null ? void 0 : item.messagesAdded[0]) == null
+        ? void 0
+        : _a2.message) &&
+      ((_c =
+        (_b = item == null ? void 0 : item.messagesAdded[0]) == null
+          ? void 0
+          : _b.message) == null
+        ? void 0
+        : _c.labelIds)
+    ) {
+      const draftThreadIndex = draftFeed.threads.findIndex((thread) => {
+        var _a3
+        if (item == null ? void 0 : item.messagesAdded) {
+          return (
+            thread.threadId ===
+            ((_a3 = item.messagesAdded[0].message) == null
+              ? void 0
+              : _a3.threadId)
+          )
+        }
+        return -1
+      })
+      if (draftThreadIndex > -1) {
+        draftFeed.threads.splice(draftThreadIndex, 1)
+        draftFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      } else {
+        draftFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      }
+    }
+  }
+  const handleAdditionMessage = (item) => {
+    var _a2, _b, _c
+    if (
+      (item == null ? void 0 : item.messagesAdded) &&
+      ((_a2 = item == null ? void 0 : item.messagesAdded[0]) == null
+        ? void 0
+        : _a2.message) &&
+      ((_c =
+        (_b = item == null ? void 0 : item.messagesAdded[0]) == null
+          ? void 0
+          : _b.message) == null
+        ? void 0
+        : _c.labelIds)
+    ) {
+      if (item.messagesAdded[0].message.labelIds.includes(INBOX_LABEL)) {
+        inboxFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      }
+      if (item.messagesAdded[0].message.labelIds.includes(toDoLabelId)) {
+        todoFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      }
+      if (item.messagesAdded[0].message.labelIds.includes(SENT_LABEL)) {
+        sentFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      }
+      if (item.messagesAdded[0].message.labelIds.includes(DRAFT_LABEL)) {
+        handleAdditionDraftMessage(item)
+      }
+    }
+  }
+  if (Array.isArray(history)) {
+    try {
+      const cleanHistoryArray = history.filter(
+        (item) => Object.keys(item).length > 2
+      )
+      for (let i = 0; i < cleanHistoryArray.length; i += 1) {
+        const item = cleanHistoryArray[i]
+        if (Object.prototype.hasOwnProperty.call(item, 'labelsRemoved')) {
+          handleRemovalUnreadLabel(item)
+          handleRemovalOriginFeed(item)
+        }
+        if (Object.prototype.hasOwnProperty.call(item, 'labelsAdded')) {
+          handleAdditionLabel(item)
+        }
+        if (Object.prototype.hasOwnProperty.call(item, 'messagesAdded')) {
+          handleAdditionMessage(item)
+        }
+      }
+    } catch (err) {
+      process.env.NODE_ENV === 'development' && console.error(err)
+    }
+  }
+  return [inboxFeed, todoFeed, sentFeed, draftFeed, archiveFeed]
+}
+
+// src/controllers/History/listHistory.ts
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google23.gmail({ version: 'v1', auth })
+    console.log(req)
     try {
-      const { startHistoryId } = req.query
+      const { startHistoryId, storageLabels } = req.body.params
+      console.log('storageLabels', storageLabels)
       const response = yield gmail.users.history.list({
         userId: USER,
         historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],
         startHistoryId,
       })
       if ((response == null ? void 0 : response.status) === 200) {
-        return response.data
+        const { data } = response
+        console.log('response.data', response.data)
+        if (data == null ? void 0 : data.history) {
+          return __spreadProps(__spreadValues({}, data), {
+            history: handleHistoryObject({
+              history: data.history,
+              storageLabels,
+            }),
+          })
+        }
+        return data
       }
       return new Error('No history found...')
     } catch (err) {
@@ -1874,7 +2224,7 @@ router.post('/api/auth/oauth/google/', getAuthUrl)
 router.post('/api/auth/oauth/google/callback/', getAuthenticateClient)
 router.get('/api/user', getProfile)
 router.get('/api/user/logout', logoutUser)
-router.get('/api/history/:startHistoryId?', listHistory)
+router.post('/api/history/:startHistoryId?', listHistory)
 router.get('/api/health', health)
 router.get('/api/settings/getSendAs', getSendAs)
 router.put('/api/settings/updateSendAs', updateSendAs)
@@ -1939,25 +2289,23 @@ var redisStore = redis(session)
 var redisClient = redis_default()
 app.use(compression())
 app.set('trust proxy', 1)
-if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND !== 'true') {
-  assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
-  const SEVEN_DAYS = 1e3 * 60 * 10080
-  app.use(
-    session({
-      store: new redisStore({ client: redisClient }),
-      saveUninitialized: false,
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      proxy: true,
-      cookie: {
-        secure: process.env.NODE_ENV !== 'production' ? false : true,
-        httpOnly: true,
-        maxAge: SEVEN_DAYS,
-        sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
-      },
-    })
-  )
-}
+assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+var SEVEN_DAYS = 1e3 * 60 * 10080
+app.use(
+  session({
+    store: new redisStore({ client: redisClient }),
+    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    proxy: true,
+    cookie: {
+      secure: process.env.NODE_ENV !== 'production' ? false : true,
+      httpOnly: true,
+      maxAge: SEVEN_DAYS,
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+    },
+  })
+)
 function determineAllowOrigin(req) {
   var _a, _b, _c
   assertNonNullish(
