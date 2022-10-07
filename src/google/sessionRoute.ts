@@ -43,14 +43,15 @@ export const authorizeSession = async ({
           'accessToken.res refresh_token should be here',
           accessToken.res?.data?.refresh_token
         )
-        oAuth2Client.setCredentials(accessToken.res.data)
+        // oAuth2Client.setCredentials(accessToken.res.data)
       } else {
-        try {
-          const refreshedToken = await oAuth2Client.refreshAccessToken()
-          oAuth2Client.setCredentials(refreshedToken?.res?.data)
-        } catch (err) {
-          console.error('Cannot refresh the access token')
-        }
+        // try {
+        //   const refreshedToken = await oAuth2Client.refreshAccessToken()
+        //   oAuth2Client.setCredentials(refreshedToken?.res?.data)
+        // } catch (err) {
+        console.error('Cannot refresh the access token')
+        return global.INVALID_TOKEN
+        // }
       }
       if (idToken && (await checkIdValidity(idToken))) {
         return oAuth2Client

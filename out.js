@@ -275,7 +275,7 @@ var authenticateLocal = (_0) =>
 // src/google/sessionRoute.ts
 var authorizeSession = (_0) =>
   __async(void 0, [_0], function* ({ session: session2, idToken }) {
-    var _a, _b, _c
+    var _a, _b
     if (session2) {
       const oAuth2Client = createAuthClientObject(null)
       try {
@@ -296,19 +296,9 @@ var authorizeSession = (_0) =>
               ? void 0
               : _b.refresh_token
           )
-          oAuth2Client.setCredentials(accessToken.res.data)
         } else {
-          try {
-            const refreshedToken = yield oAuth2Client.refreshAccessToken()
-            oAuth2Client.setCredentials(
-              (_c = refreshedToken == null ? void 0 : refreshedToken.res) ==
-                null
-                ? void 0
-                : _c.data
-            )
-          } catch (err) {
-            console.error('Cannot refresh the access token')
-          }
+          console.error('Cannot refresh the access token')
+          return INVALID_TOKEN
         }
         if (idToken && (yield checkIdValidity(idToken))) {
           return oAuth2Client
@@ -1738,7 +1728,9 @@ var onlyLegalLabels = ({ labelNames, storageLabels }) => {
   const newArray = []
   for (let i = 0; i < filterArray.length; i += 1) {
     const pushItem = storageLabels.find((item) => item.id === filterArray[i])
-    if (pushItem) newArray.push(pushItem)
+    if (pushItem) {
+      newArray.push(pushItem)
+    }
   }
   return newArray
 }
@@ -1762,7 +1754,6 @@ function handleHistoryObject({ history, storageLabels }) {
     threads: [],
     nextPageToken: HISTORY_NEXT_PAGETOKEN,
   }
-  console.log('storageLabels passed here', storageLabels)
   const toDoLabelId =
     (_a = storageLabels.find((label) => label.name === 'Juno/To Do')) == null
       ? void 0
@@ -1847,7 +1838,7 @@ function handleHistoryObject({ history, storageLabels }) {
           const output = inboxFeed.threads.filter((filterItem) => {
             var _a3
             return (
-              filterItem.id !==
+              (filterItem == null ? void 0 : filterItem.id) !==
               ((_a3 =
                 toHandleObject == null ? void 0 : toHandleObject.message) ==
               null
@@ -1866,7 +1857,7 @@ function handleHistoryObject({ history, storageLabels }) {
           const output = todoFeed.threads.filter((filterItem) => {
             var _a3
             return (
-              filterItem.id !==
+              (filterItem == null ? void 0 : filterItem.id) !==
               ((_a3 =
                 toHandleObject == null ? void 0 : toHandleObject.message) ==
               null
@@ -1929,7 +1920,7 @@ function handleHistoryObject({ history, storageLabels }) {
         var _a3
         if (item == null ? void 0 : item.messagesAdded) {
           return (
-            thread.threadId ===
+            (thread == null ? void 0 : thread.threadId) ===
             ((_a3 = item.messagesAdded[0].message) == null
               ? void 0
               : _a3.threadId)
@@ -2002,18 +1993,18 @@ function handleHistoryObject({ history, storageLabels }) {
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google23.gmail({ version: 'v1', auth })
-    console.log(req)
     try {
       const { startHistoryId, storageLabels } = req.body.params
-      console.log('storageLabels', storageLabels)
       const response = yield gmail.users.history.list({
         userId: USER,
         historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],
         startHistoryId,
       })
-      if ((response == null ? void 0 : response.status) === 200) {
+      if (
+        (response == null ? void 0 : response.status) === 200 &&
+        storageLabels
+      ) {
         const { data } = response
-        console.log('response.data', response.data)
         if (data == null ? void 0 : data.history) {
           return __spreadProps(__spreadValues({}, data), {
             history: handleHistoryObject({
