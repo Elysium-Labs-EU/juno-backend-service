@@ -25,7 +25,7 @@ export const authMiddleware =
         const response = await requestFunction(auth, req)
         return res.status(200).json(response)
       }
-      res.status(401).json('There is no authorization header found')
+      return res.status(401).json('There is no authorization header found')
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
       res.status(401).json(err?.message)

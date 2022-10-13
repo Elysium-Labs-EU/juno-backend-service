@@ -290,6 +290,7 @@ var authorizeSession = (_0) =>
     const oAuth2Client = createAuthClientObject(null)
     try {
       if (req.session.oAuthClient) {
+        console.log('req.session.oAuthClient', req.session.oAuthClient)
         oAuth2Client.setCredentials(req.session.oAuthClient)
         const accessToken = yield oAuth2Client.refreshAccessToken()
         if (!(accessToken == null ? void 0 : accessToken.res)) {
@@ -375,7 +376,7 @@ var authMiddleware = (requestFunction) => (req, res) =>
         const response = yield requestFunction(auth, req)
         return res.status(200).json(response)
       }
-      res.status(401).json('There is no authorization header found')
+      return res.status(401).json('There is no authorization header found')
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
       res.status(401).json(err == null ? void 0 : err.message)
@@ -2069,19 +2070,7 @@ var listHistory = (req, res) =>
 // src/controllers/Users/logoutUser.ts
 var logoutUser = (req, res) =>
   __async(void 0, null, function* () {
-    try {
-      if (req.headers.authorization) {
-        req.session.destroy(function (err) {
-          if (err) {
-            console.log(err)
-            return res.status(401).json(err.message)
-          }
-          return res.status(205).json()
-        })
-      }
-    } catch (err) {
-      res.status(401).json(err.message)
-    }
+    console.log("let's just not for now.")
   })
 
 // src/controllers/health.ts
