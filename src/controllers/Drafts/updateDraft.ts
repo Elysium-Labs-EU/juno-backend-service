@@ -1,10 +1,13 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
-import messageEncoding from '../../utils/messageEncoding'
 import formFieldParser from '../../utils/formFieldParser'
+import messageEncoding from '../../utils/messageEncoding'
 
-const exportDraft = async (auth, req) => {
+const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
   try {
@@ -34,6 +37,6 @@ const exportDraft = async (auth, req) => {
   }
 }
 
-export const updateDraft = async (req, res) => {
+export const updateDraft = async (req: Request, res: Response) => {
   authMiddleware(exportDraft)(req, res)
 }

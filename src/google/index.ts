@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 
@@ -19,7 +20,13 @@ const SCOPES = [
 
 const hashState = createHash('sha256').digest('hex')
 
-export const createAuthClientObject = (req: any) => {
+/**
+ * @function createAuthClientObject
+ * @param req can be either null or defined. Null is used on the route for local authorization
+ * @returns
+ */
+
+export const createAuthClientObject = (req: Request | null) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -31,15 +38,15 @@ export const createAuthClientObject = (req: any) => {
   )
 
   function determineAuthURLStructure() {
-    console.log('req?.headers?.referer', req?.headers?.referer)
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        req
+        req &&
+        req?.headers?.referer
       ) {
-        return req?.headers?.referer.endsWith('/')
-          ? req.headers?.referer.slice(0, -1)
-          : req.headers?.referer
+        return req.headers.referer.endsWith('/')
+          ? req.headers.referer.slice(0, -1)
+          : req.headers.referer
       }
       return process.env.FRONTEND_URL
     }
@@ -59,18 +66,19 @@ export const createAuthClientObject = (req: any) => {
  * workflow. Return the partial client to the callback.
  * And store the oAuthClient to the user express session.
  */
-export const getAuthenticateClient = async (req, res) => {
+export const getAuthenticateClient = async (req: Request, res: Response) => {
   try {
     const { code, state } = req.body
     // Now that we have the code, use that to acquire tokens.
     if (code) {
       const oAuth2Client = createAuthClientObject(req)
-      const response = await oAuth2Client.getToken(code)
+      const { tokens } = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
-      oAuth2Client.setCredentials(response.tokens)
       if (state && state !== 'noSession') {
         if (hashState === state) {
-          req.session.oAuthClient = oAuth2Client?.credentials
+          oAuth2Client.setCredentials(tokens)
+          req.session.oAuthClient = tokens
+          // req.session.oAuthClient = oAuth2Client?.credentials
         } else {
           return res.status(400).json('Invalid state detected')
         }
@@ -100,7 +108,7 @@ export const getAuthenticateClient = async (req, res) => {
   }
 }
 
-export const getAuthUrl = async (req, res) => {
+export const getAuthUrl = async (req: Request, res: Response) => {
   try {
     // create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
     // which should be fetched from the Google Developers Console.

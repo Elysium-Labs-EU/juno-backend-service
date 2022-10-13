@@ -1,4 +1,6 @@
-export const logoutUser = async (req, res) => {
+import { Request, Response } from 'express'
+
+export const logoutUser = async (req: Request, res: Response) => {
   try {
     if (req.headers.authorization) {
       req.session.destroy(function (err) {

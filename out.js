@@ -51,10 +51,68 @@ var __async = (__this, __arguments, generator) => {
 import http from 'http'
 
 // src/routes/app.ts
-import express2 from './node_modules/express/index.js'
 import './node_modules/dotenv/config.js'
+import compression from './node_modules/compression/index.js'
+import redis from './node_modules/connect-redis/index.js'
+import express2 from './node_modules/express/index.js'
+import session from './node_modules/express-session/index.js'
 import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
 import swaggerUI from './node_modules/swagger-ui-express/index.js'
+import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
+
+// src/data/redis.ts
+import { createClient } from './node_modules/redis/dist/index.js'
+
+// src/utils/assertNonNullish.ts
+function assertNonNullish(value, message) {
+  if (value === null || value === void 0) {
+    throw Error(message)
+  }
+}
+
+// src/data/redis.ts
+var cloudRedis = () => {
+  assertNonNullish(process.env.REDIS_USER, 'No Redis User defined')
+  assertNonNullish(process.env.REDIS_PASS, 'No Redis Pass defined')
+  assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
+  return createClient({
+    username: process.env.REDIS_USER,
+    password: process.env.REDIS_PASS,
+    socket: {
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT),
+    },
+    legacyMode: true,
+  })
+}
+var initiateRedis = () => {
+  const redisClient2 =
+    process.env.NODE_ENV === 'development'
+      ? createClient({
+          legacyMode: true,
+        })
+      : cloudRedis()
+  redisClient2.connect().catch(console.error)
+  return redisClient2
+}
+var redis_default = initiateRedis
+
+// src/utils/initSentry.ts
+import * as Sentry from './node_modules/@sentry/node/cjs/index.js'
+import * as Tracing from './node_modules/@sentry/tracing/cjs/index.js'
+function initSentry(app2) {
+  assertNonNullish(process.env.SENTRY_DSN, 'No Sentry DSN provided')
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      integrations: [
+        new Sentry.Integrations.Http({ tracing: true }),
+        new Tracing.Integrations.Express({ app: app2 }),
+      ],
+      tracesSampleRate: 1,
+    })
+  }
+}
 
 // src/routes/index.ts
 import express from './node_modules/express/index.js'
@@ -72,44 +130,9 @@ var SENT_LABEL = 'SENT'
 var UNREAD_LABEL = 'UNREAD'
 var USER = 'me'
 
-// src/controllers/Threads/threadRequest.ts
-var requestBodyCreator = (req) => {
-  const requestBody = {
-    userId: USER,
-  }
-  requestBody.maxResults =
-    typeof Number(req.query.maxResults) !== 'number'
-      ? 20
-      : Number(req.query.maxResults)
-  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    if (req.query.labelIds !== ARCHIVE_LABEL) {
-      requestBody.labelIds = req.query.labelIds
-    } else {
-      requestBody.q = '-label:inbox -label:sent -label:drafts -label:Juno/To Do'
-    }
-  }
-  if (req.query.pageToken) {
-    requestBody.pageToken = req.query.pageToken
-  }
-  if (req.query.q) {
-    requestBody.q = req.query.q
-  }
-  return requestBody
-}
-var threadRequest_default = requestBodyCreator
-
 // src/google/index.ts
 import { createHash } from 'crypto'
 import { OAuth2Client } from './node_modules/google-auth-library/build/src/index.js'
-
-// src/utils/assertNonNullish.ts
-function assertNonNullish(value, message) {
-  if (value === null || value === void 0) {
-    throw Error(message)
-  }
-}
-
-// src/google/index.ts
 var SCOPES = [
   'email',
   'https://www.googleapis.com/auth/contacts.other.readonly',
@@ -133,27 +156,18 @@ var createAuthClientObject = (req) => {
     'No Google Redirect URL found'
   )
   function determineAuthURLStructure() {
-    var _a, _b, _c, _d
-    console.log(
-      'req?.headers?.referer',
-      (_a = req == null ? void 0 : req.headers) == null ? void 0 : _a.referer
-    )
+    var _a
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        req
-      ) {
-        return (
-          (_b = req == null ? void 0 : req.headers) == null
-            ? void 0
-            : _b.referer.endsWith('/')
-        )
-          ? (_c = req.headers) == null
-            ? void 0
-            : _c.referer.slice(0, -1)
-          : (_d = req.headers) == null
+        req &&
+        ((_a = req == null ? void 0 : req.headers) == null
           ? void 0
-          : _d.referer
+          : _a.referer)
+      ) {
+        return req.headers.referer.endsWith('/')
+          ? req.headers.referer.slice(0, -1)
+          : req.headers.referer
       }
       return process.env.FRONTEND_URL
     }
@@ -171,12 +185,11 @@ var getAuthenticateClient = (req, res) =>
       const { code, state } = req.body
       if (code) {
         const oAuth2Client = createAuthClientObject(req)
-        const response = yield oAuth2Client.getToken(code)
-        oAuth2Client.setCredentials(response.tokens)
+        const { tokens } = yield oAuth2Client.getToken(code)
         if (state && state !== 'noSession') {
           if (hashState === state) {
-            req.session.oAuthClient =
-              oAuth2Client == null ? void 0 : oAuth2Client.credentials
+            oAuth2Client.setCredentials(tokens)
+            req.session.oAuthClient = tokens
           } else {
             return res.status(400).json('Invalid state detected')
           }
@@ -240,8 +253,7 @@ var checkIdValidity = (token) =>
 var authorizeLocal = (_0) =>
   __async(void 0, [_0], function* ({ credentials }) {
     if (credentials) {
-      const oAuth2Client = createAuthClientObject()
-      console.log('oAuth2Client', oAuth2Client)
+      const oAuth2Client = createAuthClientObject(null)
       try {
         oAuth2Client.setCredentials(credentials)
         return oAuth2Client
@@ -274,48 +286,38 @@ var authenticateLocal = (_0) =>
 
 // src/google/sessionRoute.ts
 var authorizeSession = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, idToken }) {
-    var _a, _b
-    if (session2) {
-      const oAuth2Client = createAuthClientObject(null)
-      try {
-        if (session2 == null ? void 0 : session2.refresh_token) {
-          console.log('this session has a refresh token')
-          oAuth2Client.setCredentials({
-            refresh_token: session2 == null ? void 0 : session2.refresh_token,
-          })
-        }
-        if (!(session2 == null ? void 0 : session2.refresh_token)) {
-          console.log('this session has no refresh token')
-        }
-        const accessToken = yield oAuth2Client.getAccessToken()
-        if (accessToken == null ? void 0 : accessToken.res) {
-          console.log(
-            'accessToken.res refresh_token should be here',
-            (_b = (_a = accessToken.res) == null ? void 0 : _a.data) == null
-              ? void 0
-              : _b.refresh_token
-          )
-        } else {
+  __async(void 0, [_0], function* ({ req }) {
+    const oAuth2Client = createAuthClientObject(null)
+    try {
+      if (req.session.oAuthClient) {
+        oAuth2Client.setCredentials(req.session.oAuthClient)
+        const accessToken = yield oAuth2Client.refreshAccessToken()
+        if (!(accessToken == null ? void 0 : accessToken.res)) {
           console.error('Cannot refresh the access token')
           return INVALID_TOKEN
         }
-        if (idToken && (yield checkIdValidity(idToken))) {
+        if (
+          accessToken.credentials.id_token &&
+          (yield checkIdValidity(accessToken.credentials.id_token))
+        ) {
+          req.session.oAuthClient = accessToken.credentials
           return oAuth2Client
         }
-      } catch (err) {
-        console.log('err', JSON.stringify(err))
-        return 'Error during authorization'
       }
-    } else {
-      return INVALID_TOKEN
+    } catch (err) {
+      console.log('err', err)
+      return 'Error during authorization'
     }
   })
 var authenticateSession = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, idToken }) {
+  __async(void 0, [_0], function* ({ req }) {
+    var _a
     try {
-      if (typeof session2 !== 'undefined') {
-        const response = yield authorizeSession({ session: session2, idToken })
+      if (
+        typeof ((_a = req.session) == null ? void 0 : _a.oAuthClient) !==
+        'undefined'
+      ) {
+        const response = yield authorizeSession({ req })
         return response
       }
       return INVALID_SESSION
@@ -327,10 +329,8 @@ var authenticateSession = (_0) =>
 // src/controllers/Users/authenticateUser.ts
 var authenticateUserSession = (req) =>
   __async(void 0, null, function* () {
-    var _a, _b
     const response = yield authenticateSession({
-      session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-      idToken: (_b = req.headers) == null ? void 0 : _b.authorization,
+      req,
     })
     if (response === INVALID_TOKEN) {
       throw Error(response)
@@ -346,18 +346,19 @@ var authenticateUserSession = (req) =>
 var authenticateUserLocal = (req) =>
   __async(void 0, null, function* () {
     var _a
-    const response = yield authenticateLocal({
-      credentials: JSON.parse(
-        (_a = req.headers) == null ? void 0 : _a.authorization
-      ),
-    })
-    if (response === INVALID_TOKEN) {
-      throw Error(response)
+    if ((_a = req.headers) == null ? void 0 : _a.authorization) {
+      const response = yield authenticateLocal({
+        credentials: JSON.parse(req.headers.authorization),
+      })
+      if (response === INVALID_TOKEN) {
+        throw Error(response)
+      }
+      if (response === 'Error during authorization') {
+        throw Error(response)
+      }
+      return response
     }
-    if (response === 'Error during authorization') {
-      throw Error(response)
-    }
-    return response
+    throw Error('No Authorization header found')
   })
 
 // src/middleware/authMiddleware.ts
@@ -365,15 +366,16 @@ var authMiddleware = (requestFunction) => (req, res) =>
   __async(void 0, null, function* () {
     var _a
     try {
-      const useLocalRoute =
-        typeof JSON.parse(
-          (_a = req.headers) == null ? void 0 : _a.authorization
-        ) === 'object'
-      const auth = useLocalRoute
-        ? yield authenticateUserLocal(req)
-        : yield authenticateUserSession(req)
-      const response = yield requestFunction(auth, req)
-      return res.status(200).json(response)
+      if ((_a = req.headers) == null ? void 0 : _a.authorization) {
+        const useLocalRoute =
+          typeof JSON.parse(req.headers.authorization) === 'object'
+        const auth = useLocalRoute
+          ? yield authenticateUserLocal(req)
+          : yield authenticateUserSession(req)
+        const response = yield requestFunction(auth, req)
+        return res.status(200).json(response)
+      }
+      res.status(401).json('There is no authorization header found')
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
       res.status(401).json(err == null ? void 0 : err.message)
@@ -510,6 +512,41 @@ function threadSimpleRemap(rawObject) {
     return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
   })
 }
+
+// src/controllers/Threads/threadRequest.ts
+var requestBodyCreator = (req) => {
+  var _a
+  const requestBody = {
+    userId: USER,
+  }
+  requestBody.maxResults =
+    typeof Number(req.query.maxResults) !== 'number'
+      ? 20
+      : Number(req.query.maxResults)
+  if (
+    req.query.labelIds &&
+    req.query.labelIds !== 'undefined' &&
+    typeof req.query.labelIds !== 'string'
+  ) {
+    const typedLabelIdsReq = req.query.labelIds
+    if (!typedLabelIdsReq.includes(ARCHIVE_LABEL)) {
+      requestBody.labelIds = typedLabelIdsReq
+    } else {
+      requestBody.q = '-label:inbox -label:sent -label:drafts -label:Juno/To Do'
+    }
+  }
+  if (
+    ((_a = req == null ? void 0 : req.query) == null ? void 0 : _a.pageToken) &&
+    typeof req.query.pageToken === 'string'
+  ) {
+    requestBody.pageToken = req.query.pageToken
+  }
+  if (req.query.q && typeof req.query.q === 'string') {
+    requestBody.q = req.query.q
+  }
+  return requestBody
+}
+var threadRequest_default = requestBodyCreator
 
 // src/controllers/Threads/fetchSimpleThreads.ts
 function singleThread(thread, gmail) {
@@ -1120,6 +1157,24 @@ var fetchSingleThread = (req, res) =>
 // src/controllers/Drafts/createDraft.ts
 import { google as google4 } from './node_modules/googleapis/build/src/index.js'
 
+// src/utils/formFieldParser.ts
+import formidable from './node_modules/formidable/src/index.js'
+function formFieldParser(req) {
+  return __async(this, null, function* () {
+    const form = formidable({ multiples: true })
+    const formFields = yield new Promise(function (resolve, reject) {
+      form.parse(req, function (err, fields, files) {
+        if (err) {
+          reject(err)
+          return
+        }
+        resolve(__spreadValues({ files }, fields))
+      })
+    })
+    return formFields
+  })
+}
+
 // src/utils/messageEncoding.ts
 import fs from 'fs'
 var messageEncoding = ({
@@ -1179,24 +1234,6 @@ var messageEncoding = ({
   return encodedMessage
 }
 var messageEncoding_default = messageEncoding
-
-// src/utils/formFieldParser.ts
-import formidable from './node_modules/formidable/src/index.js'
-function formFieldParser(req) {
-  return __async(this, null, function* () {
-    const form = formidable({ multiples: true })
-    const formFields = yield new Promise(function (resolve, reject) {
-      form.parse(req, function (err, fields, files) {
-        if (err) {
-          reject(err)
-          return
-        }
-        resolve(__spreadValues({ files }, fields))
-      })
-    })
-    return formFields
-  })
-}
 
 // src/controllers/Drafts/createDraft.ts
 function setupDraft(auth, req) {
@@ -1674,10 +1711,10 @@ var getContacts = (auth, req) =>
       typeof Number(req.query.pageSize) !== 'number'
         ? 1e3
         : Number(req.query.pageSize)
-    if (req.query.readMask) {
+    if (req.query.readMask && typeof req.query.readMask === 'string') {
       requestBody.readMask = req.query.readMask
     }
-    if (req.query.pageToken) {
+    if (req.query.pageToken && typeof req.query.pageToken === 'string') {
       requestBody.pageToken = req.query.pageToken
     }
     try {
@@ -1701,8 +1738,12 @@ var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
     const people = google22.people({ version: 'v1', auth })
     const requestBody = {}
-    requestBody.query = req.query.query
-    requestBody.readMask = req.query.readMask
+    if (typeof req.query.query === 'string') {
+      requestBody.query = req.query.query
+    }
+    if (typeof req.query.readMask === 'string') {
+      requestBody.readMask = req.query.readMask
+    }
     try {
       const response = yield people.otherContacts.search(requestBody)
       if (response && response.data) {
@@ -2131,17 +2172,21 @@ var fetchSendAs = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google27.gmail({ version: 'v1', auth })
     const { emailId } = req.query
-    try {
-      const response = yield gmail.users.settings.sendAs.get({
-        userId: USER,
-        sendAsEmail: emailId,
-      })
-      if ((response == null ? void 0 : response.status) === 200) {
-        return response.data
+    if (typeof emailId === 'string') {
+      try {
+        const response = yield gmail.users.settings.sendAs.get({
+          userId: USER,
+          sendAsEmail: emailId,
+        })
+        if ((response == null ? void 0 : response.status) === 200) {
+          return response.data
+        }
+        return new Error('No data found...')
+      } catch (err) {
+        throw Error(`Send as returned an error: ${err}`)
       }
-      return new Error('No data found...')
-    } catch (err) {
-      throw Error(`Send as returned an error: ${err}`)
+    } else {
+      throw Error('Invalid email id request')
     }
   })
 var getSendAs = (req, res) =>
@@ -2222,57 +2267,6 @@ router.put('/api/settings/updateSendAs', updateSendAs)
 var routes_default = router
 
 // src/routes/app.ts
-import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
-import session from './node_modules/express-session/index.js'
-import redis from './node_modules/connect-redis/index.js'
-
-// src/data/redis.ts
-import { createClient } from './node_modules/redis/dist/index.js'
-var cloudRedis = () => {
-  assertNonNullish(process.env.REDIS_USER, 'No Redis User defined')
-  assertNonNullish(process.env.REDIS_PASS, 'No Redis Pass defined')
-  assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
-  return createClient({
-    username: process.env.REDIS_USER,
-    password: process.env.REDIS_PASS,
-    socket: {
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT),
-    },
-    legacyMode: true,
-  })
-}
-var initiateRedis = () => {
-  const redisClient2 =
-    process.env.NODE_ENV === 'development'
-      ? createClient({
-          legacyMode: true,
-        })
-      : cloudRedis()
-  redisClient2.connect().catch(console.error)
-  return redisClient2
-}
-var redis_default = initiateRedis
-
-// src/utils/initSentry.ts
-import * as Sentry from './node_modules/@sentry/node/cjs/index.js'
-import * as Tracing from './node_modules/@sentry/tracing/cjs/index.js'
-function initSentry(app2) {
-  assertNonNullish(process.env.SENTRY_DSN, 'No Sentry DSN provided')
-  if (process.env.SENTRY_DSN) {
-    Sentry.init({
-      dsn: process.env.SENTRY_DSN,
-      integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-        new Tracing.Integrations.Express({ app: app2 }),
-      ],
-      tracesSampleRate: 1,
-    })
-  }
-}
-
-// src/routes/app.ts
-import compression from './node_modules/compression/index.js'
 process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
 var app = express2()
@@ -2298,20 +2292,19 @@ app.use(
   })
 )
 function determineAllowOrigin(req) {
-  var _a, _b, _c
+  var _a
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
   if (process.env.NODE_ENV === 'production') {
-    if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-      return ((_a = req.headers) == null ? void 0 : _a.referer.endsWith('/'))
-        ? (_b = req.headers) == null
-          ? void 0
-          : _b.referer.slice(0, -1)
-        : (_c = req.headers) == null
-        ? void 0
-        : _c.referer
+    if (
+      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+      ((_a = req.headers) == null ? void 0 : _a.referer)
+    ) {
+      return req.headers.referer.endsWith('/')
+        ? req.headers.referer.slice(0, -1)
+        : req.headers.referer
     }
     return process.env.FRONTEND_URL
   }
@@ -2322,7 +2315,8 @@ function determineAllowCredentials(req) {
   if (process.env.NODE_ENV === 'production') {
     if (
       process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      ((_a = req.headers) == null ? void 0 : _a.referer.includes('localhost'))
+      ((_a = req.headers) == null ? void 0 : _a.referer) &&
+      req.headers.referer.includes('localhost')
     ) {
       return 'false'
     }

@@ -1,19 +1,28 @@
+import { Credentials } from 'google-auth-library'
+import { Request } from 'express'
 import { createAuthClientObject, checkIdValidity } from '.'
 import * as global from '../constants/globalConstants'
 
-interface IAuthClient {
-  access_token: string
-  refresh_token: string
-  scope: string
-  token_type: 'Bearer'
-  id_token: string
-  expiry_date: number
+declare module 'express-session' {
+  interface SessionData {
+    oAuthClient: Credentials
+  }
 }
 
-interface IAuthorizeSession {
-  session: IAuthClient | null
-  idToken?: string
-}
+// interface IAuthClient {
+//   access_token: string
+//   refresh_token: string
+//   scope: string
+//   token_type: 'Bearer'
+//   id_token: string
+//   expiry_date: number
+// }
+
+// interface IAuthorizeSession {
+//   // session: IAuthClient | null
+//   req: Request
+//   // idToken?: string
+// }
 
 /**
  * @function authorizeSession
@@ -21,47 +30,42 @@ interface IAuthorizeSession {
  * @returns an OAuth2Client object if session exists, an error otherwise.
  */
 
-export const authorizeSession = async ({
-  session,
-  idToken,
-}: IAuthorizeSession) => {
-  if (session) {
-    const oAuth2Client = createAuthClientObject(null)
-    try {
-      // TODO: Check this part of the flow - it crashes here. The refresh token should be saved somewhere else, since the session is terminated on logout. Thus losogin the access to the refreshToken
-      if (session?.refresh_token) {
-        console.log('this session has a refresh token')
-        oAuth2Client.setCredentials({ refresh_token: session?.refresh_token })
-      }
-      if (!session?.refresh_token) {
-        console.log('this session has no refresh token')
-      }
-      const accessToken = await oAuth2Client.getAccessToken()
-      // oAuth2Client.setCredentials(session)
-      if (accessToken?.res) {
-        console.log(
-          'accessToken.res refresh_token should be here',
-          accessToken.res?.data?.refresh_token
-        )
-        // oAuth2Client.setCredentials(accessToken.res.data)
-      } else {
-        // try {
-        //   const refreshedToken = await oAuth2Client.refreshAccessToken()
-        //   oAuth2Client.setCredentials(refreshedToken?.res?.data)
-        // } catch (err) {
+export const authorizeSession = async ({ req }: { req: Request }) => {
+  const oAuth2Client = createAuthClientObject(null)
+  try {
+    if (req.session.oAuthClient) {
+      // TODO: Check if the session is not existing on "cloud mode"
+      // console.log('session', session)
+      oAuth2Client.setCredentials(req.session.oAuthClient)
+      // console.log(Date.now() + 10000)
+      // const adjustedSession = {
+      //   ...session,
+      //   expiry_date: Date.now() + 1000,
+      // }
+      // console.log('adjustedSession', adjustedSession)
+      // if (session?.refresh_token) {
+      //   console.log('this session has a refresh token')
+      // }
+      // if (!session?.refresh_token) {
+      //   console.log('this session has no refresh token')
+      // }
+      const accessToken = await oAuth2Client.refreshAccessToken()
+      if (!accessToken?.res) {
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
-        // }
       }
-      if (idToken && (await checkIdValidity(idToken))) {
+      if (
+        accessToken.credentials.id_token &&
+        (await checkIdValidity(accessToken.credentials.id_token))
+      ) {
+        req.session.oAuthClient = accessToken.credentials
+        // Keep the session in sync with the latest version of the credentials
         return oAuth2Client
       }
-    } catch (err) {
-      console.log('err', JSON.stringify(err))
-      return 'Error during authorization'
     }
-  } else {
-    return global.INVALID_TOKEN
+  } catch (err) {
+    console.log('err', err)
+    return 'Error during authorization'
   }
 }
 
@@ -71,13 +75,10 @@ export const authorizeSession = async ({
  * @returns a string 'INVALID Session' if the session doesn't exist, the response of the function 'Authorize' in case the function is called. Or console logs the error if there is a problem.
  */
 
-export const authenticateSession = async ({
-  session,
-  idToken,
-}: IAuthorizeSession) => {
+export const authenticateSession = async ({ req }: { req: Request }) => {
   try {
-    if (typeof session !== 'undefined') {
-      const response = await authorizeSession({ session, idToken })
+    if (typeof req.session?.oAuthClient !== 'undefined') {
+      const response = await authorizeSession({ req })
       return response
     }
     // If session is invalid, require the user to sign in again.
