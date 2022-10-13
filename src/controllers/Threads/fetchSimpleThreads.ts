@@ -1,8 +1,11 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { gmail_v1, google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
-import requestBodyCreator from './threadRequest'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import threadSimpleRemap from '../../utils/threadSimpleRemap'
+import requestBodyCreator from './threadRequest'
 
 async function singleThread(
   thread: gmail_v1.Schema$Thread,
@@ -26,7 +29,10 @@ async function singleThread(
   }
 }
 
-const getSimpleThreads = async (auth, req) => {
+const getSimpleThreads = async (
+  auth: OAuth2Client | undefined,
+  req: Request
+) => {
   const gmail: gmail_v1.Gmail = google.gmail({ version: 'v1', auth })
   const requestBody = requestBodyCreator(req)
 
@@ -59,6 +65,6 @@ const getSimpleThreads = async (auth, req) => {
   }
 }
 
-export const fetchSimpleThreads = async (req, res) => {
+export const fetchSimpleThreads = async (req: Request, res: Response) => {
   authMiddleware(getSimpleThreads)(req, res)
 }

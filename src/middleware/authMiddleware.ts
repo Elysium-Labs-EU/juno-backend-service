@@ -1,11 +1,19 @@
 import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
+
 import {
   authenticateUserLocal,
   authenticateUserSession,
 } from '../controllers/Users/authenticateUser'
 
 export const authMiddleware =
-  (requestFunction) => async (req: Request, res: Response) => {
+  <T>(
+    requestFunction: (
+      auth: OAuth2Client | undefined,
+      req: Request
+    ) => Promise<T | Error>
+  ) =>
+  async (req: Request, res: Response) => {
     try {
       if (req.headers?.authorization) {
         // A boolean to determine if the local or session authorization route should be used.

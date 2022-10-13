@@ -1,8 +1,11 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const exportDraft = async (auth, req) => {
+const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
   const { id } = req.body
 
@@ -21,6 +24,6 @@ const exportDraft = async (auth, req) => {
     throw Error(`Sending Draft encountered an error ${err}`)
   }
 }
-export const sendDraft = async (req, res) => {
+export const sendDraft = async (req: Request, res: Response) => {
   authMiddleware(exportDraft)(req, res)
 }

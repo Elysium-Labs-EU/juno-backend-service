@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 
@@ -19,7 +20,13 @@ const SCOPES = [
 
 const hashState = createHash('sha256').digest('hex')
 
-export const createAuthClientObject = (req: any) => {
+/**
+ * @function createAuthClientObject
+ * @param req can be either null or defined. Null is used on the route for local authorization
+ * @returns
+ */
+
+export const createAuthClientObject = (req: Request | null) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,
@@ -34,11 +41,12 @@ export const createAuthClientObject = (req: any) => {
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        req
+        req &&
+        req?.headers?.referer
       ) {
-        return req?.headers?.referer.endsWith('/')
-          ? req.headers?.referer.slice(0, -1)
-          : req.headers?.referer
+        return req.headers.referer.endsWith('/')
+          ? req.headers.referer.slice(0, -1)
+          : req.headers.referer
       }
       return process.env.FRONTEND_URL
     }
@@ -58,7 +66,7 @@ export const createAuthClientObject = (req: any) => {
  * workflow. Return the partial client to the callback.
  * And store the oAuthClient to the user express session.
  */
-export const getAuthenticateClient = async (req, res) => {
+export const getAuthenticateClient = async (req: Request, res: Response) => {
   try {
     const { code, state } = req.body
     // Now that we have the code, use that to acquire tokens.
@@ -101,7 +109,7 @@ export const getAuthenticateClient = async (req, res) => {
   }
 }
 
-export const getAuthUrl = async (req, res) => {
+export const getAuthUrl = async (req: Request, res: Response) => {
   try {
     // create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
     // which should be fetched from the Google Developers Console.

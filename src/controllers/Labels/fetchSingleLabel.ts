@@ -1,8 +1,11 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const getLabel = async (auth, req) => {
+const getLabel = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
   const { id } = req.params
 
@@ -19,6 +22,6 @@ const getLabel = async (auth, req) => {
     throw Error(`Label returned an error: ${err}`)
   }
 }
-export const fetchSingleLabel = async (req, res) => {
+export const fetchSingleLabel = async (req: Request, res: Response) => {
   authMiddleware(getLabel)(req, res)
 }

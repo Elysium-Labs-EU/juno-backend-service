@@ -1,9 +1,12 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import handleHistoryObject from './handleHistoryObject'
 
-const fetchHistory = async (auth, req) => {
+const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
   try {
@@ -31,6 +34,6 @@ const fetchHistory = async (auth, req) => {
     throw Error(`Profile returned an error: ${err}`)
   }
 }
-export const listHistory = async (req, res) => {
+export const listHistory = async (req: Request, res: Response) => {
   authMiddleware(fetchHistory)(req, res)
 }

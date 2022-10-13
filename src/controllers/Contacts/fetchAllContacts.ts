@@ -1,8 +1,10 @@
 import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google, people_v1 } from 'googleapis'
+
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const getContacts = async (auth, req: Request) => {
+const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
   const people = google.people({ version: 'v1', auth })
   const requestBody: people_v1.Params$Resource$Othercontacts$List = {}
 
@@ -11,10 +13,10 @@ const getContacts = async (auth, req: Request) => {
       ? 1000
       : Number(req.query.pageSize)
 
-  if (req.query.readMask) {
+  if (req.query.readMask && typeof req.query.readMask === 'string') {
     requestBody.readMask = req.query.readMask
   }
-  if (req.query.pageToken) {
+  if (req.query.pageToken && typeof req.query.pageToken === 'string') {
     requestBody.pageToken = req.query.pageToken
   }
 

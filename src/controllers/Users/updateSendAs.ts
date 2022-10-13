@@ -1,8 +1,14 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const updateSendAsGmail = async (auth, req) => {
+const updateSendAsGmail = async (
+  auth: OAuth2Client | undefined,
+  req: Request
+) => {
   const gmail = google.gmail({ version: 'v1', auth })
   const { emailId, request } = req.body.params
 
@@ -22,6 +28,6 @@ const updateSendAsGmail = async (auth, req) => {
     throw Error(`Send as returned an error: ${err}`)
   }
 }
-export const updateSendAs = async (req, res) => {
+export const updateSendAs = async (req: Request, res: Response) => {
   authMiddleware(updateSendAsGmail)(req, res)
 }

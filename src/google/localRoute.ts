@@ -2,17 +2,17 @@ import { createAuthClientObject, checkIdValidity } from '.'
 import * as global from '../constants/globalConstants'
 import { Credentials } from 'google-auth-library'
 
-interface IAuthorizeLocal {
-  credentials: Credentials
-}
-
 /**
  * @function authorizeLocal
  * @param {object} - takes in an object of the accessToken.
  * @returns an OAuth2Client object if accessToken is valid, an error otherwise.
  */
 
-export const authorizeLocal = async ({ credentials }: IAuthorizeLocal) => {
+export const authorizeLocal = async ({
+  credentials,
+}: {
+  credentials: Credentials
+}) => {
   if (credentials) {
     const oAuth2Client = createAuthClientObject(null)
     console.log('oAuth2Client', oAuth2Client)
@@ -35,7 +35,11 @@ export const authorizeLocal = async ({ credentials }: IAuthorizeLocal) => {
  * @returns a string 'INVALID Session' if the session doesn't exist, the response of the function 'Authorize' in case the function is called. Or console logs the error if there is a problem.
  */
 
-export const authenticateLocal = async ({ credentials }: IAuthorizeLocal) => {
+export const authenticateLocal = async ({
+  credentials,
+}: {
+  credentials: Credentials
+}) => {
   try {
     if (
       credentials &&

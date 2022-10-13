@@ -1,8 +1,14 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const thrashSingleMessage = async (auth, req) => {
+const thrashSingleMessage = async (
+  auth: OAuth2Client | undefined,
+  req: Request
+) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
   try {
@@ -18,6 +24,6 @@ const thrashSingleMessage = async (auth, req) => {
     throw Error(`Single message return an error: ${err}`)
   }
 }
-export const thrashMessage = async (req, res) => {
+export const thrashMessage = async (req: Request, res: Response) => {
   authMiddleware(thrashSingleMessage)(req, res)
 }

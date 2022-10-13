@@ -1,15 +1,18 @@
-import express from 'express'
 import 'dotenv/config'
+
+import compression from 'compression'
+import redis from 'connect-redis'
+import express, { Request } from 'express'
+import session from 'express-session'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
-import indexRoute from './index'
+
 import * as Sentry from '@sentry/node'
-import assertNonNullish from '../utils/assertNonNullish'
-import session from 'express-session'
-import redis from 'connect-redis'
+
 import initiateRedis from '../data/redis'
+import assertNonNullish from '../utils/assertNonNullish'
 import initSentry from '../utils/initSentry'
-import compression from 'compression'
+import indexRoute from './index'
 
 process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
@@ -41,27 +44,31 @@ app.use(
   })
 )
 
-function determineAllowOrigin(req) {
+function determineAllowOrigin(req: Request) {
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
   if (process.env.NODE_ENV === 'production') {
-    if (process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true') {
-      return req.headers?.referer.endsWith('/')
-        ? req.headers?.referer.slice(0, -1)
-        : req.headers?.referer
+    if (
+      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+      req.headers?.referer
+    ) {
+      return req.headers.referer.endsWith('/')
+        ? req.headers.referer.slice(0, -1)
+        : req.headers.referer
     }
     return process.env.FRONTEND_URL
   }
   return process.env.FRONTEND_URL
 }
 
-function determineAllowCredentials(req) {
+function determineAllowCredentials(req: Request) {
   if (process.env.NODE_ENV === 'production') {
     if (
       process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      req.headers?.referer.includes('localhost')
+      req.headers?.referer &&
+      req.headers.referer.includes('localhost')
     ) {
       return 'false'
     }

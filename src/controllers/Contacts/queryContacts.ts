@@ -1,12 +1,20 @@
+import { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { google, people_v1 } from 'googleapis'
+
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const getContacts = async (auth, req) => {
+const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
   const people = google.people({ version: 'v1', auth })
 
   const requestBody: people_v1.Params$Resource$Othercontacts$Search = {}
-  requestBody.query = req.query.query
-  requestBody.readMask = req.query.readMask
+  if (typeof req.query.query === 'string') {
+    requestBody.query = req.query.query
+  }
+  if (typeof req.query.readMask === 'string') {
+    requestBody.readMask = req.query.readMask
+  }
+
   try {
     const response = await people.otherContacts.search(requestBody)
     if (response && response.data) {
@@ -18,6 +26,6 @@ const getContacts = async (auth, req) => {
   }
 }
 
-export const queryContacts = async (req, res) => {
+export const queryContacts = async (req: Request, res: Response) => {
   authMiddleware(getContacts)(req, res)
 }
