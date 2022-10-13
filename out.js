@@ -291,7 +291,9 @@ var authorizeSession = (_0) =>
       if (req.session.oAuthClient) {
         console.log('req.session.oAuthClient', req.session.oAuthClient)
         oAuth2Client.setCredentials(req.session.oAuthClient)
+        console.log('pre accessToken', oAuth2Client)
         const accessToken = yield oAuth2Client.refreshAccessToken()
+        console.log('post accessToken', oAuth2Client)
         if (!(accessToken == null ? void 0 : accessToken.res)) {
           console.error('Cannot refresh the access token')
           return INVALID_TOKEN
@@ -2068,6 +2070,13 @@ var logoutUser = (req, res) =>
     console.log("let's just not for now.")
     try {
       if (req.headers.authorization) {
+        console.log('req.headers.authorization')
+        if (req.session.oAuthClient) {
+          const oAuth2Client = createAuthClientObject(null)
+          oAuth2Client.setCredentials(req.session.oAuthClient)
+          oAuth2Client.revokeCredentials()
+          console.log('credentials have been REVOKED')
+        }
         req.session.destroy(function (err) {
           if (err) {
             console.log(err)

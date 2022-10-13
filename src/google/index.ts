@@ -22,8 +22,8 @@ const hashState = createHash('sha256').digest('hex')
 
 /**
  * @function createAuthClientObject
- * @param req can be either null or defined. Null is used on the route for local authorization
- * @returns
+ * @param req can be either null or defined. Request is used on the route for local authorization. Null is used for a cloud based session.
+ * @returns {OAuth2Client}
  */
 
 export const createAuthClientObject = (req: Request | null) => {
@@ -77,7 +77,6 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
         if (hashState === state) {
           oAuth2Client.setCredentials(tokens)
           req.session.oAuthClient = tokens
-          // req.session.oAuthClient = oAuth2Client?.credentials
         } else {
           return res.status(400).json('Invalid state detected')
         }

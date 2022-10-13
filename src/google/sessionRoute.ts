@@ -50,7 +50,9 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       // if (!session?.refresh_token) {
       //   console.log('this session has no refresh token')
       // }
+      console.log('pre accessToken', oAuth2Client)
       const accessToken = await oAuth2Client.refreshAccessToken()
+      console.log('post accessToken', oAuth2Client)
       if (!accessToken?.res) {
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
