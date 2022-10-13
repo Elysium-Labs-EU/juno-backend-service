@@ -414,10 +414,11 @@ var getContacts = (auth, req) =>
       throw Error(`Contacts returned an error: ${err}`)
     }
   })
-var fetchAllContacts = (req, res) =>
-  __async(void 0, null, function* () {
+function fetchAllContacts(req, res) {
+  return __async(this, null, function* () {
     authMiddleware(getContacts)(req, res)
   })
+}
 
 // src/api/Contacts/queryContacts.ts
 import { google as google2 } from './node_modules/googleapis/build/src/index.js'

@@ -1,6 +1,6 @@
 import express from 'express'
 
-import { fetchAllContacts } from '../api/Contacts/fetchAllContacts'
+import fetchAllContacts from '../api/Contacts/fetchAllContacts'
 import { queryContacts } from '../api/Contacts/queryContacts'
 import { createDraft } from '../api/Drafts/createDraft'
 import { deleteDraft } from '../api/Drafts/deleteDraft'
