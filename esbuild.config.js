@@ -2,7 +2,7 @@
 import * as esBuild from 'esbuild'
 
 esBuild.buildSync({
-  entryPoints: ['server.ts'],
+  entryPoints: ['src/server.ts'],
   bundle: true,
   platform: 'node',
   external: ['./node_modules/*'],
