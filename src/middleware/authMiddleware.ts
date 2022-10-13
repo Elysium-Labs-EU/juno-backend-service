@@ -4,7 +4,7 @@ import { OAuth2Client } from 'google-auth-library'
 import {
   authenticateUserLocal,
   authenticateUserSession,
-} from '../controllers/Users/authenticateUser'
+} from '../api/Users/authenticateUser'
 
 export const authMiddleware =
   <T>(

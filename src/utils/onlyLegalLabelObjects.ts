@@ -1,4 +1,4 @@
-import { LabelIdName } from '../controllers/History/handleHistoryObject'
+import { LabelIdName } from '../api/History/handleHistoryObject'
 
 interface IOnlyLegalLabels {
   labelNames: string[]
