@@ -39,8 +39,7 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: 'none',
-      // sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })
 )
@@ -93,6 +92,7 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, PATCH, OPTIONS'
   )
+  res.setHeader('Access-Control-Expose-Headers', ['set-cookie'])
   next()
 })
 

@@ -187,6 +187,7 @@ var getAuthenticateClient = (req, res) =>
         const { tokens } = yield oAuth2Client.getToken(code)
         if (state && state !== 'noSession') {
           if (hashState === state) {
+            console.log('here@@@', tokens)
             oAuth2Client.setCredentials(tokens)
             req.session.oAuthClient = tokens
           } else {
@@ -200,6 +201,7 @@ var getAuthenticateClient = (req, res) =>
               credentials: oAuth2Client.credentials,
             })
           }
+          console.log('getAuthenticateClient', req.session)
           return res.status(200).json({
             idToken: idToken.replace(/['"]+/g, ''),
           })
@@ -315,6 +317,7 @@ var authenticateSession = (_0) =>
   __async(void 0, [_0], function* ({ req }) {
     var _a
     try {
+      console.log('req', req.session.oAuthClient)
       if (
         typeof ((_a = req.session) == null ? void 0 : _a.oAuthClient) !==
         'undefined'
@@ -331,6 +334,7 @@ var authenticateSession = (_0) =>
 // src/controllers/Users/authenticateUser.ts
 var authenticateUserSession = (req) =>
   __async(void 0, null, function* () {
+    console.log('req ####', req)
     const response = yield authenticateSession({
       req,
     })
@@ -371,6 +375,7 @@ var authMiddleware = (requestFunction) => (req, res) =>
       if ((_a = req.headers) == null ? void 0 : _a.authorization) {
         const useLocalRoute =
           typeof JSON.parse(req.headers.authorization) === 'object'
+        console.log('useLocalRoute', useLocalRoute)
         const auth = useLocalRoute
           ? yield authenticateUserLocal(req)
           : yield authenticateUserSession(req)
@@ -2293,7 +2298,7 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: 'none',
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })
 )
@@ -2345,6 +2350,7 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, PATCH, OPTIONS'
   )
+  res.setHeader('Access-Control-Expose-Headers', ['set-cookie'])
   next()
 })
 app.use(express2.json())

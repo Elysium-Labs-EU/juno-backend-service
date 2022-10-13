@@ -19,6 +19,7 @@ export const authMiddleware =
         // A boolean to determine if the local or session authorization route should be used.
         const useLocalRoute =
           typeof JSON.parse(req.headers.authorization) === 'object'
+        console.log('useLocalRoute', useLocalRoute)
         const auth = useLocalRoute
           ? await authenticateUserLocal(req)
           : await authenticateUserSession(req)

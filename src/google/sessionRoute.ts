@@ -9,21 +9,6 @@ declare module 'express-session' {
   }
 }
 
-// interface IAuthClient {
-//   access_token: string
-//   refresh_token: string
-//   scope: string
-//   token_type: 'Bearer'
-//   id_token: string
-//   expiry_date: number
-// }
-
-// interface IAuthorizeSession {
-//   // session: IAuthClient | null
-//   req: Request
-//   // idToken?: string
-// }
-
 /**
  * @function authorizeSession
  * @param {object} - takes in an object of the active Cookie session.
@@ -36,20 +21,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
     if (req.session.oAuthClient) {
       console.log('req.session.oAuthClient', req.session.oAuthClient)
       // TODO: Check if the session is not existing on "cloud mode"
-      // console.log('session', session)
       oAuth2Client.setCredentials(req.session.oAuthClient)
-      // console.log(Date.now() + 10000)
-      // const adjustedSession = {
-      //   ...session,
-      //   expiry_date: Date.now() + 1000,
-      // }
-      // console.log('adjustedSession', adjustedSession)
-      // if (session?.refresh_token) {
-      //   console.log('this session has a refresh token')
-      // }
-      // if (!session?.refresh_token) {
-      //   console.log('this session has no refresh token')
-      // }
       console.log('pre accessToken', oAuth2Client)
       const accessToken = await oAuth2Client.refreshAccessToken()
       console.log('post accessToken', oAuth2Client)
@@ -80,6 +52,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
 
 export const authenticateSession = async ({ req }: { req: Request }) => {
   try {
+    console.log('req', req.session.oAuthClient)
     if (typeof req.session?.oAuthClient !== 'undefined') {
       const response = await authorizeSession({ req })
       return response

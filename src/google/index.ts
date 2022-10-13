@@ -75,6 +75,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
       // Make sure to set the credentials on the OAuth2 client.
       if (state && state !== 'noSession') {
         if (hashState === state) {
+          console.log('here@@@', tokens)
           oAuth2Client.setCredentials(tokens)
           req.session.oAuthClient = tokens
         } else {
@@ -90,6 +91,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
             credentials: oAuth2Client.credentials,
           })
         }
+        console.log('getAuthenticateClient', req.session)
         // If the session route is used, only send back the id Token to frontend, and use the session to authorize.
         return res.status(200).json({
           idToken: idToken.replace(/['"]+/g, ''),
