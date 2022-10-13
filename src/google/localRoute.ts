@@ -15,7 +15,7 @@ export const authorizeLocal = async ({
 }) => {
   if (credentials) {
     const oAuth2Client = createAuthClientObject(null)
-    console.log('oAuth2Client', oAuth2Client)
+    // console.log('oAuth2Client', oAuth2Client)
     // TODO: Update the route to also update the access token if needed.
     try {
       oAuth2Client.setCredentials(credentials)

@@ -185,7 +185,6 @@ var getAuthenticateClient = (req, res) =>
       const { code, state } = req.body
       if (code) {
         const oAuth2Client = createAuthClientObject(req)
-        console.log('code', code)
         const { tokens } = yield oAuth2Client.getToken(code)
         if (state && state !== 'noSession') {
           if (hashState === state) {
@@ -255,7 +254,6 @@ var authorizeLocal = (_0) =>
   __async(void 0, [_0], function* ({ credentials }) {
     if (credentials) {
       const oAuth2Client = createAuthClientObject(null)
-      console.log('oAuth2Client', oAuth2Client)
       try {
         oAuth2Client.setCredentials(credentials)
         return oAuth2Client
