@@ -2,5 +2,5 @@
   "version": 2,
   "name": "juno-backend-service",
   "builds": [{ "src": "server.ts", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "/server.ts" }]
+  "routes": [{ "src": "/(.*)", "dest": "/server.js" }]
 }
