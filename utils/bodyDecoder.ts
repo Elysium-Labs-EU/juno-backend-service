@@ -1,12 +1,12 @@
+import AutoLinker from 'autolinker'
 import * as cheerio from 'cheerio'
 import { gmail_v1 } from 'googleapis'
-import AutoLinker from 'autolinker'
-import removeTrackers from './removeTrackers'
+
 import * as global from '../constants/globalConstants'
 import { IAttachment } from '../types/emailAttachmentTypes'
 import { baseBase64, decodeBase64 } from './decodeBase64'
 import removeScripts from './removeScripts'
-import { USER } from '../constants/globalConstants'
+import removeTrackers from './removeTrackers'
 
 let decodedString: string | undefined
 let localMessageId: string | null
@@ -50,7 +50,7 @@ const inlineImageDecoder = async ({
     if (localGmail && body?.attachmentId) {
       try {
         const response = await localGmail.users.messages.attachments.get({
-          userId: USER,
+          userId: global.USER,
           messageId,
           id: body?.attachmentId,
         })
