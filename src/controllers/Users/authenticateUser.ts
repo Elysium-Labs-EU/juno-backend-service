@@ -1,3 +1,4 @@
+import { Request } from 'express'
 import * as global from '../../constants/globalConstants'
 import { authenticateLocal } from '../../google/localRoute'
 import { authenticateSession } from '../../google/sessionRoute'
@@ -10,10 +11,10 @@ import { authenticateSession } from '../../google/sessionRoute'
  * @returns
  */
 
-export const authenticateUserSession = async (req) => {
+export const authenticateUserSession = async (req: Request) => {
   const response = await authenticateSession({
-    session: req.session?.oAuthClient,
-    idToken: req.headers?.authorization,
+    // session: req.session?.oAuthClient,
+    req: req,
   })
   if (response === global.INVALID_TOKEN) {
     throw Error(response)
@@ -34,15 +35,18 @@ export const authenticateUserSession = async (req) => {
  * @param req a request object that should hold the required accessToken and idToken
  * @returns
  */
-export const authenticateUserLocal = async (req) => {
-  const response = await authenticateLocal({
-    credentials: JSON.parse(req.headers?.authorization),
-  })
-  if (response === global.INVALID_TOKEN) {
-    throw Error(response)
+export const authenticateUserLocal = async (req: Request) => {
+  if (req.headers?.authorization) {
+    const response = await authenticateLocal({
+      credentials: JSON.parse(req.headers.authorization),
+    })
+    if (response === global.INVALID_TOKEN) {
+      throw Error(response)
+    }
+    if (response === 'Error during authorization') {
+      throw Error(response)
+    }
+    return response
   }
-  if (response === 'Error during authorization') {
-    throw Error(response)
-  }
-  return response
+  throw Error('No Authorization header found')
 }

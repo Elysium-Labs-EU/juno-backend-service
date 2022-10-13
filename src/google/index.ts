@@ -31,7 +31,6 @@ export const createAuthClientObject = (req: any) => {
   )
 
   function determineAuthURLStructure() {
-    console.log('req?.headers?.referer', req?.headers?.referer)
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
@@ -65,12 +64,14 @@ export const getAuthenticateClient = async (req, res) => {
     // Now that we have the code, use that to acquire tokens.
     if (code) {
       const oAuth2Client = createAuthClientObject(req)
-      const response = await oAuth2Client.getToken(code)
+      console.log('code', code)
+      const { tokens } = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
-      oAuth2Client.setCredentials(response.tokens)
       if (state && state !== 'noSession') {
         if (hashState === state) {
-          req.session.oAuthClient = oAuth2Client?.credentials
+          oAuth2Client.setCredentials(tokens)
+          req.session.oAuthClient = tokens
+          // req.session.oAuthClient = oAuth2Client?.credentials
         } else {
           return res.status(400).json('Invalid state detected')
         }

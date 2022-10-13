@@ -133,27 +133,23 @@ var createAuthClientObject = (req) => {
     'No Google Redirect URL found'
   )
   function determineAuthURLStructure() {
-    var _a, _b, _c, _d
-    console.log(
-      'req?.headers?.referer',
-      (_a = req == null ? void 0 : req.headers) == null ? void 0 : _a.referer
-    )
+    var _a, _b, _c
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
         req
       ) {
         return (
-          (_b = req == null ? void 0 : req.headers) == null
+          (_a = req == null ? void 0 : req.headers) == null
             ? void 0
-            : _b.referer.endsWith('/')
+            : _a.referer.endsWith('/')
         )
-          ? (_c = req.headers) == null
+          ? (_b = req.headers) == null
             ? void 0
-            : _c.referer.slice(0, -1)
-          : (_d = req.headers) == null
+            : _b.referer.slice(0, -1)
+          : (_c = req.headers) == null
           ? void 0
-          : _d.referer
+          : _c.referer
       }
       return process.env.FRONTEND_URL
     }
@@ -171,12 +167,12 @@ var getAuthenticateClient = (req, res) =>
       const { code, state } = req.body
       if (code) {
         const oAuth2Client = createAuthClientObject(req)
-        const response = yield oAuth2Client.getToken(code)
-        oAuth2Client.setCredentials(response.tokens)
+        console.log('code', code)
+        const { tokens } = yield oAuth2Client.getToken(code)
         if (state && state !== 'noSession') {
           if (hashState === state) {
-            req.session.oAuthClient =
-              oAuth2Client == null ? void 0 : oAuth2Client.credentials
+            oAuth2Client.setCredentials(tokens)
+            req.session.oAuthClient = tokens
           } else {
             return res.status(400).json('Invalid state detected')
           }
@@ -240,7 +236,7 @@ var checkIdValidity = (token) =>
 var authorizeLocal = (_0) =>
   __async(void 0, [_0], function* ({ credentials }) {
     if (credentials) {
-      const oAuth2Client = createAuthClientObject()
+      const oAuth2Client = createAuthClientObject(null)
       console.log('oAuth2Client', oAuth2Client)
       try {
         oAuth2Client.setCredentials(credentials)
@@ -274,48 +270,38 @@ var authenticateLocal = (_0) =>
 
 // src/google/sessionRoute.ts
 var authorizeSession = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, idToken }) {
-    var _a, _b
-    if (session2) {
-      const oAuth2Client = createAuthClientObject(null)
-      try {
-        if (session2 == null ? void 0 : session2.refresh_token) {
-          console.log('this session has a refresh token')
-          oAuth2Client.setCredentials({
-            refresh_token: session2 == null ? void 0 : session2.refresh_token,
-          })
-        }
-        if (!(session2 == null ? void 0 : session2.refresh_token)) {
-          console.log('this session has no refresh token')
-        }
-        const accessToken = yield oAuth2Client.getAccessToken()
-        if (accessToken == null ? void 0 : accessToken.res) {
-          console.log(
-            'accessToken.res refresh_token should be here',
-            (_b = (_a = accessToken.res) == null ? void 0 : _a.data) == null
-              ? void 0
-              : _b.refresh_token
-          )
-        } else {
+  __async(void 0, [_0], function* ({ req }) {
+    const oAuth2Client = createAuthClientObject(null)
+    try {
+      if (req.session.oAuthClient) {
+        oAuth2Client.setCredentials(req.session.oAuthClient)
+        const accessToken = yield oAuth2Client.refreshAccessToken()
+        if (!(accessToken == null ? void 0 : accessToken.res)) {
           console.error('Cannot refresh the access token')
           return INVALID_TOKEN
         }
-        if (idToken && (yield checkIdValidity(idToken))) {
+        if (
+          accessToken.credentials.id_token &&
+          (yield checkIdValidity(accessToken.credentials.id_token))
+        ) {
+          req.session.oAuthClient = accessToken.credentials
           return oAuth2Client
         }
-      } catch (err) {
-        console.log('err', JSON.stringify(err))
-        return 'Error during authorization'
       }
-    } else {
-      return INVALID_TOKEN
+    } catch (err) {
+      console.log('err', err)
+      return 'Error during authorization'
     }
   })
 var authenticateSession = (_0) =>
-  __async(void 0, [_0], function* ({ session: session2, idToken }) {
+  __async(void 0, [_0], function* ({ req }) {
+    var _a
     try {
-      if (typeof session2 !== 'undefined') {
-        const response = yield authorizeSession({ session: session2, idToken })
+      if (
+        typeof ((_a = req.session) == null ? void 0 : _a.oAuthClient) !==
+        'undefined'
+      ) {
+        const response = yield authorizeSession({ req })
         return response
       }
       return INVALID_SESSION
@@ -327,10 +313,8 @@ var authenticateSession = (_0) =>
 // src/controllers/Users/authenticateUser.ts
 var authenticateUserSession = (req) =>
   __async(void 0, null, function* () {
-    var _a, _b
     const response = yield authenticateSession({
-      session: (_a = req.session) == null ? void 0 : _a.oAuthClient,
-      idToken: (_b = req.headers) == null ? void 0 : _b.authorization,
+      req,
     })
     if (response === INVALID_TOKEN) {
       throw Error(response)
@@ -346,18 +330,19 @@ var authenticateUserSession = (req) =>
 var authenticateUserLocal = (req) =>
   __async(void 0, null, function* () {
     var _a
-    const response = yield authenticateLocal({
-      credentials: JSON.parse(
-        (_a = req.headers) == null ? void 0 : _a.authorization
-      ),
-    })
-    if (response === INVALID_TOKEN) {
-      throw Error(response)
+    if ((_a = req.headers) == null ? void 0 : _a.authorization) {
+      const response = yield authenticateLocal({
+        credentials: JSON.parse(req.headers.authorization),
+      })
+      if (response === INVALID_TOKEN) {
+        throw Error(response)
+      }
+      if (response === 'Error during authorization') {
+        throw Error(response)
+      }
+      return response
     }
-    if (response === 'Error during authorization') {
-      throw Error(response)
-    }
-    return response
+    throw Error('No Authorization header found')
   })
 
 // src/middleware/authMiddleware.ts
@@ -365,15 +350,16 @@ var authMiddleware = (requestFunction) => (req, res) =>
   __async(void 0, null, function* () {
     var _a
     try {
-      const useLocalRoute =
-        typeof JSON.parse(
-          (_a = req.headers) == null ? void 0 : _a.authorization
-        ) === 'object'
-      const auth = useLocalRoute
-        ? yield authenticateUserLocal(req)
-        : yield authenticateUserSession(req)
-      const response = yield requestFunction(auth, req)
-      return res.status(200).json(response)
+      if ((_a = req.headers) == null ? void 0 : _a.authorization) {
+        const useLocalRoute =
+          typeof JSON.parse(req.headers.authorization) === 'object'
+        const auth = useLocalRoute
+          ? yield authenticateUserLocal(req)
+          : yield authenticateUserSession(req)
+        const response = yield requestFunction(auth, req)
+        return res.status(200).json(response)
+      }
+      res.status(401).json('There is no authorization header found')
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
       res.status(401).json(err == null ? void 0 : err.message)

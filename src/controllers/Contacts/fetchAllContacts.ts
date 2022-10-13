@@ -1,7 +1,8 @@
+import { Request, Response } from 'express'
 import { google, people_v1 } from 'googleapis'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
-const getContacts = async (auth, req) => {
+const getContacts = async (auth, req: Request) => {
   const people = google.people({ version: 'v1', auth })
   const requestBody: people_v1.Params$Resource$Othercontacts$List = {}
 
@@ -28,6 +29,6 @@ const getContacts = async (auth, req) => {
   }
 }
 
-export const fetchAllContacts = async (req, res) => {
+export const fetchAllContacts = async (req: Request, res: Response) => {
   authMiddleware(getContacts)(req, res)
 }
