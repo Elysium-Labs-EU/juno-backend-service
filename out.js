@@ -47,10 +47,10 @@ var __async = (__this, __arguments, generator) => {
   })
 }
 
-// src/server.ts
+// server.ts
 import http from 'http'
 
-// src/routes/app.ts
+// routes/app.ts
 import './node_modules/dotenv/config.js'
 import compression from './node_modules/compression/index.js'
 import redis from './node_modules/connect-redis/index.js'
@@ -60,17 +60,17 @@ import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
 import swaggerUI from './node_modules/swagger-ui-express/index.js'
 import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
 
-// src/data/redis.ts
+// data/redis.ts
 import { createClient } from './node_modules/redis/dist/index.js'
 
-// src/utils/assertNonNullish.ts
+// utils/assertNonNullish.ts
 function assertNonNullish(value, message) {
   if (value === null || value === void 0) {
     throw Error(message)
   }
 }
 
-// src/data/redis.ts
+// data/redis.ts
 var cloudRedis = () => {
   assertNonNullish(process.env.REDIS_USER, 'No Redis User defined')
   assertNonNullish(process.env.REDIS_PASS, 'No Redis Pass defined')
@@ -97,7 +97,7 @@ var initiateRedis = () => {
 }
 var redis_default = initiateRedis
 
-// src/utils/initSentry.ts
+// utils/initSentry.ts
 import * as Sentry from './node_modules/@sentry/node/cjs/index.js'
 import * as Tracing from './node_modules/@sentry/tracing/cjs/index.js'
 function initSentry(app2) {
@@ -114,13 +114,13 @@ function initSentry(app2) {
   }
 }
 
-// src/routes/index.ts
+// routes/index.ts
 import express from './node_modules/express/index.js'
 
-// src/api/Contacts/fetchAllContacts.ts
+// api/Contacts/fetchAllContacts.ts
 import { google } from './node_modules/googleapis/build/src/index.js'
 
-// src/constants/globalConstants.ts
+// constants/globalConstants.ts
 var ARCHIVE_LABEL = 'ARCHIVE'
 var DRAFT_LABEL = 'DRAFT'
 var INBOX_LABEL = 'INBOX'
@@ -130,7 +130,7 @@ var SENT_LABEL = 'SENT'
 var UNREAD_LABEL = 'UNREAD'
 var USER = 'me'
 
-// src/google/index.ts
+// google/index.ts
 import { createHash } from 'crypto'
 import { OAuth2Client } from './node_modules/google-auth-library/build/src/index.js'
 var SCOPES = [
@@ -250,7 +250,7 @@ var checkIdValidity = (token) =>
     }
   })
 
-// src/google/localRoute.ts
+// google/localRoute.ts
 var authorizeLocal = (_0) =>
   __async(void 0, [_0], function* ({ credentials }) {
     if (credentials) {
@@ -285,7 +285,7 @@ var authenticateLocal = (_0) =>
     }
   })
 
-// src/google/sessionRoute.ts
+// google/sessionRoute.ts
 var authorizeSession = (_0) =>
   __async(void 0, [_0], function* ({ req }) {
     const oAuth2Client = createAuthClientObject(null)
@@ -331,7 +331,7 @@ var authenticateSession = (_0) =>
     }
   })
 
-// src/api/Users/authenticateUser.ts
+// api/Users/authenticateUser.ts
 var authenticateUserSession = (req) =>
   __async(void 0, null, function* () {
     console.log('req ####', req)
@@ -367,7 +367,7 @@ var authenticateUserLocal = (req) =>
     throw Error('No Authorization header found')
   })
 
-// src/middleware/authMiddleware.ts
+// middleware/authMiddleware.ts
 var authMiddleware = (requestFunction) => (req, res) =>
   __async(void 0, null, function* () {
     var _a
@@ -389,7 +389,7 @@ var authMiddleware = (requestFunction) => (req, res) =>
     }
   })
 
-// src/api/Contacts/fetchAllContacts.ts
+// api/Contacts/fetchAllContacts.ts
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
     const people = google.people({ version: 'v1', auth })
@@ -420,7 +420,7 @@ function fetchAllContacts(req, res) {
   })
 }
 
-// src/api/Contacts/queryContacts.ts
+// api/Contacts/queryContacts.ts
 import { google as google2 } from './node_modules/googleapis/build/src/index.js'
 var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
@@ -447,10 +447,10 @@ var queryContacts = (req, res) =>
     authMiddleware(getContacts2)(req, res)
   })
 
-// src/api/Drafts/createDraft.ts
+// api/Drafts/createDraft.ts
 import { google as google3 } from './node_modules/googleapis/build/src/index.js'
 
-// src/utils/formFieldParser.ts
+// utils/formFieldParser.ts
 import formidable from './node_modules/formidable/src/index.js'
 function formFieldParser(req) {
   return __async(this, null, function* () {
@@ -468,7 +468,7 @@ function formFieldParser(req) {
   })
 }
 
-// src/utils/messageEncoding.ts
+// utils/messageEncoding.ts
 import fs from 'fs'
 var messageEncoding = ({
   from,
@@ -528,7 +528,7 @@ var messageEncoding = ({
 }
 var messageEncoding_default = messageEncoding
 
-// src/api/Drafts/createDraft.ts
+// api/Drafts/createDraft.ts
 function setupDraft(auth, req) {
   return __async(this, null, function* () {
     const gmail = google3.gmail({ version: 'v1', auth })
@@ -561,7 +561,7 @@ var createDraft = (req, res) =>
     authMiddleware(setupDraft)(req, res)
   })
 
-// src/api/Drafts/deleteDraft.ts
+// api/Drafts/deleteDraft.ts
 import { google as google4 } from './node_modules/googleapis/build/src/index.js'
 var removeDraft = (auth, req) =>
   __async(void 0, null, function* () {
@@ -584,7 +584,7 @@ var deleteDraft = (req, res) =>
     authMiddleware(removeDraft)(req, res)
   })
 
-// src/api/Drafts/fetchDrafts.ts
+// api/Drafts/fetchDrafts.ts
 import { google as google5 } from './node_modules/googleapis/build/src/index.js'
 var getDrafts = (auth) =>
   __async(void 0, null, function* () {
@@ -606,14 +606,14 @@ var fetchDrafts = (req, res) =>
     authMiddleware(getDrafts)(req, res)
   })
 
-// src/api/Drafts/fetchSingleDraft.ts
+// api/Drafts/fetchSingleDraft.ts
 import { google as google6 } from './node_modules/googleapis/build/src/index.js'
 
-// src/utils/bodyDecoder.ts
+// utils/bodyDecoder.ts
 import * as cheerio3 from './node_modules/cheerio/lib/esm/index.js'
 import AutoLinker from './node_modules/autolinker/dist/commonjs/index.js'
 
-// src/utils/removeTrackers.ts
+// utils/removeTrackers.ts
 import * as cheerio from './node_modules/cheerio/lib/esm/index.js'
 var TRACKERS_SELECTORS = [
   { attribute: 'width', value: '0' },
@@ -725,7 +725,7 @@ function removeTrackers(orderedObject) {
   return localCopyOrderedObject
 }
 
-// src/utils/decodeBase64.ts
+// utils/decodeBase64.ts
 import base64url from './node_modules/base64url/index.js'
 function baseBase64(base64Data) {
   const b64 = base64url.toBase64(base64Data)
@@ -740,7 +740,7 @@ function decodeBase64(base64Data) {
   return void 0
 }
 
-// src/utils/removeScripts.ts
+// utils/removeScripts.ts
 import * as cheerio2 from './node_modules/cheerio/lib/esm/index.js'
 function removeScripts(orderedObject) {
   const $ = cheerio2.load(orderedObject.emailHTML)
@@ -750,7 +750,7 @@ function removeScripts(orderedObject) {
   return orderedObject
 }
 
-// src/utils/bodyDecoder.ts
+// utils/bodyDecoder.ts
 var decodedString
 var localMessageId
 var decodedResult = []
@@ -994,7 +994,7 @@ var bodyDecoder = (_0) =>
   })
 var bodyDecoder_default = bodyDecoder
 
-// src/utils/fetchAttachments.ts
+// utils/fetchAttachments.ts
 var foundAttachments = []
 var loopThroughParts = ({ input, reset = false }) => {
   var _a
@@ -1043,7 +1043,7 @@ function checkAttachment(message) {
   return []
 }
 
-// src/utils/findHeader.ts
+// utils/findHeader.ts
 function findHeader(rawMessage, query) {
   var _a, _b, _c, _d, _e, _f
   if (
@@ -1076,7 +1076,7 @@ function findHeader(rawMessage, query) {
   }
 }
 
-// src/utils/threadFullRemap.ts
+// utils/threadFullRemap.ts
 function handleListUnsubscribe(unsubscribeLink) {
   if (unsubscribeLink) {
     const splittedUnsubscribe = unsubscribeLink
@@ -1154,7 +1154,7 @@ function threadFullRemap(rawObject, gmail) {
   })
 }
 
-// src/api/Drafts/fetchSingleDraft.ts
+// api/Drafts/fetchSingleDraft.ts
 var getDraft = (auth, req) =>
   __async(void 0, null, function* () {
     var _a
@@ -1182,7 +1182,7 @@ var fetchSingleDraft = (req, res) =>
     authMiddleware(getDraft)(req, res)
   })
 
-// src/api/Drafts/sendDraft.ts
+// api/Drafts/sendDraft.ts
 import { google as google7 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1208,7 +1208,7 @@ var sendDraft = (req, res) =>
     authMiddleware(exportDraft)(req, res)
   })
 
-// src/api/Drafts/updateDraft.ts
+// api/Drafts/updateDraft.ts
 import { google as google8 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft2 = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1243,7 +1243,7 @@ var updateDraft = (req, res) =>
     authMiddleware(exportDraft2)(req, res)
   })
 
-// src/api/health.ts
+// api/health.ts
 var health = (req, res) =>
   __async(void 0, null, function* () {
     try {
@@ -1255,10 +1255,10 @@ var health = (req, res) =>
     }
   })
 
-// src/api/History/listHistory.ts
+// api/History/listHistory.ts
 import { google as google9 } from './node_modules/googleapis/build/src/index.js'
 
-// src/utils/onlyLegalLabelObjects.ts
+// utils/onlyLegalLabelObjects.ts
 var onlyLegalLabels = ({ labelNames, storageLabels }) => {
   const idMapStorageLabels = storageLabels.map((label) => label.id)
   const filterArray = labelNames.filter((el) => idMapStorageLabels.includes(el))
@@ -1273,7 +1273,7 @@ var onlyLegalLabels = ({ labelNames, storageLabels }) => {
 }
 var onlyLegalLabelObjects_default = onlyLegalLabels
 
-// src/api/History/handleHistoryObject.ts
+// api/History/handleHistoryObject.ts
 var HISTORY_NEXT_PAGETOKEN = 'history'
 var restructureObject = (message) => {
   if (message === void 0) {
@@ -1526,7 +1526,7 @@ function handleHistoryObject({ history, storageLabels }) {
   return [inboxFeed, todoFeed, sentFeed, draftFeed, archiveFeed]
 }
 
-// src/api/History/listHistory.ts
+// api/History/listHistory.ts
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google9.gmail({ version: 'v1', auth })
@@ -1562,7 +1562,7 @@ var listHistory = (req, res) =>
     authMiddleware(fetchHistory)(req, res)
   })
 
-// src/api/Labels/createLabels.ts
+// api/Labels/createLabels.ts
 import { google as google10 } from './node_modules/googleapis/build/src/index.js'
 var newLabels = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1589,7 +1589,7 @@ var createLabels = (req, res) =>
     authMiddleware(newLabels)(req, res)
   })
 
-// src/api/Labels/fetchLabels.ts
+// api/Labels/fetchLabels.ts
 import { google as google11 } from './node_modules/googleapis/build/src/index.js'
 var getLabels = (auth) =>
   __async(void 0, null, function* () {
@@ -1611,7 +1611,7 @@ var fetchLabels = (req, res) =>
     authMiddleware(getLabels)(req, res)
   })
 
-// src/api/Labels/fetchSingleLabel.ts
+// api/Labels/fetchSingleLabel.ts
 import { google as google12 } from './node_modules/googleapis/build/src/index.js'
 var getLabel = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1635,7 +1635,7 @@ var fetchSingleLabel = (req, res) =>
     authMiddleware(getLabel)(req, res)
   })
 
-// src/api/Labels/removeLabels.ts
+// api/Labels/removeLabels.ts
 import { google as google13 } from './node_modules/googleapis/build/src/index.js'
 var removeTheLabels = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1658,7 +1658,7 @@ var removeLabels = (req, res) =>
     authMiddleware(removeTheLabels)(req, res)
   })
 
-// src/api/Labels/updateLabels.ts
+// api/Labels/updateLabels.ts
 import { google as google14 } from './node_modules/googleapis/build/src/index.js'
 var refreshLabels = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1685,7 +1685,7 @@ var updateLabels = (req, res) =>
     authMiddleware(refreshLabels)(req, res)
   })
 
-// src/api/Message/deleteMessage.ts
+// api/Message/deleteMessage.ts
 import { google as google15 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1708,7 +1708,7 @@ var deleteMessage = (req, res) =>
     authMiddleware(deleteSingleMessage)(req, res)
   })
 
-// src/api/Message/fetchMessageAttachment.ts
+// api/Message/fetchMessageAttachment.ts
 import { google as google16 } from './node_modules/googleapis/build/src/index.js'
 var getAttachment = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1734,7 +1734,7 @@ var fetchMessageAttachment = (req, res) =>
     authMiddleware(getAttachment)(req, res)
   })
 
-// src/api/Message/sendMessage.ts
+// api/Message/sendMessage.ts
 import { google as google17 } from './node_modules/googleapis/build/src/index.js'
 var exportMessage = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1762,7 +1762,7 @@ var sendMessage = (req, res) =>
     authMiddleware(exportMessage)(req, res)
   })
 
-// src/api/Message/thrashMessage.ts
+// api/Message/thrashMessage.ts
 import { google as google18 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1785,7 +1785,7 @@ var thrashMessage = (req, res) =>
     authMiddleware(thrashSingleMessage)(req, res)
   })
 
-// src/api/Message/updateMessage.ts
+// api/Message/updateMessage.ts
 import { google as google19 } from './node_modules/googleapis/build/src/index.js'
 var modifyMessage = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1809,7 +1809,7 @@ var updateMessage = (req, res) =>
     authMiddleware(modifyMessage)(req, res)
   })
 
-// src/api/Threads/deleteThread.ts
+// api/Threads/deleteThread.ts
 import { google as google20 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
@@ -1832,10 +1832,10 @@ var deleteThread = (req, res) =>
     authMiddleware(deleteSingleThread)(req, res)
   })
 
-// src/api/Threads/fetchFullThreads.ts
+// api/Threads/fetchFullThreads.ts
 import { google as google21 } from './node_modules/googleapis/build/src/index.js'
 
-// src/api/Threads/threadRequest.ts
+// api/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
   var _a
   const requestBody = {
@@ -1866,7 +1866,7 @@ var requestBodyCreator = (req) => {
 }
 var threadRequest_default = requestBodyCreator
 
-// src/api/Threads/fetchFullThreads.ts
+// api/Threads/fetchFullThreads.ts
 function singleThread(thread, gmail) {
   return __async(this, null, function* () {
     const { id } = thread
@@ -1923,10 +1923,10 @@ var fetchFullThreads = (req, res) =>
     authMiddleware(getFullThreads)(req, res)
   })
 
-// src/api/Threads/fetchSimpleThreads.ts
+// api/Threads/fetchSimpleThreads.ts
 import { google as google22 } from './node_modules/googleapis/build/src/index.js'
 
-// src/utils/threadSimpleRemap.ts
+// utils/threadSimpleRemap.ts
 var remapPayloadHeaders2 = (rawMessage) => {
   return {
     deliveredTo: findHeader(rawMessage, 'Delivered-To'),
@@ -1975,7 +1975,7 @@ function threadSimpleRemap(rawObject) {
   })
 }
 
-// src/api/Threads/fetchSimpleThreads.ts
+// api/Threads/fetchSimpleThreads.ts
 function singleThread2(thread, gmail) {
   return __async(this, null, function* () {
     const { id } = thread
@@ -2032,7 +2032,7 @@ var fetchSimpleThreads = (req, res) =>
     authMiddleware(getSimpleThreads)(req, res)
   })
 
-// src/api/Threads/fetchSingleThread.ts
+// api/Threads/fetchSingleThread.ts
 import { google as google23 } from './node_modules/googleapis/build/src/index.js'
 var getThread = (auth, req) =>
   __async(void 0, null, function* () {
@@ -2058,7 +2058,7 @@ var fetchSingleThread = (req, res) =>
     authMiddleware(getThread)(req, res)
   })
 
-// src/api/Threads/thrashThread.ts
+// api/Threads/thrashThread.ts
 import { google as google24 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
@@ -2081,7 +2081,7 @@ var thrashThread = (req, res) =>
     authMiddleware(thrashSingleThread)(req, res)
   })
 
-// src/api/Threads/updateThread.ts
+// api/Threads/updateThread.ts
 import { google as google25 } from './node_modules/googleapis/build/src/index.js'
 var updateSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
@@ -2105,7 +2105,7 @@ var updateThread = (req, res) =>
     authMiddleware(updateSingleThread)(req, res)
   })
 
-// src/api/Users/getProfile.ts
+// api/Users/getProfile.ts
 import { google as google26 } from './node_modules/googleapis/build/src/index.js'
 var fetchProfile = (auth) =>
   __async(void 0, null, function* () {
@@ -2156,7 +2156,7 @@ var getProfile = (req, res) =>
     authMiddleware(fetchProfile)(req, res)
   })
 
-// src/api/Users/getSendAs.ts
+// api/Users/getSendAs.ts
 import { google as google27 } from './node_modules/googleapis/build/src/index.js'
 var fetchSendAs = (auth, req) =>
   __async(void 0, null, function* () {
@@ -2184,7 +2184,7 @@ var getSendAs = (req, res) =>
     authMiddleware(fetchSendAs)(req, res)
   })
 
-// src/api/Users/logoutUser.ts
+// api/Users/logoutUser.ts
 var logoutUser = (req, res) =>
   __async(void 0, null, function* () {
     console.log("let's just not for now.")
@@ -2210,7 +2210,7 @@ var logoutUser = (req, res) =>
     }
   })
 
-// src/api/Users/updateSendAs.ts
+// api/Users/updateSendAs.ts
 import { google as google28 } from './node_modules/googleapis/build/src/index.js'
 var updateSendAsGmail = (auth, req) =>
   __async(void 0, null, function* () {
@@ -2237,7 +2237,7 @@ var updateSendAs = (req, res) =>
     authMiddleware(updateSendAsGmail)(req, res)
   })
 
-// src/routes/index.ts
+// routes/index.ts
 var router = express.Router()
 router.delete('/api/draft/', deleteDraft)
 router.delete('/api/labels', removeLabels)
@@ -2282,7 +2282,7 @@ router.put('/api/settings/updateSendAs', updateSendAs)
 router.put('/api/update-draft/?:id?', updateDraft)
 var routes_default = router
 
-// src/routes/app.ts
+// routes/app.ts
 process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
 var app = express2()
@@ -2392,7 +2392,7 @@ app.use(function onError(err, req, res, next) {
 })
 var app_default = app
 
-// src/server.ts
+// server.ts
 var PORT = process.env.PORT || 5001
 var server = http.createServer(app_default)
 server.listen(PORT)
