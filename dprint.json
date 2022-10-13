@@ -1,5 +1,5 @@
 {
-  "includes": ["**/*.{js,jsx,json,md,tsx,ts}"],
+  "includes": ["src/**/*.{js,jsx,json,md,tsx,ts}"],
   "excludes": ["/node_modules, /build, /dist, /.git, /public"],
   "prettier": {
     "trailingComma": "es5",
