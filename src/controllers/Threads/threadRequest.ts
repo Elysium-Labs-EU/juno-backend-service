@@ -10,11 +10,7 @@ const requestBodyCreator = (req: Request) => {
     typeof Number(req.query.maxResults) !== 'number'
       ? 20
       : Number(req.query.maxResults)
-  if (
-    req.query.labelIds &&
-    req.query.labelIds !== 'undefined' &&
-    typeof req.query.labelIds !== 'string'
-  ) {
+  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
     // If the label Archive label is sent, sent no label and replace it with a q parameter.
     const typedLabelIdsReq = req.query.labelIds as string[]
     if (!typedLabelIdsReq.includes(ARCHIVE_LABEL)) {

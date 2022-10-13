@@ -41,7 +41,6 @@ export const createAuthClientObject = (req: Request | null) => {
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        req &&
         req?.headers?.referer
       ) {
         return req.headers.referer.endsWith('/')

@@ -160,7 +160,6 @@ var createAuthClientObject = (req) => {
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        req &&
         ((_a = req == null ? void 0 : req.headers) == null
           ? void 0
           : _a.referer)
@@ -524,11 +523,7 @@ var requestBodyCreator = (req) => {
     typeof Number(req.query.maxResults) !== 'number'
       ? 20
       : Number(req.query.maxResults)
-  if (
-    req.query.labelIds &&
-    req.query.labelIds !== 'undefined' &&
-    typeof req.query.labelIds !== 'string'
-  ) {
+  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
     const typedLabelIdsReq = req.query.labelIds
     if (!typedLabelIdsReq.includes(ARCHIVE_LABEL)) {
       requestBody.labelIds = typedLabelIdsReq
