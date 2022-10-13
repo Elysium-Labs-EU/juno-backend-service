@@ -26,7 +26,7 @@ const hashState = createHash('sha256').digest('hex')
  * @returns {OAuth2Client}
  */
 
-export const createAuthClientObject = (req: Request | null) => {
+export const createAuthClientObject = (req: Request | null): OAuth2Client => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
     process.env.GOOGLE_CLIENT_SECRET,

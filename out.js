@@ -2293,7 +2293,7 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      sameSite: 'none',
     },
   })
 )
