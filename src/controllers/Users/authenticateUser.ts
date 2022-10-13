@@ -13,7 +13,6 @@ import { authenticateSession } from '../../google/sessionRoute'
 
 export const authenticateUserSession = async (req: Request) => {
   const response = await authenticateSession({
-    // session: req.session?.oAuthClient,
     req: req,
   })
   if (response === global.INVALID_TOKEN) {

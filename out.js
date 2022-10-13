@@ -2066,6 +2066,19 @@ var listHistory = (req, res) =>
 var logoutUser = (req, res) =>
   __async(void 0, null, function* () {
     console.log("let's just not for now.")
+    try {
+      if (req.headers.authorization) {
+        req.session.destroy(function (err) {
+          if (err) {
+            console.log(err)
+            return res.status(401).json(err.message)
+          }
+          return res.status(205).json()
+        })
+      }
+    } catch (err) {
+      res.status(401).json(err.message)
+    }
   })
 
 // src/controllers/health.ts
