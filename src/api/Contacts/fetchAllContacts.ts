@@ -31,6 +31,6 @@ const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
   }
 }
 
-export default async function fetchAllContacts(req: Request, res: Response) {
+export async function fetchAllContacts(req: Request, res: Response) {
   authMiddleware(getContacts)(req, res)
 }
