@@ -44,9 +44,11 @@
     "formidable": "3.2.4",
     "gaxios": "^5.0.2",
     "googleapis": "^108.0.0",
+    "helmet": "^6.0.0",
     "redis": "^4.3.1",
     "swagger-jsdoc": "^6.2.5",
-    "swagger-ui-express": "^4.5.0"
+    "swagger-ui-express": "^4.5.0",
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "@types/compression": "1.7.2",

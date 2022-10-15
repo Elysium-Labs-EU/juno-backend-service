@@ -6,6 +6,7 @@ import * as global from '../constants/globalConstants'
 declare module 'express-session' {
   interface SessionData {
     oAuthClient: Credentials
+    hashSecret: string
   }
 }
 
@@ -19,22 +20,18 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
   const oAuth2Client = createAuthClientObject(null)
   try {
     if (req.session.oAuthClient) {
-      console.log('req.session.oAuthClient', req.session.oAuthClient)
-      // TODO: Check if the session is not existing on "cloud mode"
       oAuth2Client.setCredentials(req.session.oAuthClient)
-      console.log('pre accessToken', oAuth2Client)
-      const accessToken = await oAuth2Client.refreshAccessToken()
-      console.log('post accessToken', oAuth2Client)
-      if (!accessToken?.res) {
+      const checkedAccessToken = await oAuth2Client.getAccessToken()
+      if (!checkedAccessToken) {
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
       }
+      // Keep the session in sync with the latest version of the credentials
+      req.session.oAuthClient = oAuth2Client.credentials
       if (
-        accessToken.credentials.id_token &&
-        (await checkIdValidity(accessToken.credentials.id_token))
+        req.session.oAuthClient.id_token &&
+        (await checkIdValidity(req.session.oAuthClient.id_token))
       ) {
-        req.session.oAuthClient = accessToken.credentials
-        // Keep the session in sync with the latest version of the credentials
         return oAuth2Client
       }
     }
@@ -52,7 +49,6 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
 
 export const authenticateSession = async ({ req }: { req: Request }) => {
   try {
-    console.log('req', req.session.oAuthClient)
     if (typeof req.session?.oAuthClient !== 'undefined') {
       const response = await authorizeSession({ req })
       return response

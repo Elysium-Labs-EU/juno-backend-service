@@ -4,6 +4,7 @@ import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import formFieldParser from '../../utils/formFieldParser'
 import messageEncoding from '../../utils/messageEncoding'
 
 const exportMessage = async (auth: OAuth2Client | undefined, req: Request) => {
@@ -11,18 +12,21 @@ const exportMessage = async (auth: OAuth2Client | undefined, req: Request) => {
   const { id, threadId } = req.body
 
   try {
-    const response = await gmail.users.messages.send({
-      userId: USER,
-      requestBody: {
-        raw: messageEncoding(req.body),
-        id,
-        threadId,
-      },
-    })
-    if (response) {
-      return response
+    if ('body' in req) {
+      const parsedResult: any = await formFieldParser(req)
+      const response = await gmail.users.messages.send({
+        userId: USER,
+        requestBody: {
+          raw: messageEncoding(parsedResult),
+          id,
+          threadId,
+        },
+      })
+      if (response) {
+        return response
+      }
+      return new Error('Mail was not sent...')
     }
-    return new Error('Mail was not sent...')
   } catch (err) {
     throw Error(`Mail was not sent...: ${err}`)
   }

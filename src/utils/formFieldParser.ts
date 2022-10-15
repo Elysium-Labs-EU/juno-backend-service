@@ -1,6 +1,7 @@
+import { Request } from 'express'
 import formidable from 'formidable'
 
-export default async function formFieldParser(req) {
+export default async function formFieldParser(req: Request) {
   const form = formidable({ multiples: true })
 
   const formFields = await new Promise(function (resolve, reject) {

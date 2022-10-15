@@ -81,7 +81,6 @@ const messageEncoding = ({
     `To: ${to}`,
     `Cc: ${cc}`,
     `Bcc: ${bcc}`,
-    // 'Content-Type: text/html; charset=utf-8',
     'MIME-Version: 1.0',
     `Subject: ${utf8Subject}`,
 
