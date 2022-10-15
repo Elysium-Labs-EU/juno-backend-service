@@ -213,7 +213,7 @@ var getAuthenticateClient = (req, res) =>
           })
         }
         return res.status(200).json({
-          idToken: uuidv4(),
+          idToken: `"${uuidv4()}"`,
         })
       } else {
         res.status(400).json('Code not found')

@@ -92,7 +92,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
       }
       // If the session route is used, only send back an random id to the user.
       return res.status(200).json({
-        idToken: uuidv4(),
+        idToken: `"${uuidv4()}"`,
       })
     } else {
       res.status(400).json('Code not found')
