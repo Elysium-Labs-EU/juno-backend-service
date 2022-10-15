@@ -6,6 +6,7 @@ import express, { Request } from 'express'
 import session from 'express-session'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
+import helmet from 'helmet'
 
 import * as Sentry from '@sentry/node'
 
@@ -30,6 +31,7 @@ assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 const SEVEN_DAYS = 1000 * 60 * 10080
 app.use(
   session({
+    name: 'junoSession',
     store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
@@ -39,7 +41,8 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      sameSite: 'lax',
+      // sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
     },
   })
 )
@@ -77,6 +80,9 @@ function determineAllowCredentials(req: Request) {
   return 'true'
 }
 
+// Helmet is used to set HTTP headers
+app.use(helmet())
+app.disable('x-powered-by')
 app.use((req, res, next) => {
   res.setHeader('credentials', 'include')
   res.setHeader(

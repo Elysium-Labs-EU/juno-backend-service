@@ -58,6 +58,7 @@ import express2 from './node_modules/express/index.js'
 import session from './node_modules/express-session/index.js'
 import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
 import swaggerUI from './node_modules/swagger-ui-express/index.js'
+import helmet from './node_modules/helmet/dist/esm/index.js'
 import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
 
 // src/data/redis.ts
@@ -126,13 +127,23 @@ var DRAFT_LABEL = 'DRAFT'
 var INBOX_LABEL = 'INBOX'
 var INVALID_SESSION = 'Invalid session'
 var INVALID_TOKEN = 'Invalid token'
+var MIME_TYPE_NO_INLINE = 'application/octet-stream'
 var SENT_LABEL = 'SENT'
 var UNREAD_LABEL = 'UNREAD'
 var USER = 'me'
 
 // src/google/index.ts
-import { createHash } from 'crypto'
+import { v4 as uuidv4 } from './node_modules/uuid/wrapper.mjs'
 import { OAuth2Client } from './node_modules/google-auth-library/build/src/index.js'
+
+// src/utils/createHashedState.ts
+import { createHash } from 'crypto'
+function createHashState(secret) {
+  const hashValue = createHash('sha256').update(secret).digest('hex')
+  return hashValue
+}
+
+// src/google/index.ts
 var SCOPES = [
   'email',
   'https://www.googleapis.com/auth/contacts.other.readonly',
@@ -144,7 +155,6 @@ var SCOPES = [
   'openid',
   'profile',
 ]
-var hashState = createHash('sha256').digest('hex')
 var createAuthClientObject = (req) => {
   assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
   assertNonNullish(
@@ -180,33 +190,31 @@ var createAuthClientObject = (req) => {
 }
 var getAuthenticateClient = (req, res) =>
   __async(void 0, null, function* () {
+    var _a
     try {
       const { code, state } = req.body
       if (code) {
         const oAuth2Client = createAuthClientObject(req)
         const { tokens } = yield oAuth2Client.getToken(code)
         if (state && state !== 'noSession') {
-          if (hashState === state) {
-            console.log('here@@@', tokens)
+          if (
+            ((_a = req.session) == null ? void 0 : _a.hashSecret) &&
+            createHashState(req.session.hashSecret) === state
+          ) {
             oAuth2Client.setCredentials(tokens)
             req.session.oAuthClient = tokens
           } else {
             return res.status(400).json('Invalid state detected')
           }
         }
-        const idToken = oAuth2Client.credentials.id_token
-        if (idToken) {
-          if (state === 'noSession') {
-            return res.status(200).json({
-              credentials: oAuth2Client.credentials,
-            })
-          }
-          console.log('getAuthenticateClient', req.session)
+        if (state === 'noSession') {
           return res.status(200).json({
-            idToken: idToken.replace(/['"]+/g, ''),
+            credentials: oAuth2Client.credentials,
           })
         }
-        return res.status(400).json('Id Token not found')
+        return res.status(200).json({
+          idToken: uuidv4(),
+        })
       } else {
         res.status(400).json('Code not found')
       }
@@ -221,6 +229,9 @@ var getAuthUrl = (req, res) =>
     var _a
     try {
       const oAuth2Client = createAuthClientObject(req)
+      const randomID = uuidv4()
+      const hashState = createHashState(randomID)
+      req.session.hashSecret = randomID
       const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
         prompt: 'select_account',
@@ -291,20 +302,17 @@ var authorizeSession = (_0) =>
     const oAuth2Client = createAuthClientObject(null)
     try {
       if (req.session.oAuthClient) {
-        console.log('req.session.oAuthClient', req.session.oAuthClient)
         oAuth2Client.setCredentials(req.session.oAuthClient)
-        console.log('pre accessToken', oAuth2Client)
-        const accessToken = yield oAuth2Client.refreshAccessToken()
-        console.log('post accessToken', oAuth2Client)
-        if (!(accessToken == null ? void 0 : accessToken.res)) {
+        const checkedAccessToken = yield oAuth2Client.getAccessToken()
+        if (!checkedAccessToken) {
           console.error('Cannot refresh the access token')
           return INVALID_TOKEN
         }
+        req.session.oAuthClient = oAuth2Client.credentials
         if (
-          accessToken.credentials.id_token &&
-          (yield checkIdValidity(accessToken.credentials.id_token))
+          req.session.oAuthClient.id_token &&
+          (yield checkIdValidity(req.session.oAuthClient.id_token))
         ) {
-          req.session.oAuthClient = accessToken.credentials
           return oAuth2Client
         }
       }
@@ -317,7 +325,6 @@ var authenticateSession = (_0) =>
   __async(void 0, [_0], function* ({ req }) {
     var _a
     try {
-      console.log('req', req.session.oAuthClient)
       if (
         typeof ((_a = req.session) == null ? void 0 : _a.oAuthClient) !==
         'undefined'
@@ -334,7 +341,6 @@ var authenticateSession = (_0) =>
 // src/api/Users/authenticateUser.ts
 var authenticateUserSession = (req) =>
   __async(void 0, null, function* () {
-    console.log('req ####', req)
     const response = yield authenticateSession({
       req,
     })
@@ -610,11 +616,36 @@ var fetchDrafts = (req, res) =>
 import { google as google6 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/bodyDecoder.ts
-import * as cheerio3 from './node_modules/cheerio/lib/esm/index.js'
 import AutoLinker from './node_modules/autolinker/dist/commonjs/index.js'
+import * as cheerio3 from './node_modules/cheerio/lib/esm/index.js'
+
+// src/utils/decodeBase64.ts
+import base64url from './node_modules/base64url/index.js'
+function baseBase64(base64Data) {
+  const b64 = base64url.toBase64(base64Data)
+  return b64
+}
+function decodeBase64(base64Data) {
+  if (base64Data !== void 0 && base64Data !== 'undefined') {
+    const checkedString = base64Data.replaceAll(/-/g, '+')
+    const b64 = base64url.decode(checkedString)
+    return b64
+  }
+  return void 0
+}
+
+// src/utils/removeScripts.ts
+import * as cheerio from './node_modules/cheerio/lib/esm/index.js'
+function removeScripts(orderedObject) {
+  const $ = cheerio.load(orderedObject.emailHTML)
+  $('script').each((_, foundScript) => {
+    $(foundScript).remove()
+  })
+  return orderedObject
+}
 
 // src/utils/removeTrackers.ts
-import * as cheerio from './node_modules/cheerio/lib/esm/index.js'
+import * as cheerio2 from './node_modules/cheerio/lib/esm/index.js'
 var TRACKERS_SELECTORS = [
   { attribute: 'width', value: '0' },
   { attribute: 'width', value: '0 !important' },
@@ -691,7 +722,7 @@ function removeTrackers(orderedObject) {
     __spreadValues({}, orderedObject),
     { removedTrackers: [] }
   )
-  const $ = cheerio.load(orderedObject.emailHTML)
+  const $ = cheerio2.load(orderedObject.emailHTML)
   let foundImage = null
   $('img').each((_, documentImage) => {
     const imageWithInlineSrc = documentImage.attributes.filter(
@@ -723,31 +754,6 @@ function removeTrackers(orderedObject) {
   })
   localCopyOrderedObject.emailHTML = $.html()
   return localCopyOrderedObject
-}
-
-// src/utils/decodeBase64.ts
-import base64url from './node_modules/base64url/index.js'
-function baseBase64(base64Data) {
-  const b64 = base64url.toBase64(base64Data)
-  return b64
-}
-function decodeBase64(base64Data) {
-  if (base64Data !== void 0 && base64Data !== 'undefined') {
-    const checkedString = base64Data.replaceAll(/-/g, '+')
-    const b64 = base64url.decode(checkedString)
-    return b64
-  }
-  return void 0
-}
-
-// src/utils/removeScripts.ts
-import * as cheerio2 from './node_modules/cheerio/lib/esm/index.js'
-function removeScripts(orderedObject) {
-  const $ = cheerio2.load(orderedObject.emailHTML)
-  $('script').each((_, foundScript) => {
-    $(foundScript).remove()
-  })
-  return orderedObject
 }
 
 // src/utils/bodyDecoder.ts
@@ -960,7 +966,7 @@ var placeInlineImage = (orderedObject) => {
     }
     const unprocessedValidObjects = orderedObject.emailFileHTML
       .filter((item) => !processedObjectArray.includes(item))
-      .filter((item) => item.mimeType !== void 0)
+      .filter((item) => item.mimeType !== MIME_TYPE_NO_INLINE)
     return { emailFileHTML: unprocessedValidObjects, emailHTML: $.html() }
   }
   return orderedObject
@@ -1741,18 +1747,21 @@ var exportMessage = (auth, req) =>
     const gmail = google17.gmail({ version: 'v1', auth })
     const { id, threadId } = req.body
     try {
-      const response = yield gmail.users.messages.send({
-        userId: USER,
-        requestBody: {
-          raw: messageEncoding_default(req.body),
-          id,
-          threadId,
-        },
-      })
-      if (response) {
-        return response
+      if ('body' in req) {
+        const parsedResult = yield formFieldParser(req)
+        const response = yield gmail.users.messages.send({
+          userId: USER,
+          requestBody: {
+            raw: messageEncoding_default(parsedResult),
+            id,
+            threadId,
+          },
+        })
+        if (response) {
+          return response
+        }
+        return new Error('Mail was not sent...')
       }
-      return new Error('Mail was not sent...')
     } catch (err) {
       throw Error(`Mail was not sent...: ${err}`)
     }
@@ -2187,15 +2196,12 @@ var getSendAs = (req, res) =>
 // src/api/Users/logoutUser.ts
 var logoutUser = (req, res) =>
   __async(void 0, null, function* () {
-    console.log("let's just not for now.")
     try {
       if (req.headers.authorization) {
-        console.log('req.headers.authorization')
         if (req.session.oAuthClient) {
           const oAuth2Client = createAuthClientObject(null)
           oAuth2Client.setCredentials(req.session.oAuthClient)
           oAuth2Client.revokeCredentials()
-          console.log('credentials have been REVOKED')
         }
         req.session.destroy(function (err) {
           if (err) {
@@ -2294,6 +2300,7 @@ assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
 var SEVEN_DAYS = 1e3 * 60 * 10080
 app.use(
   session({
+    name: 'junoSession',
     store: new redisStore({ client: redisClient }),
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
@@ -2303,7 +2310,7 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      sameSite: 'lax',
     },
   })
 )
@@ -2340,6 +2347,8 @@ function determineAllowCredentials(req) {
   }
   return 'true'
 }
+app.use(helmet())
+app.disable('x-powered-by')
 app.use((req, res, next) => {
   res.setHeader('credentials', 'include')
   res.setHeader(

@@ -1,7 +1,8 @@
-import { createHash } from 'crypto'
+import { v4 as uuidv4 } from 'uuid'
 import { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
+import createHashState from '../utils/createHashedState'
 
 const SCOPES = [
   'email',
@@ -17,8 +18,6 @@ const SCOPES = [
   // 'https://www.googleapis.com/auth/gmail.readonly',
   // 'https://www.googleapis.com/auth/gmail.send',
 ]
-
-const hashState = createHash('sha256').digest('hex')
 
 /**
  * @function createAuthClientObject
@@ -74,30 +73,27 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
       const { tokens } = await oAuth2Client.getToken(code)
       // Make sure to set the credentials on the OAuth2 client.
       if (state && state !== 'noSession') {
-        if (hashState === state) {
-          console.log('here@@@', tokens)
+        if (
+          req.session?.hashSecret &&
+          createHashState(req.session.hashSecret) === state
+        ) {
           oAuth2Client.setCredentials(tokens)
           req.session.oAuthClient = tokens
         } else {
           return res.status(400).json('Invalid state detected')
         }
       }
-      // Send back the id token to later use to verify the ID Token.
-      const idToken = oAuth2Client.credentials.id_token
-      if (idToken) {
-        // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
-        if (state === 'noSession') {
-          return res.status(200).json({
-            credentials: oAuth2Client.credentials,
-          })
-        }
-        console.log('getAuthenticateClient', req.session)
-        // If the session route is used, only send back the id Token to frontend, and use the session to authorize.
+
+      // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
+      if (state === 'noSession') {
         return res.status(200).json({
-          idToken: idToken.replace(/['"]+/g, ''),
+          credentials: oAuth2Client.credentials,
         })
       }
-      return res.status(400).json('Id Token not found')
+      // If the session route is used, only send back an random id to the user.
+      return res.status(200).json({
+        idToken: uuidv4(),
+      })
     } else {
       res.status(400).json('Code not found')
     }
@@ -110,9 +106,14 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
 
 export const getAuthUrl = async (req: Request, res: Response) => {
   try {
-    // create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
+    // Create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
     // which should be fetched from the Google Developers Console.
     const oAuth2Client = createAuthClientObject(req)
+    const randomID = uuidv4()
+
+    // The hashState will be send to the user and the source secret will be stored in the session - to verify the incoming request later.
+    const hashState = createHashState(randomID)
+    req.session.hashSecret = randomID
 
     // Generate the url that will be used for the consent dialog.
     const authorizeUrl = oAuth2Client.generateAuthUrl({

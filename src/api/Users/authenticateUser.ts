@@ -12,7 +12,6 @@ import { authenticateSession } from '../../google/sessionRoute'
  */
 
 export const authenticateUserSession = async (req: Request) => {
-  console.log('req ####', req)
   const response = await authenticateSession({
     req: req,
   })
