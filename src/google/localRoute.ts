@@ -1,4 +1,4 @@
-import { createAuthClientObject, checkIdValidity } from '.'
+import { createAuthClientObject } from '.'
 import * as global from '../constants/globalConstants'
 import { Credentials } from 'google-auth-library'
 
@@ -22,14 +22,7 @@ export const authorizeLocal = async ({
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
       }
-      if (
-        oAuth2Client.credentials.id_token &&
-        (await checkIdValidity(oAuth2Client.credentials.id_token))
-      ) {
-        return oAuth2Client
-      } else {
-        return global.INVALID_TOKEN
-      }
+      return oAuth2Client
     } catch (err) {
       return 'Error during authorization'
       console.log('err', JSON.stringify(err))

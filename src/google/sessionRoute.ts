@@ -1,6 +1,6 @@
 import { Credentials } from 'google-auth-library'
 import { Request } from 'express'
-import { createAuthClientObject, checkIdValidity } from '.'
+import { createAuthClientObject } from '.'
 import * as global from '../constants/globalConstants'
 
 declare module 'express-session' {
@@ -28,14 +28,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       }
       // Keep the session in sync with the latest version of the credentials
       req.session.oAuthClient = oAuth2Client.credentials
-      if (
-        req.session.oAuthClient.id_token &&
-        (await checkIdValidity(req.session.oAuthClient.id_token))
-      ) {
-        return oAuth2Client
-      } else {
-        return global.INVALID_TOKEN
-      }
+      return oAuth2Client
     }
   } catch (err) {
     console.log('err', err)

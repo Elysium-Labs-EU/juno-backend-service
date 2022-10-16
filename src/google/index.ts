@@ -77,8 +77,12 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
           req.session?.hashSecret &&
           createHashState(req.session.hashSecret) === state
         ) {
-          oAuth2Client.setCredentials(tokens)
-          req.session.oAuthClient = tokens
+          if (tokens?.id_token && (await checkIdValidity(tokens.id_token))) {
+            oAuth2Client.setCredentials(tokens)
+            req.session.oAuthClient = tokens
+          } else {
+            return res.status(400).json(global.INVALID_TOKEN)
+          }
         } else {
           return res.status(400).json('Invalid state detected')
         }
