@@ -15,11 +15,21 @@ export const authorizeLocal = async ({
 }) => {
   if (credentials) {
     const oAuth2Client = createAuthClientObject(null)
-    // console.log('oAuth2Client', oAuth2Client)
-    // TODO: Update the route to also update the access token if needed.
     try {
       oAuth2Client.setCredentials(credentials)
-      return oAuth2Client
+      const checkedAccessToken = await oAuth2Client.getAccessToken()
+      if (!checkedAccessToken) {
+        console.error('Cannot refresh the access token')
+        return global.INVALID_TOKEN
+      }
+      if (
+        oAuth2Client.credentials.id_token &&
+        (await checkIdValidity(oAuth2Client.credentials.id_token))
+      ) {
+        return oAuth2Client
+      } else {
+        return global.INVALID_TOKEN
+      }
     } catch (err) {
       return 'Error during authorization'
       console.log('err', JSON.stringify(err))
@@ -41,11 +51,7 @@ export const authenticateLocal = async ({
   credentials: Credentials
 }) => {
   try {
-    if (
-      credentials &&
-      credentials?.id_token &&
-      (await checkIdValidity(credentials?.id_token))
-    ) {
+    if (credentials) {
       const response = await authorizeLocal({ credentials })
       return response
     }

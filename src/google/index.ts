@@ -86,6 +86,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
 
       // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
       if (state === 'noSession') {
+        oAuth2Client.setCredentials(tokens)
         return res.status(200).json({
           credentials: oAuth2Client.credentials,
         })

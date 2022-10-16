@@ -33,6 +33,8 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
         (await checkIdValidity(req.session.oAuthClient.id_token))
       ) {
         return oAuth2Client
+      } else {
+        return global.INVALID_TOKEN
       }
     }
   } catch (err) {

@@ -31,7 +31,7 @@ export const authenticateUserSession = async (req: Request) => {
  * @function authenticateUserLocal
  * This route is used whenever the request authorization header is an object and contains the accessToken key.
  * When running a local frontend and cloud backend, this route is useful.
- * @param req a request object that should hold the required accessToken and idToken
+ * @param req a request object that should hold the required authorization.
  * @returns
  */
 export const authenticateUserLocal = async (req: Request) => {
