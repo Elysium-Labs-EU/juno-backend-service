@@ -43,6 +43,10 @@ app.use(
       maxAge: SEVEN_DAYS,
       // sameSite: 'lax',
       sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      domain:
+        process.env.NODE_ENV !== 'production'
+          ? undefined
+          : process.env.COOKIE_DOMAIN,
     },
   })
 )
