@@ -7,6 +7,7 @@ import session from 'express-session'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 import helmet from 'helmet'
+import { google } from 'googleapis'
 
 import * as Sentry from '@sentry/node'
 
@@ -107,6 +108,10 @@ app.use((req, res, next) => {
 })
 
 app.use(express.json())
+
+google.options({
+  http2: true,
+})
 
 const swaggerDefinition = {
   info: {

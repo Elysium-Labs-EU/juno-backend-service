@@ -59,6 +59,7 @@ import session from './node_modules/express-session/index.js'
 import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
 import swaggerUI from './node_modules/swagger-ui-express/index.js'
 import helmet from './node_modules/helmet/dist/esm/index.js'
+import { google as google29 } from './node_modules/googleapis/build/src/index.js'
 import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
 
 // src/data/redis.ts
@@ -201,13 +202,21 @@ var getAuthenticateClient = (req, res) =>
             ((_a = req.session) == null ? void 0 : _a.hashSecret) &&
             createHashState(req.session.hashSecret) === state
           ) {
-            oAuth2Client.setCredentials(tokens)
-            req.session.oAuthClient = tokens
+            if (
+              (tokens == null ? void 0 : tokens.id_token) &&
+              (yield checkIdValidity(tokens.id_token))
+            ) {
+              oAuth2Client.setCredentials(tokens)
+              req.session.oAuthClient = tokens
+            } else {
+              return res.status(400).json(global.INVALID_TOKEN)
+            }
           } else {
             return res.status(400).json('Invalid state detected')
           }
         }
         if (state === 'noSession') {
+          oAuth2Client.setCredentials(tokens)
           return res.status(200).json({
             credentials: oAuth2Client.credentials,
           })
@@ -268,6 +277,11 @@ var authorizeLocal = (_0) =>
       const oAuth2Client = createAuthClientObject(null)
       try {
         oAuth2Client.setCredentials(credentials)
+        const checkedAccessToken = yield oAuth2Client.getAccessToken()
+        if (!checkedAccessToken) {
+          console.error('Cannot refresh the access token')
+          return INVALID_TOKEN
+        }
         return oAuth2Client
       } catch (err) {
         return 'Error during authorization'
@@ -280,13 +294,7 @@ var authorizeLocal = (_0) =>
 var authenticateLocal = (_0) =>
   __async(void 0, [_0], function* ({ credentials }) {
     try {
-      if (
-        credentials &&
-        (credentials == null ? void 0 : credentials.id_token) &&
-        (yield checkIdValidity(
-          credentials == null ? void 0 : credentials.id_token
-        ))
-      ) {
+      if (credentials) {
         const response = yield authorizeLocal({ credentials })
         return response
       }
@@ -309,12 +317,7 @@ var authorizeSession = (_0) =>
           return INVALID_TOKEN
         }
         req.session.oAuthClient = oAuth2Client.credentials
-        if (
-          req.session.oAuthClient.id_token &&
-          (yield checkIdValidity(req.session.oAuthClient.id_token))
-        ) {
-          return oAuth2Client
-        }
+        return oAuth2Client
       }
     } catch (err) {
       console.log('err', err)
@@ -381,7 +384,6 @@ var authMiddleware = (requestFunction) => (req, res) =>
       if ((_a = req.headers) == null ? void 0 : _a.authorization) {
         const useLocalRoute =
           typeof JSON.parse(req.headers.authorization) === 'object'
-        console.log('useLocalRoute', useLocalRoute)
         const auth = useLocalRoute
           ? yield authenticateUserLocal(req)
           : yield authenticateUserSession(req)
@@ -398,6 +400,9 @@ var authMiddleware = (requestFunction) => (req, res) =>
 // src/api/Contacts/fetchAllContacts.ts
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
+    google.options({
+      http2: true,
+    })
     const people = google.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.pageSize =
@@ -430,6 +435,9 @@ function fetchAllContacts(req, res) {
 import { google as google2 } from './node_modules/googleapis/build/src/index.js'
 var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
+    google2.options({
+      http2: true,
+    })
     const people = google2.people({ version: 'v1', auth })
     const requestBody = {}
     if (typeof req.query.query === 'string') {
@@ -558,6 +566,11 @@ function setupDraft(auth, req) {
         }
       }
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Create Draft returned an error ${err}`)
     }
   })
@@ -582,6 +595,11 @@ var removeDraft = (auth, req) =>
       })
       return response
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Draft returned an error: ${err}`)
     }
   })
@@ -604,6 +622,11 @@ var getDrafts = (auth) =>
       }
       return new Error('No drafts found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Drafts returned an error: ${err}`)
     }
   })
@@ -1180,6 +1203,11 @@ var getDraft = (auth, req) =>
       }
       return new Error('Draft not found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Fetching Draft returned an error ${err}`)
     }
   })
@@ -1206,6 +1234,11 @@ var exportDraft = (auth, req) =>
       }
       return new Error('Mail was not sent...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Sending Draft encountered an error ${err}`)
     }
   })
@@ -1241,6 +1274,11 @@ var exportDraft2 = (auth, req) =>
         }
       }
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Draft update encountered an error ${err}`)
     }
   })
@@ -1560,6 +1598,11 @@ var fetchHistory = (auth, req) =>
       }
       return new Error('No history found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Profile returned an error: ${err}`)
     }
   })
@@ -1587,6 +1630,11 @@ var newLabels = (auth, req) =>
       })
       return response
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Create labels returned an error: ${err}`)
     }
   })
@@ -1609,6 +1657,11 @@ var getLabels = (auth) =>
       }
       return new Error('No Labels found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Labels returned an error: ${err}`)
     }
   })
@@ -1633,6 +1686,11 @@ var getLabel = (auth, req) =>
       }
       return new Error('No Label found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Label returned an error: ${err}`)
     }
   })
@@ -1656,6 +1714,11 @@ var removeTheLabels = (auth, req) =>
       })
       return response
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Create labels returned an error: ${err}`)
     }
   })
@@ -1683,6 +1746,11 @@ var refreshLabels = (auth, req) =>
       }
       return new Error('No labels created...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw new Error(`Create labels returned an error: ${err}`)
     }
   })
@@ -1706,6 +1774,11 @@ var deleteSingleMessage = (auth, req) =>
       })
       return response
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error('Message not removed...')
     }
   })
@@ -1732,6 +1805,11 @@ var getAttachment = (auth, req) =>
       }
       return new Error('Message attachment not found4...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Get Attachment returned an error: ${err}`)
     }
   })
@@ -1763,6 +1841,11 @@ var exportMessage = (auth, req) =>
         return new Error('Mail was not sent...')
       }
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Mail was not sent...: ${err}`)
     }
   })
@@ -1786,6 +1869,11 @@ var thrashSingleMessage = (auth, req) =>
       }
       return new Error('No message found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Single message return an error: ${err}`)
     }
   })
@@ -1810,6 +1898,11 @@ var modifyMessage = (auth, req) =>
       }
       return new Error('Message not found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Single message returned an error: ${err}`)
     }
   })
@@ -1833,6 +1926,11 @@ var deleteSingleThread = (auth, req) =>
       })
       return response
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error('Message not removed...')
     }
   })
@@ -1892,6 +1990,11 @@ function singleThread(thread, gmail) {
       }
       throw Error('Thread not found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Threads returned an error: ${err}`)
     }
   })
@@ -2001,6 +2104,11 @@ function singleThread2(thread, gmail) {
       }
       throw Error('Thread not found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Threads returned an error: ${err}`)
     }
   })
@@ -2059,6 +2167,11 @@ var getThread = (auth, req) =>
       }
       return new Error('Thread not found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Threads returned an error: ${err}`)
     }
   })
@@ -2082,6 +2195,11 @@ var thrashSingleThread = (auth, req) =>
       }
       return new Error('No message found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Single message return an error: ${err}`)
     }
   })
@@ -2106,6 +2224,11 @@ var updateSingleThread = (auth, req) =>
       }
       return new Error('Message not found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Single message returned an error: ${err}`)
     }
   })
@@ -2157,6 +2280,11 @@ var fetchProfile = (auth) =>
       }
       return new Error('No Profile found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Profile returned an error: ${err}`)
     }
   })
@@ -2182,6 +2310,11 @@ var fetchSendAs = (auth, req) =>
         }
         return new Error('No data found...')
       } catch (err) {
+        if (err.response) {
+          const error = err
+          console.error(error.response)
+          throw error
+        }
         throw Error(`Send as returned an error: ${err}`)
       }
     } else {
@@ -2235,6 +2368,11 @@ var updateSendAsGmail = (auth, req) =>
       }
       return new Error('No data found...')
     } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
       throw Error(`Send as returned an error: ${err}`)
     }
   })
@@ -2310,7 +2448,11 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      domain:
+        process.env.NODE_ENV !== 'production'
+          ? void 0
+          : process.env.COOKIE_DOMAIN,
     },
   })
 )
@@ -2368,6 +2510,9 @@ app.use((req, res, next) => {
   next()
 })
 app.use(express2.json())
+google29.options({
+  http2: true,
+})
 var swaggerDefinition = {
   info: {
     title: 'Juno API',
