@@ -7,7 +7,7 @@ import { authMiddleware } from '../../middleware/authMiddleware'
 
 const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
-  const { id } = req.body
+  const { id }: { id: string } = req.body
 
   try {
     const response = await gmail.users.drafts.send({
