@@ -5,6 +5,9 @@ import { google, people_v1 } from 'googleapis'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
 const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
+  google.options({
+    http2: true,
+  })
   const people = google.people({ version: 'v1', auth })
   const requestBody: people_v1.Params$Resource$Othercontacts$List = {}
 

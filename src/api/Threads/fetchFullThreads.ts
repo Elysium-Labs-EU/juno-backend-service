@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
+import { GaxiosError } from 'googleapis-common'
 import { OAuth2Client } from 'google-auth-library'
-import { gmail_v1, google } from 'googleapis'
+import { Common, gmail_v1, google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
@@ -25,6 +26,11 @@ async function singleThread(
     }
     throw Error('Thread not found...')
   } catch (err) {
+    if ((err as GaxiosError).response) {
+      const error = err as Common.GaxiosError
+      console.error(error.response)
+      throw error
+    }
     throw Error(`Threads returned an error: ${err}`)
   }
 }

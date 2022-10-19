@@ -1,6 +1,7 @@
-import { OAuth2Client } from 'google-auth-library'
 import { Request, Response } from 'express'
-import { google } from 'googleapis'
+import { GaxiosError } from 'googleapis-common'
+import { OAuth2Client } from 'google-auth-library'
+import { Common, google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
@@ -17,6 +18,11 @@ const getDrafts = async (auth: OAuth2Client | undefined) => {
     }
     return new Error('No drafts found...')
   } catch (err) {
+    if ((err as GaxiosError).response) {
+      const error = err as Common.GaxiosError
+      console.error(error.response)
+      throw error
+    }
     throw Error(`Drafts returned an error: ${err}`)
   }
 }
