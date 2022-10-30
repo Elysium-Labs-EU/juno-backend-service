@@ -41,7 +41,7 @@
     "esbuild": "^0.15.10",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
-    "formidable": "3.2.4",
+    "formidable": "3.2.5",
     "gaxios": "^5.0.2",
     "googleapis": "^108.0.0",
     "helmet": "^6.0.0",
