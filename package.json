@@ -29,7 +29,7 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@sentry/node": "^7.15.0",
+    "@sentry/node": "^7.16.0",
     "@sentry/tracing": "^7.15.0",
     "autolinker": "^4.0.0",
     "base64-arraybuffer": "^1.0.2",
