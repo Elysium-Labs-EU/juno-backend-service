@@ -1061,10 +1061,10 @@ dotenv@^16.0.3:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.3.tgz#115aec42bac5053db3c456db30cc243a5a836a07"
   integrity sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==
 
-dprint@0.32.1:
-  version "0.32.1"
-  resolved "https://registry.yarnpkg.com/dprint/-/dprint-0.32.1.tgz#b731217d821bed624c39ab1b484db4879422eee8"
-  integrity sha512-HBG9npq+26QW1IjhLyMfX0qMwkIYREZqMByNmLL9O778rsyK54eTkXPhuIBeF1FA2VIoZg3t/5si6FRvDtoQmw==
+dprint@0.33.0:
+  version "0.33.0"
+  resolved "https://registry.yarnpkg.com/dprint/-/dprint-0.33.0.tgz#6c971ed1a3f161005031d6730f5c7ab7912bbd50"
+  integrity sha512-VploASP7wL1HAYe5xWZKRwp8gW5zTdcG3Tb60DASv6QLnGKsl+OS+bY7wsXFrS4UcIbUNujXdsNG5FxBfRJIQg==
   dependencies:
     yauzl "=2.10.0"
 
