@@ -400,9 +400,6 @@ var authMiddleware = (requestFunction) => (req, res) =>
 // src/api/Contacts/fetchAllContacts.ts
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
-    google.options({
-      http2: true,
-    })
     const people = google.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.pageSize =
@@ -435,9 +432,6 @@ function fetchAllContacts(req, res) {
 import { google as google2 } from './node_modules/googleapis/build/src/index.js'
 var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
-    google2.options({
-      http2: true,
-    })
     const people = google2.people({ version: 'v1', auth })
     const requestBody = {}
     if (typeof req.query.query === 'string') {
