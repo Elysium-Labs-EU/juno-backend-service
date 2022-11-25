@@ -3,7 +3,6 @@
     /* Docs: https://www.typescriptlang.org/tsconfig */
     "allowJs": true,
     "allowUnreachableCode": true,
-    "baseUrl": "src",
     "checkJs": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
