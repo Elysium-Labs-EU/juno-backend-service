@@ -2179,6 +2179,9 @@ import { google as google24 } from './node_modules/googleapis/build/src/index.js
 var thrashSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
     const gmail = google24.gmail({ version: 'v1', auth })
+    google24.options({
+      http2: false,
+    })
     try {
       const response = yield gmail.users.threads.trash({
         userId: USER,

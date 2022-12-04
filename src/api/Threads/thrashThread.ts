@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { GaxiosError } from 'googleapis-common'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
+import { Common, gmail_v1, google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
@@ -10,8 +10,10 @@ const thrashSingleThread = async (
   auth: OAuth2Client | undefined,
   req: Request
 ) => {
-  const gmail = google.gmail({ version: 'v1', auth })
-
+  const gmail: gmail_v1.Gmail = google.gmail({ version: 'v1', auth })
+  google.options({
+    http2: false,
+  })
   try {
     const response = await gmail.users.threads.trash({
       userId: USER,
