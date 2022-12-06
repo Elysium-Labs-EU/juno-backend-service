@@ -1,4 +1,5 @@
 import { Request } from 'express'
+
 import * as global from '../../constants/globalConstants'
 import { authenticateLocal } from '../../google/localRoute'
 import { authenticateSession } from '../../google/sessionRoute'

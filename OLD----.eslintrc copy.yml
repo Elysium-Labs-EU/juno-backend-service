@@ -1,0 +1,32 @@
+env:
+  es2021: true
+  node: true
+extends:
+  - eslint:recommended
+  - plugin:@typescript-eslint/recommended
+parser: '@typescript-eslint/parser'
+parserOptions:
+  ecmaVersion: 13
+  sourceType: module
+plugins:
+  - '@typescript-eslint'
+settings:
+  - typescript: { project: './tsconfig.json' }
+rules:
+  {
+    import/order:
+      [
+        error,
+        {
+          groups:
+            [builtin, external, internal, [sibling, parent], index, unknown],
+          newlines-between: always,
+          alphabetize: {
+              # /* sort in ascending order. Options: [ignore, asc, desc] */
+              order: asc,
+              # /* ignore case. Options: [true, false] */
+              caseInsensitive: true,
+            },
+        },
+      ],
+  }

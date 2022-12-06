@@ -1,4 +1,5 @@
 import { createClient } from 'redis'
+
 import assertNonNullish from '../utils/assertNonNullish'
 
 const cloudRedis = () => {
