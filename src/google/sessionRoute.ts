@@ -1,7 +1,9 @@
-import { Credentials } from 'google-auth-library'
 import { Request } from 'express'
-import { createAuthClientObject } from '.'
+import { Credentials } from 'google-auth-library'
+
 import * as global from '../constants/globalConstants'
+
+import { createAuthClientObject } from '.'
 
 declare module 'express-session' {
   interface SessionData {

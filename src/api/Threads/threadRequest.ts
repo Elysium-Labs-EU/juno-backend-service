@@ -1,5 +1,6 @@
 import { Request } from 'express'
 import { gmail_v1 } from 'googleapis'
+
 import { ARCHIVE_LABEL, USER } from '../../constants/globalConstants'
 
 const requestBodyCreator = (req: Request) => {

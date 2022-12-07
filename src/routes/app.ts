@@ -1,19 +1,19 @@
 import 'dotenv/config'
 
+import * as Sentry from '@sentry/node'
 import compression from 'compression'
 import redis from 'connect-redis'
 import express, { Request } from 'express'
 import session from 'express-session'
+import { google } from 'googleapis'
+import helmet from 'helmet'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
-import helmet from 'helmet'
-import { google } from 'googleapis'
-
-import * as Sentry from '@sentry/node'
 
 import initiateRedis from '../data/redis'
 import assertNonNullish from '../utils/assertNonNullish'
 import initSentry from '../utils/initSentry'
+
 import indexRoute from './index'
 
 process.env.NODE_ENV !== 'production' &&

@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
+
 import assertNonNullish from './assertNonNullish'
 
 export default function initSentry(app) {

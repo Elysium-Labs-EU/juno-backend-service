@@ -52,15 +52,15 @@ import http from 'http'
 
 // src/routes/app.ts
 import './node_modules/dotenv/config.js'
+import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
 import compression from './node_modules/compression/index.js'
 import redis from './node_modules/connect-redis/index.js'
 import express2 from './node_modules/express/index.js'
 import session from './node_modules/express-session/index.js'
+import { google as google29 } from './node_modules/googleapis/build/src/index.js'
+import helmet from './node_modules/helmet/dist/esm/index.js'
 import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
 import swaggerUI from './node_modules/swagger-ui-express/index.js'
-import helmet from './node_modules/helmet/dist/esm/index.js'
-import { google as google29 } from './node_modules/googleapis/build/src/index.js'
-import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
 
 // src/data/redis.ts
 import { createClient } from './node_modules/redis/dist/index.js'

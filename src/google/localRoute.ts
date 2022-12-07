@@ -1,6 +1,8 @@
-import { createAuthClientObject } from '.'
-import * as global from '../constants/globalConstants'
 import { Credentials } from 'google-auth-library'
+
+import * as global from '../constants/globalConstants'
+
+import { createAuthClientObject } from '.'
 
 /**
  * @function authorizeLocal

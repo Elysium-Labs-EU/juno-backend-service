@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio'
+
 import { IAttachment } from '../types/emailAttachmentTypes'
 
 export default function removeScripts(orderedObject: {

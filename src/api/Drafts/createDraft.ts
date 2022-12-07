@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import { GaxiosError } from 'googleapis-common'
 import { OAuth2Client } from 'google-auth-library'
 import { Common, google } from 'googleapis'
+import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
