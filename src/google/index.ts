@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import assertNonNullish from '../utils/assertNonNullish'
 import createHashState from '../utils/createHashedState'

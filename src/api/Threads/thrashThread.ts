@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import { Common, gmail_v1, google } from 'googleapis'
 import { GaxiosError } from 'googleapis-common'

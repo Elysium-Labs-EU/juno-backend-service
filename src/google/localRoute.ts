@@ -1,4 +1,4 @@
-import { Credentials } from 'google-auth-library'
+import type { Credentials } from 'google-auth-library'
 
 import * as global from '../constants/globalConstants'
 

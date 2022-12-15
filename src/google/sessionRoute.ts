@@ -1,5 +1,5 @@
-import { Request } from 'express'
-import { Credentials } from 'google-auth-library'
+import type { Request } from 'express'
+import type { Credentials } from 'google-auth-library'
 
 import * as global from '../constants/globalConstants'
 
