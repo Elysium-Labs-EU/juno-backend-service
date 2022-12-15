@@ -1,6 +1,7 @@
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { google, people_v1 } from 'googleapis'
+import { google } from 'googleapis'
+import type { people_v1 } from 'googleapis'
 
 import { authMiddleware } from '../../middleware/authMiddleware'
 
