@@ -2,6 +2,9 @@
 
 The backend code for the application Juno, build in NodeJS. This serves as an API layer connecting the React frontend to the Gmail API services.
 
+## Docs
+https://docs.elysiumlabs.io/docs/juno/development/
+
 ## Getting started
 
 You need to have a Google API account. With that account you setup your account to eventually set the `.env`-variables. Follow these steps: https://developers.google.com/workspace/guides/create-credentials and https://github.com/Elysium-Labs-EU/juno-core/wiki/Google-Credentials-setup
