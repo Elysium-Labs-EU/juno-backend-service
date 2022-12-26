@@ -1,9 +1,8 @@
-import type { Request } from 'express'
-import type { Credentials } from 'google-auth-library'
+import type { Request } from 'npm:express'
+import type { Credentials } from 'npm:google-auth-library'
 
-import * as global from '../constants/globalConstants'
-
-import { createAuthClientObject } from '.'
+import * as global from '../constants/globalConstants.ts'
+import { createAuthClientObject } from './index.ts'
 
 declare module 'express-session' {
   interface SessionData {

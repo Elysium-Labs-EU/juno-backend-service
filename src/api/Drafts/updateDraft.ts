@@ -1,12 +1,12 @@
-import type { Request, Response } from 'express'
-import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import type { Request, Response } from 'npm:express'
+import { OAuth2Client } from 'npm:google-auth-library'
+import { Common, google } from 'npm:googleapis'
+import { GaxiosError } from 'npm:googleapis-common'
 
-import { USER } from '../../constants/globalConstants'
-import { authMiddleware } from '../../middleware/authMiddleware'
-import formFieldParser from '../../utils/formFieldParser'
-import messageEncoding from '../../utils/messageEncoding'
+import { USER } from '../../constants/globalConstants.ts'
+import { authMiddleware } from '../../middleware/authMiddleware.ts'
+import formFieldParser from '../../utils/formFieldParser.ts'
+import messageEncoding from '../../utils/messageEncoding.ts'
 
 const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })

@@ -1,11 +1,11 @@
-import type { Request, Response } from 'express'
-import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import type { Request, Response } from 'npm:express'
+import { OAuth2Client } from 'npm:google-auth-library'
+import { Common, google } from 'npm:googleapis'
+import { GaxiosError } from 'npm:googleapis-common'
 
-import { USER } from '../../constants/globalConstants'
-import { authMiddleware } from '../../middleware/authMiddleware'
-import threadFullRemap from '../../utils/threadFullRemap'
+import { USER } from '../../constants/globalConstants.ts'
+import { authMiddleware } from '../../middleware/authMiddleware.ts'
+import threadFullRemap from '../../utils/threadFullRemap.ts'
 
 const getThread = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })

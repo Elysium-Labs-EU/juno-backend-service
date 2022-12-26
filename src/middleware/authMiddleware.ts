@@ -1,10 +1,13 @@
-import type { Request, Response } from 'express'
-import { OAuth2Client } from 'google-auth-library'
+import { config } from 'https://deno.land/x/dotenv/mod.ts'
+import type { Request, Response } from 'npm:express'
+import { OAuth2Client } from 'npm:google-auth-library'
+
+const env = config({ safe: true })
 
 import {
   authenticateUserLocal,
   authenticateUserSession,
-} from '../api/Users/authenticateUser'
+} from '../api/Users/authenticateUser.ts'
 
 export const authMiddleware =
   <T>(
@@ -27,7 +30,7 @@ export const authMiddleware =
       }
       return res.status(401).json('There is no authorization header found')
     } catch (err) {
-      process.env.NODE_ENV !== 'production' && console.error(err)
+      env.NODE_ENV !== 'production' && console.error(err)
       res.status(401).json(err?.message)
     }
   }

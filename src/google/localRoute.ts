@@ -1,8 +1,8 @@
-import type { Credentials } from 'google-auth-library'
+import type { Credentials } from 'npm:google-auth-library'
 
-import * as global from '../constants/globalConstants'
+import * as global from '../constants/globalConstants.ts'
 
-import { createAuthClientObject } from '.'
+import { createAuthClientObject } from './index.ts'
 
 /**
  * @function authorizeLocal
@@ -26,8 +26,8 @@ export const authorizeLocal = async ({
       }
       return oAuth2Client
     } catch (err) {
-      return 'Error during authorization'
       console.log('err', JSON.stringify(err))
+      return 'Error during authorization'
     }
   } else {
     return global.INVALID_TOKEN

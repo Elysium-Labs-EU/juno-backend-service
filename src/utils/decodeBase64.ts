@@ -1,4 +1,4 @@
-import base64url from 'base64url'
+import base64url from 'npm:base64url'
 
 /**
  * @function baseBase64

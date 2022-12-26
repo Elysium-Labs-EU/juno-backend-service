@@ -1,7 +1,8 @@
-const PORT = process.env.PORT || 5001
-import http from 'http'
+import { config } from 'https://deno.land/x/dotenv/mod.ts'
 
-import application from './routes/app'
+import application from './routes/app.ts'
 
-const server = http.createServer(application)
-server.listen(PORT)
+const env = config({ safe: true })
+const PORT = Number(env.PORT) || 5001
+
+application.listen(PORT)

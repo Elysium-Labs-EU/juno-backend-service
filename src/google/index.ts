@@ -1,8 +1,11 @@
-import { v4 as uuidv4 } from 'uuid'
-import type { Request, Response } from 'express'
-import { OAuth2Client } from 'google-auth-library'
-import assertNonNullish from '../utils/assertNonNullish'
-import createHashState from '../utils/createHashedState'
+import { config } from 'https://deno.land/x/dotenv/mod.ts'
+import { v4 as uuidv4 } from 'npm:uuid'
+import type { Request, Response } from 'npm:express'
+import { OAuth2Client } from 'npm:google-auth-library'
+import assertNonNullish from '../utils/assertNonNullish.ts'
+import createHashState from '../utils/createHashedState.ts'
+
+const env = config({ safe: true })
 
 const SCOPES = [
   'email',
@@ -26,35 +29,29 @@ const SCOPES = [
  */
 
 export const createAuthClientObject = (req: Request | null): OAuth2Client => {
-  assertNonNullish(process.env.GOOGLE_CLIENT_ID, 'No Google ID found')
-  assertNonNullish(
-    process.env.GOOGLE_CLIENT_SECRET,
-    'No Google Client Secret found'
-  )
-  assertNonNullish(
-    process.env.GOOGLE_REDIRECT_URL,
-    'No Google Redirect URL found'
-  )
+  assertNonNullish(env.GOOGLE_CLIENT_ID, 'No Google ID found')
+  assertNonNullish(env.GOOGLE_CLIENT_SECRET, 'No Google Client Secret found')
+  assertNonNullish(env.GOOGLE_REDIRECT_URL, 'No Google Redirect URL found')
 
   function determineAuthURLStructure() {
-    if (process.env.NODE_ENV === 'production') {
+    if (env.NODE_ENV === 'production') {
       if (
-        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
         req?.headers?.referer
       ) {
         return req.headers.referer.endsWith('/')
           ? req.headers.referer.slice(0, -1)
           : req.headers.referer
       }
-      return process.env.FRONTEND_URL
+      return env.FRONTEND_URL
     }
-    return process.env.FRONTEND_URL
+    return env.FRONTEND_URL
   }
 
   return new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    `${determineAuthURLStructure()}${process.env.GOOGLE_REDIRECT_URL}`
+    env.GOOGLE_CLIENT_ID,
+    env.GOOGLE_CLIENT_SECRET,
+    `${determineAuthURLStructure()}${env.GOOGLE_REDIRECT_URL}`
   )
 }
 

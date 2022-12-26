@@ -1,6 +1,6 @@
-import type { Request, Response } from 'express'
+import type { Request, Response } from 'npm:express'
 
-import { createAuthClientObject } from '../../google'
+import { createAuthClientObject } from '../../google/index.ts'
 
 export const logoutUser = async (req: Request, res: Response) => {
   try {

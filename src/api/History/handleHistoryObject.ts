@@ -1,7 +1,7 @@
-import { gmail_v1 } from 'googleapis'
+import { gmail_v1 } from 'npm:googleapis'
 
-import * as global from '../../constants/globalConstants'
-import onlyLegalLabelObjects from '../../utils/onlyLegalLabelObjects'
+import * as global from '../../constants/globalConstants.ts'
+import onlyLegalLabelObjects from '../../utils/onlyLegalLabelObjects.ts'
 
 export const HISTORY_NEXT_PAGETOKEN = 'history'
 export const HISTORY_TIME_STAMP = 0

@@ -1,12 +1,12 @@
-import type { Request, Response } from 'express'
-import { OAuth2Client } from 'google-auth-library'
-import { Common, gmail_v1, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import type { Request, Response } from 'npm:express'
+import { OAuth2Client } from 'npm:google-auth-library'
+import { Common, gmail_v1, google } from 'npm:googleapis'
+import { GaxiosError } from 'npm:googleapis-common'
 
-import { USER } from '../../constants/globalConstants'
-import { authMiddleware } from '../../middleware/authMiddleware'
-import threadFullRemap from '../../utils/threadFullRemap'
-import requestBodyCreator from './threadRequest'
+import { USER } from '../../constants/globalConstants.ts'
+import { authMiddleware } from '../../middleware/authMiddleware.ts'
+import threadFullRemap from '../../utils/threadFullRemap.ts'
+import requestBodyCreator from './threadRequest.ts'
 
 async function singleThread(
   thread: gmail_v1.Schema$Thread,

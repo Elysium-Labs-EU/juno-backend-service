@@ -1,4 +1,4 @@
-import { gmail_v1 } from 'googleapis'
+import { gmail_v1 } from 'npm:googleapis'
 
 export default function findHeader(
   rawMessage: gmail_v1.Schema$Message,

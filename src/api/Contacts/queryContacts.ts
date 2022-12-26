@@ -1,8 +1,8 @@
-import type { Request, Response } from 'express'
-import { OAuth2Client } from 'google-auth-library'
-import { google, people_v1 } from 'googleapis'
+import type { Request, Response } from 'npm:express'
+import { OAuth2Client } from 'npm:google-auth-library'
+import { google, people_v1 } from 'npm:googleapis'
 
-import { authMiddleware } from '../../middleware/authMiddleware'
+import { authMiddleware } from '../../middleware/authMiddleware.ts'
 
 const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
   const people = google.people({ version: 'v1', auth })

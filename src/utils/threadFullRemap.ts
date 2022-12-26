@@ -1,8 +1,8 @@
-import { gmail_v1 } from 'googleapis'
+import { gmail_v1 } from 'npm:googleapis'
 
-import bodyDecoder from './bodyDecoder'
-import checkAttachment from './fetchAttachments'
-import findHeader from './findHeader'
+import bodyDecoder from './bodyDecoder.ts'
+import checkAttachment from './fetchAttachments.ts'
+import findHeader from './findHeader.ts'
 
 /**
  *

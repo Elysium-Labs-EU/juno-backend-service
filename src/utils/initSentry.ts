@@ -1,7 +1,7 @@
-import * as Sentry from '@sentry/node'
-import * as Tracing from '@sentry/tracing'
+import * as Sentry from 'npm:@sentry/node'
+import * as Tracing from 'npm:@sentry/tracing'
 
-import assertNonNullish from './assertNonNullish'
+import assertNonNullish from './assertNonNullish.ts'
 
 export default function initSentry(app) {
   assertNonNullish(process.env.SENTRY_DSN, 'No Sentry DSN provided')

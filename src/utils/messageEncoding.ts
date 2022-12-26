@@ -1,4 +1,4 @@
-import fs from 'fs'
+import { Buffer } from 'https://deno.land/std@0.170.0/io/buffer.ts'
 
 interface ICustomFile {
   /**
@@ -98,7 +98,7 @@ const messageEncoding = ({
   // Handle filesArray coming via the api request here.
   if ('file' in files && files.file.length > 0) {
     for (const file of files.file) {
-      const content = fs.readFileSync(file.filepath)
+      const content = Deno.readFileSync(file.filepath)
       const toBase64 = Buffer.from(content).toString('base64')
 
       const attachment = [

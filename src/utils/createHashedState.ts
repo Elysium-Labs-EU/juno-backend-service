@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+// import { createHash } from 'npm:crypto'
 
 /**
  * @function createHashState
@@ -6,6 +6,7 @@ import { createHash } from 'crypto'
  */
 
 export default function createHashState(secret: string) {
-  const hashValue = createHash('sha256').update(secret).digest('hex')
+  // const hashValue = createHash('sha256').update(secret).digest('hex')
+  const hashValue = '1221323123'
   return hashValue
 }

@@ -1,6 +1,6 @@
-import * as cheerio from 'cheerio'
+import * as cheerio from 'npm:cheerio'
 
-import { IAttachment } from '../types/emailAttachmentTypes'
+import { IAttachment } from '../types/emailAttachmentTypes.ts'
 
 export default function removeScripts(orderedObject: {
   emailHTML: string

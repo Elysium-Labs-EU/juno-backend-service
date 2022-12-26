@@ -1,12 +1,12 @@
-import AutoLinker from 'autolinker'
-import * as cheerio from 'cheerio'
-import { gmail_v1 } from 'googleapis'
+import AutoLinker from 'npm:autolinker'
+import * as cheerio from 'npm:cheerio'
+import { gmail_v1 } from 'npm:googleapis'
 
-import * as global from '../constants/globalConstants'
-import { IAttachment } from '../types/emailAttachmentTypes'
-import { baseBase64, decodeBase64 } from './decodeBase64'
-import removeScripts from './removeScripts'
-import removeTrackers from './removeTrackers'
+import * as global from '../constants/globalConstants.ts'
+import { IAttachment } from '../types/emailAttachmentTypes.ts'
+import { baseBase64, decodeBase64 } from './decodeBase64.ts'
+import removeScripts from './removeScripts.ts'
+import removeTrackers from './removeTrackers.ts'
 
 let decodedString: string | undefined
 let localMessageId: string | null

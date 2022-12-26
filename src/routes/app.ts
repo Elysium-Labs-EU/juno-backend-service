@@ -1,80 +1,79 @@
-import 'dotenv/config'
+import { config } from 'https://deno.land/x/dotenv/mod.ts'
+import * as Sentry from 'npm:@sentry/node'
+import compression from 'npm:compression'
+import redis from 'npm:connect-redis'
+import express from 'npm:express'
+import type { Request } from 'npm:express'
+import session from 'npm:express-session'
+import { google } from 'npm:googleapis'
+import helmet from 'npm:helmet'
+import swaggerJSDoc from 'npm:swagger-jsdoc'
+import swaggerUI from 'npm:swagger-ui-express'
 
-import * as Sentry from '@sentry/node'
-import compression from 'compression'
-import redis from 'connect-redis'
-import express, { Request } from 'express'
-import session from 'express-session'
-import { google } from 'googleapis'
-import helmet from 'helmet'
-import swaggerJSDoc from 'swagger-jsdoc'
-import swaggerUI from 'swagger-ui-express'
+import initiateRedis from '../data/redis.ts'
+import assertNonNullish from '../utils/assertNonNullish.ts'
+import customSession from '../utils/customSession.ts'
+import initSentry from '../utils/initSentry.ts'
+import indexRoute from './index.ts'
 
-import initiateRedis from '../data/redis'
-import assertNonNullish from '../utils/assertNonNullish'
-import initSentry from '../utils/initSentry'
+const env = config({ safe: true })
 
-import indexRoute from './index'
-
-process.env.NODE_ENV !== 'production' &&
-  console.log('Booted and ready for usage')
+env.NODE_ENV !== 'production' && console.log('Booted and ready for usage')
 
 const app = express()
 const redisStore = redis(session)
 const redisClient = initiateRedis()
 
 // Compress all HTTP responses
-app.use(compression())
+// app.use(compression())
 
 app.set('trust proxy', 1)
 
-assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
+assertNonNullish(env.SESSION_SECRET, 'No Session Secret.')
 const SEVEN_DAYS = 1000 * 60 * 10080
-app.use(
-  session({
-    name: 'junoSession',
-    store: new redisStore({ client: redisClient }),
-    saveUninitialized: false,
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    proxy: true,
-    cookie: {
-      secure: process.env.NODE_ENV !== 'production' ? false : true,
-      httpOnly: true,
-      maxAge: SEVEN_DAYS,
-      // sameSite: 'lax',
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
-      domain:
-        process.env.NODE_ENV !== 'production'
-          ? undefined
-          : process.env.COOKIE_DOMAIN,
-    },
-  })
-)
+// app.use((req: any, res: any, next: any) => {
+//   customSession(req)
+// })
+
+// app.use(
+//   session({
+//     name: 'junoSession',
+//     store: new redisStore({ client: redisClient }),
+//     saveUninitialized: false,
+//     secret: env.SESSION_SECRET,
+//     resave: false,
+//     proxy: true,
+//     cookie: {
+//       secure: env.NODE_ENV !== 'production' ? false : true,
+//       httpOnly: true,
+//       maxAge: SEVEN_DAYS,
+//       // sameSite: 'lax',
+//       sameSite: env.NODE_ENV !== 'production' ? 'lax' : 'none',
+//       domain: env.NODE_ENV !== 'production' ? undefined : env.COOKIE_DOMAIN,
+//     },
+//   })
+// )
 
 function determineAllowOrigin(req: Request) {
-  assertNonNullish(
-    process.env.FRONTEND_URL,
-    'No Frontend environment variable found.'
-  )
-  if (process.env.NODE_ENV === 'production') {
+  assertNonNullish(env.FRONTEND_URL, 'No Frontend environment variable found.')
+  if (env.NODE_ENV === 'production') {
     if (
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+      env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
       req.headers?.referer
     ) {
       return req.headers.referer.endsWith('/')
         ? req.headers.referer.slice(0, -1)
         : req.headers.referer
     }
-    return process.env.FRONTEND_URL
+    return env.FRONTEND_URL
   }
-  return process.env.FRONTEND_URL
+  return env.FRONTEND_URL
 }
 
 function determineAllowCredentials(req: Request) {
-  if (process.env.NODE_ENV === 'production') {
+  if (env.NODE_ENV === 'production') {
     if (
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+      env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
       req.headers?.referer &&
       req.headers.referer.includes('localhost')
     ) {
@@ -88,8 +87,8 @@ function determineAllowCredentials(req: Request) {
 // Helmet is used to set HTTP headers
 app.use(helmet())
 app.disable('x-powered-by')
-app.use((req, res, next) => {
-  res.setHeader('credentials', 'include')
+app.use((req: any, res: any, next: any) => {
+  customSession(req), res.setHeader('credentials', 'include')
   res.setHeader(
     'Access-Control-Allow-Credentials',
     determineAllowCredentials(req)
@@ -139,7 +138,7 @@ const swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Don't run Sentry when developing.
-process.env.NODE_ENV !== 'development' && initSentry(app)
+env.NODE_ENV !== 'development' && initSentry(app)
 
 app.use('/', indexRoute)
 
@@ -154,7 +153,7 @@ app.use(Sentry.Handlers.errorHandler())
 
 // Optional fallthrough error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use(function onError(err, req, res, next) {
+app.use(function onError(err: any, req: any, res: any, next: any) {
   // The error id is attached to `res.sentry` to be returned
   // and optionally displayed to the user for support.
   res.statusCode = 500

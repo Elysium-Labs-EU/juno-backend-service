@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express'
+import type { Request, Response } from 'npm:express'
 
 export const health = async (req: Request, res: Response) => {
   try {

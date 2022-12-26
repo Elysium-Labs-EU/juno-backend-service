@@ -1,8 +1,8 @@
-import { Request } from 'express'
+import { Request } from 'npm:express'
 
-import * as global from '../../constants/globalConstants'
-import { authenticateLocal } from '../../google/localRoute'
-import { authenticateSession } from '../../google/sessionRoute'
+import * as global from '../../constants/globalConstants.ts'
+import { authenticateLocal } from '../../google/localRoute.ts'
+import { authenticateSession } from '../../google/sessionRoute.ts'
 
 /**
  * @function authenticateUserSession

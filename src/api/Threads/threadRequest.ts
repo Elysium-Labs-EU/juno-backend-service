@@ -1,7 +1,7 @@
-import { Request } from 'express'
-import { gmail_v1 } from 'googleapis'
+import { Request } from 'npm:express'
+import { gmail_v1 } from 'npm:googleapis'
 
-import { ARCHIVE_LABEL, USER } from '../../constants/globalConstants'
+import { ARCHIVE_LABEL, USER } from '../../constants/globalConstants.ts'
 
 const requestBodyCreator = (req: Request) => {
   const requestBody: gmail_v1.Params$Resource$Users$Threads$List = {

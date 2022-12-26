@@ -1,6 +1,6 @@
-import * as cheerio from 'cheerio'
+import * as cheerio from 'npm:cheerio'
 
-import { IAttachment } from '../types/emailAttachmentTypes'
+import { IAttachment } from '../types/emailAttachmentTypes.ts'
 
 const TRACKERS_SELECTORS = [
   { attribute: 'width', value: '0' },
@@ -24,11 +24,11 @@ const TRACKERS_SELECTORS_INCLUDES = [
 function parseStyleIntoObject(documentImage: cheerio.Element) {
   let foundImage: cheerio.Element | null = null
   const fetchedStyle = documentImage.attributes.filter(
-    (attribute) => attribute.name === 'style'
+    (attribute: any) => attribute.name === 'style'
   )
   if (fetchedStyle.length > 0) {
     const parsedStyle = fetchedStyle
-      .map((item) => item.value?.split(/\s*;\s*/g))
+      .map((item: any) => item.value?.split(/\s*;\s*/g))
       .flat(1)
     for (let i = 0; parsedStyle.length > i; i += 1) {
       if (parsedStyle[i]) {
@@ -54,14 +54,14 @@ function detectAndRemove(documentImage: cheerio.Element) {
   if (
     TRACKERS_SELECTORS.filter(
       (checkValue) =>
-        documentImage.attributes.some((item) => {
+        documentImage.attributes.some((item: any) => {
           if (item.name === checkValue.attribute) {
             return item.value === checkValue.value
           }
         }) === true
     ).length > 0 ||
     TRACKERS_SELECTORS_INCLUDES.filter((checkValueInclude) =>
-      documentImage.attributes.some((item) => {
+      documentImage.attributes.some((item: any) => {
         if (item.name === checkValueInclude.attribute) {
           return item.value === checkValueInclude.value
         }
@@ -85,10 +85,10 @@ export default function removeTrackers(orderedObject: {
 
   const $ = cheerio.load(orderedObject.emailHTML)
   let foundImage: cheerio.Element | null = null
-  $('img').each((_, documentImage) => {
+  $('img').each((_: any, documentImage: any) => {
     // First attempt to find a tracker based on the inline styles - the other method is regular attributes.
     const imageWithInlineSrc = documentImage.attributes.filter(
-      (item) => item.name === 'style'
+      (item: any) => item.name === 'style'
     )
     if (imageWithInlineSrc !== null && imageWithInlineSrc.length > 0) {
       const response = parseStyleIntoObject(documentImage)
@@ -104,7 +104,7 @@ export default function removeTrackers(orderedObject: {
     if (foundImage) {
       $(foundImage).remove()
       const srcOfTracker = documentImage?.attributes.filter(
-        (attribute) => attribute.name === 'src'
+        (attribute: any) => attribute.name === 'src'
       )[0]
       if (srcOfTracker) {
         localCopyOrderedObject.removedTrackers.push(srcOfTracker.value)

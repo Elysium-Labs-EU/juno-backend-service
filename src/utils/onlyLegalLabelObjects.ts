@@ -1,4 +1,4 @@
-import { LabelIdName } from '../api/History/handleHistoryObject'
+import { LabelIdName } from '../api/History/handleHistoryObject.ts'
 
 interface IOnlyLegalLabels {
   labelNames: string[]

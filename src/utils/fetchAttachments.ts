@@ -1,4 +1,4 @@
-import { gmail_v1 } from 'googleapis'
+import { gmail_v1 } from 'npm:googleapis'
 
 let foundAttachments: gmail_v1.Schema$MessagePart[] = []
 const loopThroughParts = ({

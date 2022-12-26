@@ -1,18 +1,21 @@
-import { createClient } from 'redis'
+import { config } from 'https://deno.land/x/dotenv/mod.ts'
+import { createClient } from 'npm:redis'
 
-import assertNonNullish from '../utils/assertNonNullish'
+import assertNonNullish from '../utils/assertNonNullish.ts'
+
+const env = config({ safe: true })
 
 const cloudRedis = () => {
-  assertNonNullish(process.env.REDIS_USER, 'No Redis User defined')
-  assertNonNullish(process.env.REDIS_PASS, 'No Redis Pass defined')
-  assertNonNullish(process.env.REDIS_PORT, 'No Redis Port defined')
+  assertNonNullish(env.REDIS_USER, 'No Redis User defined')
+  assertNonNullish(env.REDIS_PASS, 'No Redis Pass defined')
+  assertNonNullish(env.REDIS_PORT, 'No Redis Port defined')
 
   return createClient({
-    username: process.env.REDIS_USER,
-    password: process.env.REDIS_PASS,
+    username: env.REDIS_USER,
+    password: env.REDIS_PASS,
     socket: {
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT),
+      host: env.REDIS_HOST,
+      port: parseInt(env.REDIS_PORT),
     },
     legacyMode: true,
   })
@@ -20,7 +23,7 @@ const cloudRedis = () => {
 
 const initiateRedis = () => {
   const redisClient =
-    process.env.NODE_ENV === 'development'
+    env.NODE_ENV === 'development'
       ? createClient({
           legacyMode: true,
         })
