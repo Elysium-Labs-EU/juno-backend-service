@@ -1,8 +1,10 @@
-import { v4 as uuidv4 } from 'uuid'
-import type { Request, Response } from 'express'
+import { randomUUID } from 'crypto'
 import { OAuth2Client } from 'google-auth-library'
+
 import assertNonNullish from '../utils/assertNonNullish'
 import createHashState from '../utils/createHashedState'
+
+import type { Request, Response } from 'express'
 
 const SCOPES = [
   'email',
@@ -14,9 +16,6 @@ const SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.sharing',
   'openid',
   'profile',
-  // 'https://mail.google.com',
-  // 'https://www.googleapis.com/auth/gmail.readonly',
-  // 'https://www.googleapis.com/auth/gmail.send',
 ]
 
 /**
@@ -97,7 +96,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
       }
       // If the session route is used, only send back an random id to the user.
       return res.status(200).json({
-        idToken: `"${uuidv4()}"`,
+        idToken: `"${randomUUID()}"`,
       })
     } else {
       res.status(400).json('Code not found')
@@ -114,7 +113,7 @@ export const getAuthUrl = async (req: Request, res: Response) => {
     // Create an oAuth client to authorize the API call.  Secrets are kept in the environment file,
     // which should be fetched from the Google Developers Console.
     const oAuth2Client = createAuthClientObject(req)
-    const randomID = uuidv4()
+    const randomID = randomUUID()
 
     // The hashState will be send to the user and the source secret will be stored in the session - to verify the incoming request later.
     const hashState = createHashState(randomID)
