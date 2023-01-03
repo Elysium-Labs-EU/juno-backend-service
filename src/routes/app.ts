@@ -58,6 +58,7 @@ function determineAllowOrigin(req: Request) {
     'No Frontend environment variable found.'
   )
   if (process.env.NODE_ENV === 'production') {
+    console.log(req.headers)
     console.log(req.headers?.referer)
     if (
       process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
