@@ -150,7 +150,7 @@ export const checkIdValidity = async (token: string) => {
     })
     return true
   } catch (err) {
-    console.log(err)
+    console.log('google err', err)
     return false
   }
 }
