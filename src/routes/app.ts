@@ -42,7 +42,6 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      // sameSite: 'lax',
       sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
       domain:
         process.env.NODE_ENV !== 'production'
@@ -52,12 +51,14 @@ app.use(
   })
 )
 
+// TODO: Expand this to allow for Tauri apps to connect to the cloud backend, without having to use insecure route.
 function determineAllowOrigin(req: Request) {
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
   if (process.env.NODE_ENV === 'production') {
+    console.log(req.headers?.referer)
     if (
       process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
       req.headers?.referer

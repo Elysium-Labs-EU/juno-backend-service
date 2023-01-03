@@ -134,7 +134,7 @@ var UNREAD_LABEL = 'UNREAD'
 var USER = 'me'
 
 // src/google/index.ts
-import { v4 as uuidv4 } from './node_modules/uuid/wrapper.mjs'
+import { randomUUID } from 'crypto'
 import { OAuth2Client } from './node_modules/google-auth-library/build/src/index.js'
 
 // src/utils/createHashedState.ts
@@ -222,7 +222,7 @@ var getAuthenticateClient = (req, res) =>
           })
         }
         return res.status(200).json({
-          idToken: `"${uuidv4()}"`,
+          idToken: `"${randomUUID()}"`,
         })
       } else {
         res.status(400).json('Code not found')
@@ -238,7 +238,7 @@ var getAuthUrl = (req, res) =>
     var _a
     try {
       const oAuth2Client = createAuthClientObject(req)
-      const randomID = uuidv4()
+      const randomID = randomUUID()
       const hashState = createHashState(randomID)
       req.session.hashSecret = randomID
       const authorizeUrl = oAuth2Client.generateAuthUrl({
@@ -2454,15 +2454,16 @@ app.use(
   })
 )
 function determineAllowOrigin(req) {
-  var _a
+  var _a, _b
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
   if (process.env.NODE_ENV === 'production') {
+    console.log((_a = req.headers) == null ? void 0 : _a.referer)
     if (
       process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      ((_a = req.headers) == null ? void 0 : _a.referer)
+      ((_b = req.headers) == null ? void 0 : _b.referer)
     ) {
       return req.headers.referer.endsWith('/')
         ? req.headers.referer.slice(0, -1)
