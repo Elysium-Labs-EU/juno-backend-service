@@ -67,6 +67,9 @@ function determineAllowOrigin(req: Request) {
         ? req.headers.referer.slice(0, -1)
         : req.headers.referer
     }
+    if (req.headers.origin === 'tauri://localhost') {
+      return req.headers.origin
+    }
     return process.env.FRONTEND_URL
   }
   return process.env.FRONTEND_URL
