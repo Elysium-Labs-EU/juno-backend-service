@@ -25,9 +25,6 @@
     "url": "https://elysiumlabs.io"
   },
   "license": "ISC",
-  "engines": {
-    "node": ">=14"
-  },
   "dependencies": {
     "@sentry/node": "^7.28.1",
     "@sentry/tracing": "^7.28.1",
