@@ -4,7 +4,7 @@ The backend code for the application Juno, build in NodeJS. This serves as an AP
 
 ## Getting started
 
-You need to have a Google API account. With that account you setup your account to eventually set the `.env`-variables. Follow these steps: https://developers.google.com/workspace/guides/create-credentials and https://github.com/Elysium-Labs-EU/juno-core/wiki/Google-Credentials-setup
+If you want to run this repository locally, you need to have a Google API account. With that account you setup your account to eventually set the `.env`-variables. Follow these steps: https://developers.google.com/workspace/guides/create-credentials.
 
 The normal setup sequence would be;
 
