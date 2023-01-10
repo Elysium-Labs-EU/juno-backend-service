@@ -52,41 +52,65 @@ app.use(
 )
 
 // TODO: Expand this to allow for Tauri apps to connect to the cloud backend, without having to use insecure route.
+const LOCALHOST_ORIGIN_TAURI = 'tauri://localhost'
+
 function determineAllowOrigin(req: Request) {
+  // Assert that the FRONTEND_URL environment variable is not null or undefined
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
-  if (process.env.NODE_ENV === 'production') {
-    console.log('headers@@', req.headers)
-    if (
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      req.headers?.referer
-    ) {
-      return req.headers.referer.endsWith('/')
-        ? req.headers.referer.slice(0, -1)
-        : req.headers.referer
+
+  // Check the value of the NODE_ENV environment variable
+  switch (process.env.NODE_ENV) {
+    case 'production': {
+      // Check if the ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND environment variable is set to 'true'
+      // and the req.headers.referer property is not null or undefined
+      if (
+        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        req.headers?.referer
+      ) {
+        // If the referer value ends with a '/' character, slice it off
+        return req.headers.referer.endsWith('/')
+          ? req.headers.referer.slice(0, -1)
+          : req.headers.referer
+      }
+
+      // Check if the origin value is equal to the LOCALHOST_ORIGIN constant
+      if (req.headers.origin === LOCALHOST_ORIGIN_TAURI) {
+        return req.headers.origin
+      }
+
+      // Return the FRONTEND_URL environment variable
+      return process.env.FRONTEND_URL
     }
-    if (req.headers.origin === 'tauri://localhost') {
-      return req.headers.origin
+    default: {
+      // For all other values of NODE_ENV, return the FRONTEND_URL environment variable
+      return process.env.FRONTEND_URL
     }
-    return process.env.FRONTEND_URL
   }
-  return process.env.FRONTEND_URL
 }
 
 function determineAllowCredentials(req: Request) {
-  if (process.env.NODE_ENV === 'production') {
-    if (
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      req.headers?.referer &&
-      req.headers.referer.includes('localhost')
-    ) {
-      return 'false'
+  // Check the value of the NODE_ENV environment variable
+  switch (process.env.NODE_ENV) {
+    case 'production': {
+      // Check if the ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND environment variable is set to 'true'
+      // and the req.headers.referer property is not null or undefined and includes the string 'localhost'
+      if (
+        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        req.headers?.referer &&
+        req.headers.referer.includes('localhost')
+      ) {
+        return 'false'
+      }
+      return 'true'
     }
-    return 'true'
+    default: {
+      // For all other values of NODE_ENV, return 'true'
+      return 'true'
+    }
   }
-  return 'true'
 }
 
 // Helmet is used to set HTTP headers

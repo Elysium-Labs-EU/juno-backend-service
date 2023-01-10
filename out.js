@@ -265,7 +265,7 @@ var checkIdValidity = (token) =>
       })
       return true
     } catch (err) {
-      console.log(err)
+      console.log('google err', err)
       return false
     }
   })
@@ -2335,7 +2335,7 @@ var logoutUser = (req, res) =>
         }
         req.session.destroy(function (err) {
           if (err) {
-            console.log(err)
+            console.log('logout err', err)
             return res.status(401).json(err.message)
           }
           return res.status(205).json()
@@ -2453,39 +2453,50 @@ app.use(
     },
   })
 )
+var LOCALHOST_ORIGIN_TAURI = 'tauri://localhost'
 function determineAllowOrigin(req) {
-  var _a, _b
+  var _a
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
   )
-  if (process.env.NODE_ENV === 'production') {
-    console.log((_a = req.headers) == null ? void 0 : _a.referer)
-    if (
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      ((_b = req.headers) == null ? void 0 : _b.referer)
-    ) {
-      return req.headers.referer.endsWith('/')
-        ? req.headers.referer.slice(0, -1)
-        : req.headers.referer
+  switch (process.env.NODE_ENV) {
+    case 'production': {
+      if (
+        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        ((_a = req.headers) == null ? void 0 : _a.referer)
+      ) {
+        return req.headers.referer.endsWith('/')
+          ? req.headers.referer.slice(0, -1)
+          : req.headers.referer
+      }
+      if (req.headers.origin === LOCALHOST_ORIGIN_TAURI) {
+        return req.headers.origin
+      }
+      return process.env.FRONTEND_URL
     }
-    return process.env.FRONTEND_URL
+    default: {
+      return process.env.FRONTEND_URL
+    }
   }
-  return process.env.FRONTEND_URL
 }
 function determineAllowCredentials(req) {
   var _a
-  if (process.env.NODE_ENV === 'production') {
-    if (
-      process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-      ((_a = req.headers) == null ? void 0 : _a.referer) &&
-      req.headers.referer.includes('localhost')
-    ) {
-      return 'false'
+  switch (process.env.NODE_ENV) {
+    case 'production': {
+      if (
+        process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
+        ((_a = req.headers) == null ? void 0 : _a.referer) &&
+        req.headers.referer.includes('localhost')
+      ) {
+        return 'false'
+      }
+      return 'true'
     }
-    return 'true'
+    default: {
+      return 'true'
+    }
   }
-  return 'true'
 }
 app.use(helmet())
 app.disable('x-powered-by')
