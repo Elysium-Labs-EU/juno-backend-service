@@ -1,31 +1,9 @@
 import { gmail_v1 } from 'googleapis'
 
-import bodyDecoder from './bodyDecoder'
-import checkAttachment from './fetchAttachments'
+import bodyDecoder from './bodyDecoder/bodyDecoder'
+import checkAttachment from './fetchAttachments/fetchAttachments'
 import findHeader from './findHeader'
-
-/**
- *
- * @param unsubscribeLink - a string or undefined - coming from the Gmail header
- * @returns nothing if there is no input, prefer the regular page link over the mailto link. If there is input, it will return at least a string.
- */
-function handleListUnsubscribe(unsubscribeLink: string | undefined | null) {
-  if (unsubscribeLink) {
-    const splittedUnsubscribe = unsubscribeLink
-      .split(',')
-      .map((link) => link.trim().replace(/(<|>)+/g, ''))
-    if (splittedUnsubscribe.length === 1) {
-      return splittedUnsubscribe[0]
-    }
-    const preferNoMailLink = splittedUnsubscribe.filter(
-      (item) => !item.startsWith('mailto')
-    )
-    if (preferNoMailLink.length === 0) {
-      return splittedUnsubscribe[0]
-    }
-    return preferNoMailLink[0]
-  }
-}
+import handleListUnsubscribe from './handleListUnsubscribe/handleListUnsubscribe'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   return {

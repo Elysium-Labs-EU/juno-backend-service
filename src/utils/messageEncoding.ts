@@ -44,19 +44,19 @@ interface ICustomFile {
 }
 
 interface IFormidableFileArray {
-  file: ICustomFile[]
+  file: Array<ICustomFile>
 }
 
 export interface IMessageEncoding {
   body: string | null | undefined
   subject: string | null | undefined
-  to: string[] | null | undefined
-  cc: string[] | null | undefined
-  bcc: string[] | null | undefined
+  to: Array<string> | null | undefined
+  cc: Array<string> | null | undefined
+  bcc: Array<string> | null | undefined
   sender: string | null | undefined
   signature: string | null | undefined
   from: string | null | undefined
-  files: string[] | IFormidableFileArray
+  files: Array<string> | IFormidableFileArray
 }
 
 const messageEncoding = ({

@@ -632,8 +632,7 @@ var fetchDrafts = (req, res) =>
 // src/api/Drafts/fetchSingleDraft.ts
 import { google as google6 } from './node_modules/googleapis/build/src/index.js'
 
-// src/utils/bodyDecoder.ts
-import AutoLinker from './node_modules/autolinker/dist/commonjs/index.js'
+// src/utils/bodyDecoder/bodyDecoder.ts
 import * as cheerio3 from './node_modules/cheerio/lib/esm/index.js'
 
 // src/utils/decodeBase64.ts
@@ -661,7 +660,7 @@ function removeScripts(orderedObject) {
   return orderedObject
 }
 
-// src/utils/removeTrackers.ts
+// src/utils/removeTrackers/removeTrackers.ts
 import * as cheerio2 from './node_modules/cheerio/lib/esm/index.js'
 var TRACKERS_SELECTORS = [
   { attribute: 'width', value: '0' },
@@ -773,24 +772,24 @@ function removeTrackers(orderedObject) {
   return localCopyOrderedObject
 }
 
-// src/utils/bodyDecoder.ts
+// src/utils/bodyDecoder/utils/enhancePlainText.ts
+import AutoLinker from './node_modules/autolinker/dist/commonjs/index.js'
+function enhancePlainText(localString) {
+  var _a
+  const lineBreakRegex = /(?:\r\n|\r|\n)/g
+  return (_a = AutoLinker.link(localString, { email: false }).replace(
+    lineBreakRegex,
+    '<br>'
+  )) != null
+    ? _a
+    : ''
+}
+
+// src/utils/bodyDecoder/bodyDecoder.ts
 var decodedString
 var localMessageId
 var decodedResult = []
 var localGmail = null
-var enhancePlainText = (localString) => {
-  const enhancedText = () => {
-    var _a
-    const lineBreakRegex = /(?:\r\n|\r|\n)/g
-    return (_a = AutoLinker.link(localString, { email: false }).replace(
-      lineBreakRegex,
-      '<br>'
-    )) != null
-      ? _a
-      : ''
-  }
-  return enhancedText()
-}
 var inlineImageDecoder = (_0) =>
   __async(void 0, [_0], function* ({ attachmentData, messageId }) {
     var _a, _b
@@ -1002,13 +1001,18 @@ var bodyDecoder = (_0) =>
           inputObject,
           signal,
         })
+        console.log(response)
         decodedResult = []
-        const ordered = orderArrayPerType(response)
-        const prioritized = prioritizeHTMLbodyObject(ordered)
-        const inlinedImages = placeInlineImage(prioritized)
-        const removedTrackers = removeTrackers(inlinedImages)
-        const removedScript = removeScripts(removedTrackers)
-        return removedScript
+        if (response) {
+          const ordered = orderArrayPerType(response)
+          const prioritized = prioritizeHTMLbodyObject(ordered)
+          const inlinedImages = placeInlineImage(prioritized)
+          const removedTrackers = removeTrackers(inlinedImages)
+          const removedScript = removeScripts(removedTrackers)
+          return removedScript
+        } else {
+          throw Error('Got no response from the body parts')
+        }
       }
       return { emailHTML: '', emailFileHTML: [] }
     } catch (err) {
@@ -1017,32 +1021,33 @@ var bodyDecoder = (_0) =>
   })
 var bodyDecoder_default = bodyDecoder
 
-// src/utils/fetchAttachments.ts
+// src/utils/fetchAttachments/fetchAttachments.ts
 var foundAttachments = []
 var loopThroughParts = ({ input, reset = false }) => {
   var _a
   if (reset) {
     foundAttachments = []
   }
-  if (input) {
-    for (const inputParts of input) {
-      if (Object.prototype.hasOwnProperty.call(inputParts, 'parts')) {
-        loopThroughParts({ input: inputParts.parts })
-      }
-      if (
-        !Object.prototype.hasOwnProperty.call(inputParts, 'parts') &&
-        Object.prototype.hasOwnProperty.call(inputParts, 'filename') &&
-        ((_a = inputParts == null ? void 0 : inputParts.headers) == null
-          ? void 0
-          : _a.find((header) => {
-              var _a2
-              return (_a2 = header == null ? void 0 : header.name) == null
-                ? void 0
-                : _a2.includes('Content-Disposition')
-            }))
-      ) {
-        foundAttachments.push(inputParts)
-      }
+  if (!input) {
+    return []
+  }
+  for (const inputParts of input) {
+    if (inputParts.parts) {
+      loopThroughParts({ input: inputParts.parts })
+    }
+    if (
+      !inputParts.parts &&
+      inputParts.filename &&
+      ((_a = inputParts == null ? void 0 : inputParts.headers) == null
+        ? void 0
+        : _a.some((header) => {
+            var _a2
+            return (_a2 = header == null ? void 0 : header.name) == null
+              ? void 0
+              : _a2.includes('Content-Disposition')
+          }))
+    ) {
+      foundAttachments.push(inputParts)
     }
   }
   return foundAttachments
@@ -1050,18 +1055,11 @@ var loopThroughParts = ({ input, reset = false }) => {
 function checkAttachment(message) {
   var _a
   if (
-    Object.prototype.hasOwnProperty.call(
-      message == null ? void 0 : message.payload,
-      'parts'
-    )
+    (_a = message == null ? void 0 : message.payload) == null
+      ? void 0
+      : _a.parts
   ) {
-    return loopThroughParts({
-      input:
-        (_a = message == null ? void 0 : message.payload) == null
-          ? void 0
-          : _a.parts,
-      reset: true,
-    })
+    return loopThroughParts({ input: message.payload.parts, reset: true })
   }
   return []
 }
@@ -1099,24 +1097,18 @@ function findHeader(rawMessage, query) {
   }
 }
 
-// src/utils/threadFullRemap.ts
+// src/utils/handleListUnsubscribe/handleListUnsubscribe.ts
 function handleListUnsubscribe(unsubscribeLink) {
-  if (unsubscribeLink) {
-    const splittedUnsubscribe = unsubscribeLink
-      .split(',')
-      .map((link) => link.trim().replace(/(<|>)+/g, ''))
-    if (splittedUnsubscribe.length === 1) {
-      return splittedUnsubscribe[0]
-    }
-    const preferNoMailLink = splittedUnsubscribe.filter(
-      (item) => !item.startsWith('mailto')
-    )
-    if (preferNoMailLink.length === 0) {
-      return splittedUnsubscribe[0]
-    }
-    return preferNoMailLink[0]
-  }
+  if (!unsubscribeLink) return
+  const links = unsubscribeLink
+    .split(',')
+    .map((link) => link.trim().replace(/(<|>)+/g, ''))
+  let preferNoMailLink = links.find((item) => !item.startsWith('mailto'))
+  if (!preferNoMailLink) preferNoMailLink = links[0]
+  return preferNoMailLink
 }
+
+// src/utils/threadFullRemap.ts
 var remapPayloadHeaders = (rawMessage) => {
   return {
     deliveredTo: findHeader(rawMessage, 'Delivered-To'),
