@@ -1,6 +1,6 @@
 import { gmail_v1 } from 'googleapis'
 
-import checkAttachment from './fetchAttachments'
+import checkAttachment from './fetchAttachments/fetchAttachments'
 import findHeader from './findHeader'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {

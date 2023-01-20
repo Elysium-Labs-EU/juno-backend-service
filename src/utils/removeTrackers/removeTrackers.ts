@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 
-import { IAttachment } from '../types/emailAttachmentTypes'
+import { IAttachment } from '../../types/emailAttachmentTypes'
 
 const TRACKERS_SELECTORS = [
   { attribute: 'width', value: '0' },
@@ -75,12 +75,12 @@ function detectAndRemove(documentImage: cheerio.Element) {
 
 export default function removeTrackers(orderedObject: {
   emailHTML: string
-  emailFileHTML: IAttachment[]
+  emailFileHTML: Array<IAttachment>
 }) {
   const localCopyOrderedObject: {
     emailHTML: string
-    emailFileHTML: IAttachment[]
-    removedTrackers: string[]
+    emailFileHTML: Array<IAttachment>
+    removedTrackers: Array<string>
   } = { ...orderedObject, removedTrackers: [] }
 
   const $ = cheerio.load(orderedObject.emailHTML)

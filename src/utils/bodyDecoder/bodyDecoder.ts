@@ -1,36 +1,17 @@
-import AutoLinker from 'autolinker'
 import * as cheerio from 'cheerio'
 import { gmail_v1 } from 'googleapis'
 
-import * as global from '../constants/globalConstants'
-import { IAttachment } from '../types/emailAttachmentTypes'
-import { baseBase64, decodeBase64 } from './decodeBase64'
-import removeScripts from './removeScripts'
-import removeTrackers from './removeTrackers'
+import * as global from '../../constants/globalConstants'
+import type { IAttachment } from '../../types/emailAttachmentTypes'
+import { baseBase64, decodeBase64 } from '../decodeBase64'
+import removeScripts from '../removeScripts'
+import removeTrackers from '../removeTrackers/removeTrackers'
+import enhancePlainText from './utils/enhancePlainText'
 
 let decodedString: string | undefined
 let localMessageId: string | null
 let decodedResult: Array<string | Promise<any | Error>> = []
 let localGmail: gmail_v1.Gmail | null = null
-
-/**
- * @function enhancePlainText
- * @param localString a plain text string that needs to be enhanced.
- * @returns it will return a string that has been line "breaked" and has activated links.
- */
-
-const enhancePlainText = (localString: string) => {
-  const enhancedText = () => {
-    const lineBreakRegex = /(?:\r\n|\r|\n)/g
-    return (
-      AutoLinker.link(localString, { email: false }).replace(
-        lineBreakRegex,
-        '<br>'
-      ) ?? ''
-    )
-  }
-  return enhancedText()
-}
 
 /**
  * @function inlineImageDecoder
@@ -89,6 +70,7 @@ const inlineImageDecoder = async ({
  * @param {object} params - parameter object that contains an inputObject and an abort signal.
  * @returns
  */
+// VERSION 1
 export const loopThroughBodyParts = async ({
   inputObject,
   signal,
@@ -166,9 +148,9 @@ export const loopThroughBodyParts = async ({
 
 export const orderArrayPerType = (
   response: Array<string | IAttachment>
-): { emailHTML: string[]; emailFileHTML: IAttachment[] } => {
+): { emailHTML: string[]; emailFileHTML: Array<IAttachment> } => {
   const firstStringOnly: string[] = []
-  const objectOnly: IAttachment[] = []
+  const objectOnly: Array<IAttachment> = []
   for (const item of response) {
     if (typeof item === 'string') {
       firstStringOnly.push(item)
@@ -188,8 +170,8 @@ export const orderArrayPerType = (
  */
 
 export const prioritizeHTMLbodyObject = (response: {
-  emailHTML: string[]
-  emailFileHTML: IAttachment[]
+  emailHTML: Array<string>
+  emailFileHTML: Array<IAttachment>
 }) => {
   let htmlObject = ''
   let noHtmlObject = ''
@@ -225,10 +207,10 @@ export const prioritizeHTMLbodyObject = (response: {
 // Check the string body for CID (files) if there is a match, replace the img tag with the fetched file
 export const placeInlineImage = (orderedObject: {
   emailHTML: string
-  emailFileHTML: IAttachment[]
-}): { emailHTML: string; emailFileHTML: IAttachment[] } => {
+  emailFileHTML: Array<IAttachment>
+}): { emailHTML: string; emailFileHTML: Array<IAttachment> } => {
   if (orderedObject.emailFileHTML.length > 0) {
-    const processedObjectArray: IAttachment[] = []
+    const processedObjectArray: Array<IAttachment> = []
     const $ = cheerio.load(orderedObject.emailHTML)
 
     for (const emailFileHTML of orderedObject.emailFileHTML) {
@@ -262,19 +244,21 @@ export const placeInlineImage = (orderedObject: {
  * @returns a promise that resolves with the decoded email object, sorted on emailHTML and emailFileHTML, and showing which trackers have been removed from the email.
  */
 
+interface IBodyDecoder {
+  messageId: string | undefined | null
+  inputObject: gmail_v1.Schema$MessagePart | undefined
+  signal?: AbortSignal
+  gmail: gmail_v1.Gmail | undefined
+}
+
 const bodyDecoder = async ({
   messageId,
   inputObject,
   signal,
   gmail,
-}: {
-  messageId: string | undefined | null
-  inputObject: gmail_v1.Schema$MessagePart | undefined
-  signal?: AbortSignal
-  gmail: gmail_v1.Gmail | undefined
-}): Promise<{
+}: IBodyDecoder): Promise<{
   emailHTML: string
-  emailFileHTML: IAttachment[]
+  emailFileHTML: Array<IAttachment>
 }> => {
   try {
     if (inputObject) {
@@ -288,16 +272,21 @@ const bodyDecoder = async ({
         inputObject,
         signal,
       })
+      console.log(response)
       // Reset the local variable for the next decode
       decodedResult = []
 
       // orderArrayPerType changes the response object into an object that can hold two objects: emailHTML[], emailFileHTML[]
-      const ordered = orderArrayPerType(response)
-      const prioritized = prioritizeHTMLbodyObject(ordered)
-      const inlinedImages = placeInlineImage(prioritized)
-      const removedTrackers = removeTrackers(inlinedImages)
-      const removedScript = removeScripts(removedTrackers)
-      return removedScript
+      if (response) {
+        const ordered = orderArrayPerType(response)
+        const prioritized = prioritizeHTMLbodyObject(ordered)
+        const inlinedImages = placeInlineImage(prioritized)
+        const removedTrackers = removeTrackers(inlinedImages)
+        const removedScript = removeScripts(removedTrackers)
+        return removedScript
+      } else {
+        throw Error('Got no response from the body parts')
+      }
     }
     // If there is no input object, return an empty object back
     return { emailHTML: '', emailFileHTML: [] }
