@@ -46,6 +46,9 @@ workflows:
       - node/run:
           pkg-manager: yarn
           yarn-run: format
+      - node/run:
+          pkg-manager: yarn
+          yarn-run: test
       - deploy:
           filters:
             branches:
