@@ -272,7 +272,6 @@ const bodyDecoder = async ({
         inputObject,
         signal,
       })
-      console.log(response)
       // Reset the local variable for the next decode
       decodedResult = []
 
