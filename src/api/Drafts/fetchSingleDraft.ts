@@ -5,7 +5,8 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
-import { remapFullMessage } from '../../utils/threadFullRemap'
+import { gmailV1SchemaDraftSchema } from '../../types/gmailTypes'
+import { remapFullMessage } from '../../utils/threadRemap/threadFullRemap'
 
 const getDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -16,7 +17,8 @@ const getDraft = async (auth: OAuth2Client | undefined, req: Request) => {
       id: req.params.id,
       format: 'full',
     })
-    if (response && response.data?.message) {
+    if (response?.data?.message) {
+      gmailV1SchemaDraftSchema.parse(response.data)
       const decodedResult = await remapFullMessage(response.data.message, gmail)
       return { id: response.data.id, message: decodedResult }
     }

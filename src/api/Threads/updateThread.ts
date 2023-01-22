@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaThreadSchema } from '../../types/gmailTypes'
 
 const updateSingleThread = async (
   auth: OAuth2Client | undefined,
@@ -17,7 +18,8 @@ const updateSingleThread = async (
       id: req.params.id,
       requestBody: req.body,
     })
-    if (response && response?.data) {
+    if (response?.data) {
+      gmailV1SchemaThreadSchema.parse(response.data)
       return response.data
     }
     return new Error('Message not found...')

@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaLabelSchema } from '../../types/gmailTypes'
 
 const newLabels = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -21,6 +22,7 @@ const newLabels = async (auth: OAuth2Client | undefined, req: Request) => {
         name,
       },
     })
+    gmailV1SchemaLabelSchema.parse(response)
     return response
   } catch (err) {
     if ((err as GaxiosError).response) {

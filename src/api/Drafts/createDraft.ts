@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaDraftSchema } from '../../types/gmailTypes'
 import formFieldParser from '../../utils/formFieldParser'
 import messageEncoding from '../../utils/messageEncoding'
 
@@ -26,7 +27,8 @@ async function setupDraft(auth: OAuth2Client | undefined, req: Request) {
         },
       })
 
-      if (response?.status === 200) {
+      if (response?.status === 200 && response?.data) {
+        gmailV1SchemaDraftSchema.parse(response.data)
         return response
       } else {
         return new Error('Draft is not created...')

@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaMessageSchema } from '../../types/gmailTypes'
 import formFieldParser from '../../utils/formFieldParser'
 import messageEncoding from '../../utils/messageEncoding'
 
@@ -24,6 +25,7 @@ const exportMessage = async (auth: OAuth2Client | undefined, req: Request) => {
         },
       })
       if (response) {
+        gmailV1SchemaMessageSchema.parse(response)
         return response
       }
       return new Error('Mail was not sent...')

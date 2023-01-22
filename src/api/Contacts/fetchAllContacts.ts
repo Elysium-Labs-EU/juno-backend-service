@@ -4,6 +4,7 @@ import { google } from 'googleapis'
 import type { people_v1 } from 'googleapis'
 
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { peopleV1SchemaListOtherContactsResponseSchema } from '../../types/peopleTypes'
 
 const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
   const people = google.people({ version: 'v1', auth })
@@ -23,7 +24,8 @@ const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
 
   try {
     const response = await people.otherContacts.list(requestBody)
-    if (response && response.data) {
+    if (response?.data) {
+      peopleV1SchemaListOtherContactsResponseSchema.parse(response.data)
       return response.data
     }
     return new Error('No contacts found...')

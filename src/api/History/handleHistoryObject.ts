@@ -11,7 +11,7 @@ export interface LabelIdName {
   name: string
 }
 interface IFeedModel {
-  labels: string[]
+  labels: Array<string>
   threads: (gmail_v1.Schema$Message | undefined)[]
   nextPageToken: string | null
 }

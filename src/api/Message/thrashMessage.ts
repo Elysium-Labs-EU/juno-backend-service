@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaMessageSchema } from '../../types/gmailTypes'
 
 const thrashSingleMessage = async (
   auth: OAuth2Client | undefined,
@@ -17,7 +18,8 @@ const thrashSingleMessage = async (
       userId: USER,
       id: req.params.id,
     })
-    if (response && response.data) {
+    if (response?.data) {
+      gmailV1SchemaMessageSchema.parse(response)
       return response.data
     }
     return new Error('No message found...')

@@ -1,7 +1,10 @@
 import { gmail_v1 } from 'googleapis'
 
-import checkAttachment from './fetchAttachments/fetchAttachments'
-import findHeader from './findHeader'
+import bodyDecoder from '../bodyDecoder/bodyDecoder'
+import checkAttachment from '../fetchAttachments/fetchAttachments'
+import findHeader from '../findHeader'
+import handleListUnsubscribe from '../handleListUnsubscribe/handleListUnsubscribe'
+import { ThreadFullRemap } from './types/threadRemapTypes'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   return {
@@ -9,13 +12,19 @@ const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
     date: findHeader(rawMessage, 'Date'),
     from: findHeader(rawMessage, 'From'),
     subject: findHeader(rawMessage, 'Subject'),
+    listUnsubscribe: handleListUnsubscribe(
+      findHeader(rawMessage, 'List-Unsubscribe')
+    ),
     to: findHeader(rawMessage, 'To'),
     cc: findHeader(rawMessage, 'Cc'),
     bcc: findHeader(rawMessage, 'Bcc'),
   }
 }
 
-const remapSimpleMessage = async (rawMessage: gmail_v1.Schema$Message) => {
+export const remapFullMessage = async (
+  rawMessage: gmail_v1.Schema$Message,
+  gmail: gmail_v1.Gmail
+) => {
   return {
     id: rawMessage.id,
     threadId: rawMessage.threadId,
@@ -24,7 +33,13 @@ const remapSimpleMessage = async (rawMessage: gmail_v1.Schema$Message) => {
     payload: {
       mimeType: rawMessage?.payload?.mimeType,
       headers: remapPayloadHeaders(rawMessage),
+      body: await bodyDecoder({
+        inputObject: rawMessage.payload,
+        messageId: rawMessage?.id,
+        gmail,
+      }),
       files: checkAttachment(rawMessage),
+      parts: rawMessage?.payload?.parts,
     },
     sizeEstimate: rawMessage.sizeEstimate,
     historyId: rawMessage.historyId,
@@ -32,19 +47,23 @@ const remapSimpleMessage = async (rawMessage: gmail_v1.Schema$Message) => {
   }
 }
 
-export default async function threadSimpleRemap(
-  rawObject: gmail_v1.Schema$Thread
+export default async function threadFullRemap(
+  rawObject: gmail_v1.Schema$Thread,
+  gmail: gmail_v1.Gmail
 ) {
   if (rawObject.messages) {
     const mappedMessages = rawObject.messages.map((message) =>
-      remapSimpleMessage(message)
+      remapFullMessage(message, gmail)
     )
 
-    return {
+    const result = {
       id: rawObject.id,
       historyId: rawObject.historyId,
       messages: await Promise.all(mappedMessages),
     }
+    ThreadFullRemap.parse(result)
+
+    return result
   }
   return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
 }

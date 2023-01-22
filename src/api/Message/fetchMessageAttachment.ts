@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaMessagePartBodySchema } from '../../types/gmailTypes'
 
 const getAttachment = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -17,7 +18,8 @@ const getAttachment = async (auth: OAuth2Client | undefined, req: Request) => {
       messageId,
       id: attachmentId,
     })
-    if (response && response.data) {
+    if (response?.data) {
+      gmailV1SchemaMessagePartBodySchema.parse(response.data)
       return response.data
     }
     return new Error('Message attachment not found4...')

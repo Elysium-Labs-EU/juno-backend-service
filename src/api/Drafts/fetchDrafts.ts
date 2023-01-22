@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaListDraftsResponseSchema } from '../../types/gmailTypes'
 
 const getDrafts = async (auth: OAuth2Client | undefined) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -13,7 +14,8 @@ const getDrafts = async (auth: OAuth2Client | undefined) => {
     const response = await gmail.users.drafts.list({
       userId: USER,
     })
-    if (response && response.data) {
+    if (response?.data) {
+      gmailV1SchemaListDraftsResponseSchema.parse(response.data)
       return response.data
     }
     return new Error('No drafts found...')

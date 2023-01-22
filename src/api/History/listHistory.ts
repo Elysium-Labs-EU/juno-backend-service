@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaListHistoryResponseSchema } from '../../types/gmailTypes'
 import handleHistoryObject from './handleHistoryObject'
 
 const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
@@ -18,6 +19,7 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
       startHistoryId,
     })
     if (response?.status === 200 && storageLabels) {
+      gmailV1SchemaListHistoryResponseSchema.parse(response.data)
       const { data } = response
       if (data?.history) {
         return {

@@ -5,7 +5,11 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
-import threadSimpleRemap from '../../utils/threadSimpleRemap'
+import {
+  gmailV1SchemaListThreadsResponseSchema,
+  gmailV1SchemaThreadSchema,
+} from '../../types/gmailTypes'
+import threadSimpleRemap from '../../utils/threadRemap/threadSimpleRemap'
 import requestBodyCreator from './threadRequest'
 
 async function singleThread(
@@ -21,6 +25,7 @@ async function singleThread(
         format: 'full',
       })
       if (response && response.data) {
+        gmailV1SchemaThreadSchema.parse(response.data)
         return response.data
       }
     }
@@ -45,23 +50,25 @@ const getSimpleThreads = async (
   try {
     const response = await gmail.users.threads.list(requestBody)
     if (response && response.data) {
+      gmailV1SchemaListThreadsResponseSchema.parse(response.data)
       const hydrateMetaList = async () => {
         const results: Promise<gmail_v1.Schema$Thread>[] = []
 
-        const threads = response.data.threads
+        const { threads } = response.data
         if (threads) {
           for (const thread of threads) {
             results.push(singleThread(thread, gmail))
           }
           const timeStampLastFetch = Date.now()
           const fetchedThreads = await Promise.all(results)
-          return {
+          const result = {
             ...response.data,
             threads: await Promise.all(
               fetchedThreads.map((thread) => threadSimpleRemap(thread))
             ),
             timestamp: timeStampLastFetch,
           }
+          return result
         }
       }
       return hydrateMetaList()
