@@ -1001,7 +1001,6 @@ var bodyDecoder = (_0) =>
           inputObject,
           signal,
         })
-        console.log(response)
         decodedResult = []
         if (response) {
           const ordered = orderArrayPerType(response)
