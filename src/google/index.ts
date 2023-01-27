@@ -5,6 +5,10 @@ import assertNonNullish from '../utils/assertNonNullish'
 import createHashState from '../utils/createHashedState'
 
 import type { Request, Response } from 'express'
+import {
+  credentialsSchema,
+  getAuthUrlResponseSchema,
+} from '../types/otherTypes'
 
 const SCOPES = [
   'email',
@@ -90,6 +94,10 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
       // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
       if (state === 'noSession') {
         oAuth2Client.setCredentials(tokens)
+        const result = {
+          credentials: oAuth2Client.credentials,
+        }
+        credentialsSchema.parse(result.credentials)
         return res.status(200).json({
           credentials: oAuth2Client.credentials,
         })
@@ -130,7 +138,7 @@ export const getAuthUrl = async (req: Request, res: Response) => {
       // code_challenge_method: S256,
       // code_challenge: createHash('sha256').digest('hex'),
     })
-
+    getAuthUrlResponseSchema.parse(authorizeUrl)
     return res.status(200).json(authorizeUrl)
   } catch (err) {
     res.status(401).json(err)

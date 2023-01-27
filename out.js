@@ -144,6 +144,719 @@ function createHashState(secret) {
   return hashValue
 }
 
+// src/types/otherTypes.ts
+import { z as z3 } from './node_modules/zod/lib/index.mjs'
+
+// src/types/gmailTypes.ts
+import { z } from './node_modules/zod/lib/index.mjs'
+var gmailV1SchemaAutoForwardingSchema = z.object({
+  disposition: z.string().optional().nullable(),
+  emailAddress: z.string().optional().nullable(),
+  enabled: z.boolean().optional().nullable(),
+})
+var gmailV1SchemaBatchDeleteMessagesRequestSchema = z.object({
+  ids: z.array(z.string()).optional().nullable(),
+})
+var gmailV1SchemaBatchModifyMessagesRequestSchema = z.object({
+  addLabelIds: z.array(z.string()).optional().nullable(),
+  ids: z.array(z.string()).optional().nullable(),
+  removeLabelIds: z.array(z.string()).optional().nullable(),
+})
+var gmailV1SchemaDelegateSchema = z.object({
+  delegateEmail: z.string().optional().nullable(),
+  verificationStatus: z.string().optional().nullable(),
+})
+var gmailV1SchemaFilterActionSchema = z.object({
+  addLabelIds: z.array(z.string()).optional().nullable(),
+  forward: z.string().optional().nullable(),
+  removeLabelIds: z.array(z.string()).optional().nullable(),
+})
+var gmailV1SchemaFilterCriteriaSchema = z.object({
+  excludeChats: z.boolean().optional().nullable(),
+  from: z.string().optional().nullable(),
+  hasAttachment: z.boolean().optional().nullable(),
+  negatedQuery: z.string().optional().nullable(),
+  query: z.string().optional().nullable(),
+  size: z.number().optional().nullable(),
+  sizeComparison: z.string().optional().nullable(),
+  subject: z.string().optional().nullable(),
+  to: z.string().optional().nullable(),
+})
+var gmailV1SchemaForwardingAddressSchema = z.object({
+  forwardingEmail: z.string().optional().nullable(),
+  verificationStatus: z.string().optional().nullable(),
+})
+var gmailV1SchemaImapSettingsSchema = z.object({
+  autoExpunge: z.boolean().optional().nullable(),
+  enabled: z.boolean().optional().nullable(),
+  expungeBehavior: z.string().optional().nullable(),
+  maxFolderSize: z.number().optional().nullable(),
+})
+var gmailV1SchemaLabelColorSchema = z.object({
+  backgroundColor: z.string().optional().nullable(),
+  textColor: z.string().optional().nullable(),
+})
+var gmailV1SchemaLanguageSettingsSchema = z.object({
+  displayLanguage: z.string().optional().nullable(),
+})
+var gmailV1SchemaListDelegatesResponseSchema = z.object({
+  delegates: z.array(gmailV1SchemaDelegateSchema).optional(),
+})
+var gmailV1SchemaListForwardingAddressesResponseSchema = z.object({
+  forwardingAddresses: z.array(gmailV1SchemaForwardingAddressSchema).optional(),
+})
+var gmailV1SchemaMessagePartBodySchema = z.object({
+  attachmentId: z.string().optional().nullable(),
+  data: z.string().optional().nullable(),
+  size: z.number().optional().nullable(),
+})
+var gmailV1SchemaMessagePartHeaderSchema = z.object({
+  name: z.string().optional().nullable(),
+  value: z.string().optional().nullable(),
+})
+var gmailV1SchemaModifyMessageRequestSchema = z.object({
+  addLabelIds: z.array(z.string()).optional().nullable(),
+  removeLabelIds: z.array(z.string()).optional().nullable(),
+})
+var gmailV1SchemaModifyThreadRequestSchema = z.object({
+  addLabelIds: z.array(z.string()).optional().nullable(),
+  removeLabelIds: z.array(z.string()).optional().nullable(),
+})
+var gmailV1SchemaPopSettingsSchema = z.object({
+  accessWindow: z.string().optional().nullable(),
+  disposition: z.string().optional().nullable(),
+})
+var gmailV1SchemaProfileSchema = z.object({
+  emailAddress: z.string().optional().nullable(),
+  historyId: z.string().optional().nullable(),
+  messagesTotal: z.number().optional().nullable(),
+  threadsTotal: z.number().optional().nullable(),
+})
+var gmailV1SchemaSmimeInfoSchema = z.object({
+  encryptedKeyPassword: z.string().optional().nullable(),
+  expiration: z.string().optional().nullable(),
+  id: z.string().optional().nullable(),
+  isDefault: z.boolean().optional().nullable(),
+  issuerCn: z.string().optional().nullable(),
+  pem: z.string().optional().nullable(),
+  pkcs12: z.string().optional().nullable(),
+})
+var gmailV1SchemaSmtpMsaSchema = z.object({
+  host: z.string().optional().nullable(),
+  password: z.string().optional().nullable(),
+  port: z.number().optional().nullable(),
+  securityMode: z.string().optional().nullable(),
+  username: z.string().optional().nullable(),
+})
+var gmailV1SchemaVacationSettingsSchema = z.object({
+  enableAutoReply: z.boolean().optional().nullable(),
+  endTime: z.string().optional().nullable(),
+  responseBodyHtml: z.string().optional().nullable(),
+  responseBodyPlainText: z.string().optional().nullable(),
+  responseSubject: z.string().optional().nullable(),
+  restrictToContacts: z.boolean().optional().nullable(),
+  restrictToDomain: z.boolean().optional().nullable(),
+  startTime: z.string().optional().nullable(),
+})
+var gmailV1SchemaWatchRequestSchema = z.object({
+  labelFilterAction: z.string().optional().nullable(),
+  labelIds: z.array(z.string()).optional().nullable(),
+  topicName: z.string().optional().nullable(),
+})
+var gmailV1SchemaWatchResponseSchema = z.object({
+  expiration: z.string().optional().nullable(),
+  historyId: z.string().optional().nullable(),
+})
+var gmailV1SchemaFilterSchema = z.object({
+  action: gmailV1SchemaFilterActionSchema.optional(),
+  criteria: gmailV1SchemaFilterCriteriaSchema.optional(),
+  id: z.string().optional().nullable(),
+})
+var gmailV1SchemaLabelSchema = z.object({
+  color: gmailV1SchemaLabelColorSchema.optional(),
+  id: z.string().optional().nullable(),
+  labelListVisibility: z.string().optional().nullable(),
+  messageListVisibility: z.string().optional().nullable(),
+  messagesTotal: z.number().optional().nullable(),
+  messagesUnread: z.number().optional().nullable(),
+  name: z.string().optional().nullable(),
+  threadsTotal: z.number().optional().nullable(),
+  threadsUnread: z.number().optional().nullable(),
+  type: z.string().optional().nullable(),
+})
+var gmailV1SchemaListFiltersResponseSchema = z.object({
+  filter: z.array(gmailV1SchemaFilterSchema).optional(),
+})
+var gmailV1SchemaListLabelsResponseSchema = z.object({
+  labels: z.array(gmailV1SchemaLabelSchema).optional(),
+})
+var gmailV1SchemaListSmimeInfoResponseSchema = z.object({
+  smimeInfo: z.array(gmailV1SchemaSmimeInfoSchema).optional(),
+})
+var gmailV1SchemaMessagePartSchema = z.lazy(() =>
+  z.object({
+    body: gmailV1SchemaMessagePartBodySchema.optional(),
+    filename: z.string().optional().nullable(),
+    headers: z.array(gmailV1SchemaMessagePartHeaderSchema).optional(),
+    mimeType: z.string().optional().nullable(),
+    partId: z.string().optional().nullable(),
+    parts: z.array(gmailV1SchemaMessagePartSchema).optional(),
+  })
+)
+var gmailV1SchemaSendAsSchema = z.object({
+  displayName: z.string().optional().nullable(),
+  isDefault: z.boolean().optional().nullable(),
+  isPrimary: z.boolean().optional().nullable(),
+  replyToAddress: z.string().optional().nullable(),
+  sendAsEmail: z.string().optional().nullable(),
+  signature: z.string().optional().nullable(),
+  smtpMsa: gmailV1SchemaSmtpMsaSchema.optional(),
+  treatAsAlias: z.boolean().optional().nullable(),
+  verificationStatus: z.string().optional().nullable(),
+})
+var gmailV1SchemaListSendAsResponseSchema = z.object({
+  sendAs: z.array(gmailV1SchemaSendAsSchema).optional(),
+})
+var gmailV1SchemaMessageSchema = z.object({
+  historyId: z.string().optional().nullable(),
+  id: z.string().optional().nullable(),
+  internalDate: z.string().optional().nullable(),
+  labelIds: z.array(z.string()).optional().nullable(),
+  payload: gmailV1SchemaMessagePartSchema.optional(),
+  raw: z.string().optional().nullable(),
+  sizeEstimate: z.number().optional().nullable(),
+  snippet: z.string().optional().nullable(),
+  threadId: z.string().optional().nullable(),
+})
+var gmailV1SchemaThreadSchema = z.object({
+  historyId: z.string().optional().nullable(),
+  id: z.string().optional().nullable(),
+  messages: z.array(gmailV1SchemaMessageSchema).optional(),
+  snippet: z.string().optional().nullable(),
+})
+var gmailV1SchemaDraftSchema = z.object({
+  id: z.string().optional().nullable(),
+  message: gmailV1SchemaMessageSchema.optional(),
+})
+var gmailV1SchemaHistoryLabelAddedSchema = z.object({
+  labelIds: z.array(z.string()).optional().nullable(),
+  message: gmailV1SchemaMessageSchema.optional(),
+})
+var gmailV1SchemaHistoryLabelRemovedSchema = z.object({
+  labelIds: z.array(z.string()).optional().nullable(),
+  message: gmailV1SchemaMessageSchema.optional(),
+})
+var gmailV1SchemaHistoryMessageAddedSchema = z.object({
+  message: gmailV1SchemaMessageSchema.optional(),
+})
+var gmailV1SchemaHistoryMessageDeletedSchema = z.object({
+  message: gmailV1SchemaMessageSchema.optional(),
+})
+var gmailV1SchemaListDraftsResponseSchema = z.object({
+  drafts: z.array(gmailV1SchemaDraftSchema).optional(),
+  nextPageToken: z.string().optional().nullable(),
+  resultSizeEstimate: z.number().optional().nullable(),
+})
+var gmailV1SchemaListMessagesResponseSchema = z.object({
+  messages: z.array(gmailV1SchemaMessageSchema).optional(),
+  nextPageToken: z.string().optional().nullable(),
+  resultSizeEstimate: z.number().optional().nullable(),
+})
+var gmailV1SchemaListThreadsResponseSchema = z.object({
+  nextPageToken: z.string().optional().nullable(),
+  resultSizeEstimate: z.number().optional().nullable(),
+  threads: z.array(gmailV1SchemaThreadSchema).optional(),
+})
+var gmailV1SchemaHistorySchema = z.object({
+  id: z.string().optional().nullable(),
+  labelsAdded: z.array(gmailV1SchemaHistoryLabelAddedSchema).optional(),
+  labelsRemoved: z.array(gmailV1SchemaHistoryLabelRemovedSchema).optional(),
+  messages: z.array(gmailV1SchemaMessageSchema).optional(),
+  messagesAdded: z.array(gmailV1SchemaHistoryMessageAddedSchema).optional(),
+  messagesDeleted: z.array(gmailV1SchemaHistoryMessageDeletedSchema).optional(),
+})
+var gmailV1SchemaListHistoryResponseSchema = z.object({
+  history: z.array(gmailV1SchemaHistorySchema).optional(),
+  historyId: z.string().optional().nullable(),
+  nextPageToken: z.string().optional().nullable(),
+})
+
+// src/types/peopleTypes.ts
+import { z as z2 } from './node_modules/zod/lib/index.mjs'
+var peopleV1SchemaBatchDeleteContactsRequestSchema = z2.object({
+  resourceNames: z2.array(z2.string()).optional().nullable(),
+})
+var peopleV1SchemaContactGroupMembershipSchema = z2.object({
+  contactGroupId: z2.string().optional().nullable(),
+  contactGroupResourceName: z2.string().optional().nullable(),
+})
+var peopleV1SchemaContactGroupMetadataSchema = z2.object({
+  deleted: z2.boolean().optional().nullable(),
+  updateTime: z2.string().optional().nullable(),
+})
+var peopleV1SchemaCopyOtherContactToMyContactsGroupRequestSchema = z2.object({
+  copyMask: z2.string().optional().nullable(),
+  readMask: z2.string().optional().nullable(),
+  sources: z2.array(z2.string()).optional().nullable(),
+})
+var peopleV1SchemaDateSchema = z2.object({
+  day: z2.number().optional().nullable(),
+  month: z2.number().optional().nullable(),
+  year: z2.number().optional().nullable(),
+})
+var peopleV1SchemaDomainMembershipSchema = z2.object({
+  inViewerDomain: z2.boolean().optional().nullable(),
+})
+var peopleV1SchemaEmptySchema = z2.object({})
+var peopleV1SchemaGroupClientDataSchema = z2.object({
+  key: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaModifyContactGroupMembersRequestSchema = z2.object({
+  resourceNamesToAdd: z2.array(z2.string()).optional().nullable(),
+  resourceNamesToRemove: z2.array(z2.string()).optional().nullable(),
+})
+var peopleV1SchemaModifyContactGroupMembersResponseSchema = z2.object({
+  canNotRemoveLastContactGroupResourceNames: z2
+    .array(z2.string())
+    .optional()
+    .nullable(),
+  notFoundResourceNames: z2.array(z2.string()).optional().nullable(),
+})
+var peopleV1SchemaProfileMetadataSchema = z2.object({
+  objectType: z2.string().optional().nullable(),
+  userTypes: z2.array(z2.string()).optional().nullable(),
+})
+var peopleV1SchemaSourceSchema = z2.object({
+  etag: z2.string().optional().nullable(),
+  id: z2.string().optional().nullable(),
+  profileMetadata: peopleV1SchemaProfileMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  updateTime: z2.string().optional().nullable(),
+})
+var peopleV1SchemaStatusSchema = z2.object({
+  code: z2.number().optional().nullable(),
+  details: z2.array(z2.record(z2.any())).optional().nullable(),
+  message: z2.string().optional().nullable(),
+})
+var peopleV1SchemaUpdateContactPhotoRequestSchema = z2.object({
+  personFields: z2.string().optional().nullable(),
+  photoBytes: z2.string().optional().nullable(),
+  sources: z2.array(z2.string()).optional().nullable(),
+})
+var peopleV1SchemaContactGroupSchema = z2.object({
+  clientData: z2.array(peopleV1SchemaGroupClientDataSchema).optional(),
+  etag: z2.string().optional().nullable(),
+  formattedName: z2.string().optional().nullable(),
+  groupType: z2.string().optional().nullable(),
+  memberCount: z2.number().optional().nullable(),
+  memberResourceNames: z2.array(z2.string()).optional().nullable(),
+  metadata: peopleV1SchemaContactGroupMetadataSchema.optional(),
+  name: z2.string().optional().nullable(),
+  resourceName: z2.string().optional().nullable(),
+})
+var peopleV1SchemaContactGroupResponseSchema = z2.object({
+  contactGroup: peopleV1SchemaContactGroupSchema.optional(),
+  requestedResourceName: z2.string().optional().nullable(),
+  status: peopleV1SchemaStatusSchema.optional(),
+})
+var peopleV1SchemaCreateContactGroupRequestSchema = z2.object({
+  contactGroup: peopleV1SchemaContactGroupSchema.optional(),
+  readGroupFields: z2.string().optional().nullable(),
+})
+var peopleV1SchemaFieldMetadataSchema = z2.object({
+  primary: z2.boolean().optional().nullable(),
+  source: peopleV1SchemaSourceSchema.optional(),
+  sourcePrimary: z2.boolean().optional().nullable(),
+  verified: z2.boolean().optional().nullable(),
+})
+var peopleV1SchemaFileAsSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaGenderSchema = z2.object({
+  addressMeAs: z2.string().optional().nullable(),
+  formattedValue: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaImClientSchema = z2.object({
+  formattedProtocol: z2.string().optional().nullable(),
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  protocol: z2.string().optional().nullable(),
+  type: z2.string().optional().nullable(),
+  username: z2.string().optional().nullable(),
+})
+var peopleV1SchemaInterestSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaListContactGroupsResponseSchema = z2.object({
+  contactGroups: z2.array(peopleV1SchemaContactGroupSchema).optional(),
+  nextPageToken: z2.string().optional().nullable(),
+  nextSyncToken: z2.string().optional().nullable(),
+  totalItems: z2.number().optional().nullable(),
+})
+var peopleV1SchemaLocaleSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaLocationSchema = z2.object({
+  buildingId: z2.string().optional().nullable(),
+  current: z2.boolean().optional().nullable(),
+  deskCode: z2.string().optional().nullable(),
+  floor: z2.string().optional().nullable(),
+  floorSection: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaMembershipSchema = z2.object({
+  contactGroupMembership: peopleV1SchemaContactGroupMembershipSchema.optional(),
+  domainMembership: peopleV1SchemaDomainMembershipSchema.optional(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+})
+var peopleV1SchemaMiscKeywordSchema = z2.object({
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaNameSchema = z2.object({
+  displayName: z2.string().optional().nullable(),
+  displayNameLastFirst: z2.string().optional().nullable(),
+  familyName: z2.string().optional().nullable(),
+  givenName: z2.string().optional().nullable(),
+  honorificPrefix: z2.string().optional().nullable(),
+  honorificSuffix: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  middleName: z2.string().optional().nullable(),
+  phoneticFamilyName: z2.string().optional().nullable(),
+  phoneticFullName: z2.string().optional().nullable(),
+  phoneticGivenName: z2.string().optional().nullable(),
+  phoneticHonorificPrefix: z2.string().optional().nullable(),
+  phoneticHonorificSuffix: z2.string().optional().nullable(),
+  phoneticMiddleName: z2.string().optional().nullable(),
+  unstructuredName: z2.string().optional().nullable(),
+})
+var peopleV1SchemaNicknameSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaOccupationSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaOrganizationSchema = z2.object({
+  costCenter: z2.string().optional().nullable(),
+  current: z2.boolean().optional().nullable(),
+  department: z2.string().optional().nullable(),
+  domain: z2.string().optional().nullable(),
+  endDate: peopleV1SchemaDateSchema.optional(),
+  formattedType: z2.string().optional().nullable(),
+  fullTimeEquivalentMillipercent: z2.number().optional().nullable(),
+  jobDescription: z2.string().optional().nullable(),
+  location: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  name: z2.string().optional().nullable(),
+  phoneticName: z2.string().optional().nullable(),
+  startDate: peopleV1SchemaDateSchema.optional(),
+  symbol: z2.string().optional().nullable(),
+  title: z2.string().optional().nullable(),
+  type: z2.string().optional().nullable(),
+})
+var peopleV1SchemaPersonMetadataSchema = z2.object({
+  deleted: z2.boolean().optional().nullable(),
+  linkedPeopleResourceNames: z2.array(z2.string()).optional().nullable(),
+  objectType: z2.string().optional().nullable(),
+  previousResourceNames: z2.array(z2.string()).optional().nullable(),
+  sources: z2.array(peopleV1SchemaSourceSchema).optional(),
+})
+var peopleV1SchemaPhoneNumberSchema = z2.object({
+  canonicalForm: z2.string().optional().nullable(),
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaPhotoSchema = z2.object({
+  default: z2.boolean().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  url: z2.string().optional().nullable(),
+})
+var peopleV1SchemaRelationSchema = z2.object({
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  person: z2.string().optional().nullable(),
+  type: z2.string().optional().nullable(),
+})
+var peopleV1SchemaRelationshipInterestSchema = z2.object({
+  formattedValue: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaRelationshipStatusSchema = z2.object({
+  formattedValue: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaResidenceSchema = z2.object({
+  current: z2.boolean().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaSipAddressSchema = z2.object({
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaSkillSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaTaglineSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaUpdateContactGroupRequestSchema = z2.object({
+  contactGroup: peopleV1SchemaContactGroupSchema.optional(),
+  readGroupFields: z2.string().optional().nullable(),
+  updateGroupFields: z2.string().optional().nullable(),
+})
+var peopleV1SchemaUrlSchema = z2.object({
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaUserDefinedSchema = z2.object({
+  key: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaAddressSchema = z2.object({
+  city: z2.string().optional().nullable(),
+  country: z2.string().optional().nullable(),
+  countryCode: z2.string().optional().nullable(),
+  extendedAddress: z2.string().optional().nullable(),
+  formattedType: z2.string().optional().nullable(),
+  formattedValue: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  poBox: z2.string().optional().nullable(),
+  postalCode: z2.string().optional().nullable(),
+  region: z2.string().optional().nullable(),
+  streetAddress: z2.string().optional().nullable(),
+  type: z2.string().optional().nullable(),
+})
+var peopleV1SchemaAgeRangeTypeSchema = z2.object({
+  ageRange: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+})
+var peopleV1SchemaBatchGetContactGroupsResponseSchema = z2.object({
+  responses: z2.array(peopleV1SchemaContactGroupResponseSchema).optional(),
+})
+var peopleV1SchemaBiographySchema = z2.object({
+  contentType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaBirthdaySchema = z2.object({
+  date: peopleV1SchemaDateSchema.optional(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  text: z2.string().optional().nullable(),
+})
+var peopleV1SchemaBraggingRightsSchema = z2.object({
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaCalendarUrlSchema = z2.object({
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  url: z2.string().optional().nullable(),
+})
+var peopleV1SchemaClientDataSchema = z2.object({
+  key: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaCoverPhotoSchema = z2.object({
+  default: z2.boolean().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  url: z2.string().optional().nullable(),
+})
+var peopleV1SchemaEmailAddressSchema = z2.object({
+  displayName: z2.string().optional().nullable(),
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaEventSchema = z2.object({
+  date: peopleV1SchemaDateSchema.optional(),
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+})
+var peopleV1SchemaExternalIdSchema = z2.object({
+  formattedType: z2.string().optional().nullable(),
+  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
+  type: z2.string().optional().nullable(),
+  value: z2.string().optional().nullable(),
+})
+var peopleV1SchemaPersonSchema = z2.object({
+  addresses: z2.array(peopleV1SchemaAddressSchema).optional(),
+  ageRange: z2.string().optional().nullable(),
+  ageRanges: z2.array(peopleV1SchemaAgeRangeTypeSchema).optional(),
+  biographies: z2.array(peopleV1SchemaBiographySchema).optional(),
+  birthdays: z2.array(peopleV1SchemaBirthdaySchema).optional(),
+  braggingRights: z2.array(peopleV1SchemaBraggingRightsSchema).optional(),
+  calendarUrls: z2.array(peopleV1SchemaCalendarUrlSchema).optional(),
+  clientData: z2.array(peopleV1SchemaClientDataSchema).optional(),
+  coverPhotos: z2.array(peopleV1SchemaCoverPhotoSchema).optional(),
+  emailAddresses: z2.array(peopleV1SchemaEmailAddressSchema).optional(),
+  etag: z2.string().optional().nullable(),
+  events: z2.array(peopleV1SchemaEventSchema).optional(),
+  externalIds: z2.array(peopleV1SchemaExternalIdSchema).optional(),
+  fileAses: z2.array(peopleV1SchemaFileAsSchema).optional(),
+  genders: z2.array(peopleV1SchemaGenderSchema).optional(),
+  imClients: z2.array(peopleV1SchemaImClientSchema).optional(),
+  interests: z2.array(peopleV1SchemaInterestSchema).optional(),
+  locales: z2.array(peopleV1SchemaLocaleSchema).optional(),
+  locations: z2.array(peopleV1SchemaLocationSchema).optional(),
+  memberships: z2.array(peopleV1SchemaMembershipSchema).optional(),
+  metadata: peopleV1SchemaPersonMetadataSchema.optional(),
+  miscKeywords: z2.array(peopleV1SchemaMiscKeywordSchema).optional(),
+  names: z2.array(peopleV1SchemaNameSchema).optional(),
+  nicknames: z2.array(peopleV1SchemaNicknameSchema).optional(),
+  occupations: z2.array(peopleV1SchemaOccupationSchema).optional(),
+  organizations: z2.array(peopleV1SchemaOrganizationSchema).optional(),
+  phoneNumbers: z2.array(peopleV1SchemaPhoneNumberSchema).optional(),
+  photos: z2.array(peopleV1SchemaPhotoSchema).optional(),
+  relations: z2.array(peopleV1SchemaRelationSchema).optional(),
+  relationshipInterests: z2
+    .array(peopleV1SchemaRelationshipInterestSchema)
+    .optional(),
+  relationshipStatuses: z2
+    .array(peopleV1SchemaRelationshipStatusSchema)
+    .optional(),
+  residences: z2.array(peopleV1SchemaResidenceSchema).optional(),
+  resourceName: z2.string().optional().nullable(),
+  sipAddresses: z2.array(peopleV1SchemaSipAddressSchema).optional(),
+  skills: z2.array(peopleV1SchemaSkillSchema).optional(),
+  taglines: z2.array(peopleV1SchemaTaglineSchema).optional(),
+  urls: z2.array(peopleV1SchemaUrlSchema).optional(),
+  userDefined: z2.array(peopleV1SchemaUserDefinedSchema).optional(),
+})
+var peopleV1SchemaPersonResponseSchema = z2.object({
+  httpStatusCode: z2.number().optional().nullable(),
+  person: peopleV1SchemaPersonSchema.optional(),
+  requestedResourceName: z2.string().optional().nullable(),
+  status: peopleV1SchemaStatusSchema.optional(),
+})
+var peopleV1SchemaSearchDirectoryPeopleResponseSchema = z2.object({
+  nextPageToken: z2.string().optional().nullable(),
+  people: z2.array(peopleV1SchemaPersonSchema).optional(),
+  totalSize: z2.number().optional().nullable(),
+})
+var peopleV1SchemaSearchResultSchema = z2.object({
+  person: peopleV1SchemaPersonSchema.optional(),
+})
+var peopleV1SchemaUpdateContactPhotoResponseSchema = z2.object({
+  person: peopleV1SchemaPersonSchema.optional(),
+})
+var peopleV1SchemaBatchCreateContactsResponseSchema = z2.object({
+  createdPeople: z2.array(peopleV1SchemaPersonResponseSchema).optional(),
+})
+var peopleV1SchemaBatchUpdateContactsRequestSchema = z2.object({
+  contacts: z2.record(peopleV1SchemaPersonSchema).optional().nullable(),
+  readMask: z2.string().optional().nullable(),
+  sources: z2.array(z2.string()).optional().nullable(),
+  updateMask: z2.string().optional().nullable(),
+})
+var peopleV1SchemaBatchUpdateContactsResponseSchema = z2.object({
+  updateResult: z2
+    .record(peopleV1SchemaPersonResponseSchema)
+    .optional()
+    .nullable(),
+})
+var peopleV1SchemaContactToCreateSchema = z2.object({
+  contactPerson: peopleV1SchemaPersonSchema.optional(),
+})
+var peopleV1SchemaDeleteContactPhotoResponseSchema = z2.object({
+  person: peopleV1SchemaPersonSchema.optional(),
+})
+var peopleV1SchemaGetPeopleResponseSchema = z2.object({
+  responses: z2.array(peopleV1SchemaPersonResponseSchema).optional(),
+})
+var peopleV1SchemaListConnectionsResponseSchema = z2.object({
+  connections: z2.array(peopleV1SchemaPersonSchema).optional(),
+  nextPageToken: z2.string().optional().nullable(),
+  nextSyncToken: z2.string().optional().nullable(),
+  totalItems: z2.number().optional().nullable(),
+  totalPeople: z2.number().optional().nullable(),
+})
+var peopleV1SchemaListDirectoryPeopleResponseSchema = z2.object({
+  nextPageToken: z2.string().optional().nullable(),
+  nextSyncToken: z2.string().optional().nullable(),
+  people: z2.array(peopleV1SchemaPersonSchema).optional(),
+})
+var peopleV1SchemaListOtherContactsResponseSchema = z2.object({
+  nextPageToken: z2.string().optional().nullable(),
+  nextSyncToken: z2.string().optional().nullable(),
+  otherContacts: z2.array(peopleV1SchemaPersonSchema).optional(),
+  totalSize: z2.number().optional().nullable(),
+})
+var peopleV1SchemaSearchResponseSchema = z2.object({
+  results: z2.array(peopleV1SchemaSearchResultSchema).optional(),
+})
+var peopleV1SchemaBatchCreateContactsRequestSchema = z2.object({
+  contacts: z2.array(peopleV1SchemaContactToCreateSchema).optional(),
+  readMask: z2.string().optional().nullable(),
+  sources: z2.array(z2.string()).optional().nullable(),
+})
+
+// src/types/otherTypes.ts
+var getAuthUrlResponseSchema = z3.string()
+var getAuthenticateClient = z3.union
+var credentialsSchema = z3.object({
+  refresh_token: z3.string().optional().nullable(),
+  expiry_date: z3.number().optional().nullable(),
+  access_token: z3.string().optional().nullable(),
+  token_type: z3.string().optional().nullable(),
+  id_token: z3.string().optional().nullable(),
+  scope: z3.string().optional(),
+})
+var credentialRequestSchema = z3.object({
+  refresh_token: z3.string().optional(),
+  access_token: z3.string().optional(),
+  token_type: z3.string().optional(),
+  expires_in: z3.number().optional(),
+  id_token: z3.string().optional(),
+  scope: z3.string().optional(),
+})
+var jWTInputSchema = z3.object({
+  type: z3.string().optional(),
+  client_email: z3.string().optional(),
+  private_key: z3.string().optional(),
+  private_key_id: z3.string().optional(),
+  project_id: z3.string().optional(),
+  client_id: z3.string().optional(),
+  client_secret: z3.string().optional(),
+  refresh_token: z3.string().optional(),
+  quota_project_id: z3.string().optional(),
+})
+var credentialBodySchema = z3.object({
+  client_email: z3.string().optional(),
+  private_key: z3.string().optional(),
+})
+var extendedGmailV1SchemaProfileSchemaSchema = gmailV1SchemaProfileSchema.and(
+  peopleV1SchemaNameSchema.pick({ displayName: true })
+)
+
 // src/google/index.ts
 var SCOPES = [
   'email',
@@ -189,7 +902,7 @@ var createAuthClientObject = (req) => {
     `${determineAuthURLStructure()}${process.env.GOOGLE_REDIRECT_URL}`
   )
 }
-var getAuthenticateClient = (req, res) =>
+var getAuthenticateClient2 = (req, res) =>
   __async(void 0, null, function* () {
     var _a
     try {
@@ -217,6 +930,10 @@ var getAuthenticateClient = (req, res) =>
         }
         if (state === 'noSession') {
           oAuth2Client.setCredentials(tokens)
+          const result = {
+            credentials: oAuth2Client.credentials,
+          }
+          credentialsSchema.parse(result.credentials)
           return res.status(200).json({
             credentials: oAuth2Client.credentials,
           })
@@ -251,6 +968,7 @@ var getAuthUrl = (req, res) =>
           ? 'noSession'
           : hashState,
       })
+      getAuthUrlResponseSchema.parse(authorizeUrl)
       return res.status(200).json(authorizeUrl)
     } catch (err) {
       res.status(401).json(err)
@@ -397,444 +1115,6 @@ var authMiddleware = (requestFunction) => (req, res) =>
     }
   })
 
-// src/types/peopleTypes.ts
-import { z } from './node_modules/zod/lib/index.mjs'
-var peopleV1SchemaBatchDeleteContactsRequestSchema = z.object({
-  resourceNames: z.array(z.string()).optional().nullable(),
-})
-var peopleV1SchemaContactGroupMembershipSchema = z.object({
-  contactGroupId: z.string().optional().nullable(),
-  contactGroupResourceName: z.string().optional().nullable(),
-})
-var peopleV1SchemaContactGroupMetadataSchema = z.object({
-  deleted: z.boolean().optional().nullable(),
-  updateTime: z.string().optional().nullable(),
-})
-var peopleV1SchemaCopyOtherContactToMyContactsGroupRequestSchema = z.object({
-  copyMask: z.string().optional().nullable(),
-  readMask: z.string().optional().nullable(),
-  sources: z.array(z.string()).optional().nullable(),
-})
-var peopleV1SchemaDateSchema = z.object({
-  day: z.number().optional().nullable(),
-  month: z.number().optional().nullable(),
-  year: z.number().optional().nullable(),
-})
-var peopleV1SchemaDomainMembershipSchema = z.object({
-  inViewerDomain: z.boolean().optional().nullable(),
-})
-var peopleV1SchemaEmptySchema = z.object({})
-var peopleV1SchemaGroupClientDataSchema = z.object({
-  key: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaModifyContactGroupMembersRequestSchema = z.object({
-  resourceNamesToAdd: z.array(z.string()).optional().nullable(),
-  resourceNamesToRemove: z.array(z.string()).optional().nullable(),
-})
-var peopleV1SchemaModifyContactGroupMembersResponseSchema = z.object({
-  canNotRemoveLastContactGroupResourceNames: z
-    .array(z.string())
-    .optional()
-    .nullable(),
-  notFoundResourceNames: z.array(z.string()).optional().nullable(),
-})
-var peopleV1SchemaProfileMetadataSchema = z.object({
-  objectType: z.string().optional().nullable(),
-  userTypes: z.array(z.string()).optional().nullable(),
-})
-var peopleV1SchemaSourceSchema = z.object({
-  etag: z.string().optional().nullable(),
-  id: z.string().optional().nullable(),
-  profileMetadata: peopleV1SchemaProfileMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  updateTime: z.string().optional().nullable(),
-})
-var peopleV1SchemaStatusSchema = z.object({
-  code: z.number().optional().nullable(),
-  details: z.array(z.record(z.any())).optional().nullable(),
-  message: z.string().optional().nullable(),
-})
-var peopleV1SchemaUpdateContactPhotoRequestSchema = z.object({
-  personFields: z.string().optional().nullable(),
-  photoBytes: z.string().optional().nullable(),
-  sources: z.array(z.string()).optional().nullable(),
-})
-var peopleV1SchemaContactGroupSchema = z.object({
-  clientData: z.array(peopleV1SchemaGroupClientDataSchema).optional(),
-  etag: z.string().optional().nullable(),
-  formattedName: z.string().optional().nullable(),
-  groupType: z.string().optional().nullable(),
-  memberCount: z.number().optional().nullable(),
-  memberResourceNames: z.array(z.string()).optional().nullable(),
-  metadata: peopleV1SchemaContactGroupMetadataSchema.optional(),
-  name: z.string().optional().nullable(),
-  resourceName: z.string().optional().nullable(),
-})
-var peopleV1SchemaContactGroupResponseSchema = z.object({
-  contactGroup: peopleV1SchemaContactGroupSchema.optional(),
-  requestedResourceName: z.string().optional().nullable(),
-  status: peopleV1SchemaStatusSchema.optional(),
-})
-var peopleV1SchemaCreateContactGroupRequestSchema = z.object({
-  contactGroup: peopleV1SchemaContactGroupSchema.optional(),
-  readGroupFields: z.string().optional().nullable(),
-})
-var peopleV1SchemaFieldMetadataSchema = z.object({
-  primary: z.boolean().optional().nullable(),
-  source: peopleV1SchemaSourceSchema.optional(),
-  sourcePrimary: z.boolean().optional().nullable(),
-  verified: z.boolean().optional().nullable(),
-})
-var peopleV1SchemaFileAsSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaGenderSchema = z.object({
-  addressMeAs: z.string().optional().nullable(),
-  formattedValue: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaImClientSchema = z.object({
-  formattedProtocol: z.string().optional().nullable(),
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  protocol: z.string().optional().nullable(),
-  type: z.string().optional().nullable(),
-  username: z.string().optional().nullable(),
-})
-var peopleV1SchemaInterestSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaListContactGroupsResponseSchema = z.object({
-  contactGroups: z.array(peopleV1SchemaContactGroupSchema).optional(),
-  nextPageToken: z.string().optional().nullable(),
-  nextSyncToken: z.string().optional().nullable(),
-  totalItems: z.number().optional().nullable(),
-})
-var peopleV1SchemaLocaleSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaLocationSchema = z.object({
-  buildingId: z.string().optional().nullable(),
-  current: z.boolean().optional().nullable(),
-  deskCode: z.string().optional().nullable(),
-  floor: z.string().optional().nullable(),
-  floorSection: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaMembershipSchema = z.object({
-  contactGroupMembership: peopleV1SchemaContactGroupMembershipSchema.optional(),
-  domainMembership: peopleV1SchemaDomainMembershipSchema.optional(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-})
-var peopleV1SchemaMiscKeywordSchema = z.object({
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaNameSchema = z.object({
-  displayName: z.string().optional().nullable(),
-  displayNameLastFirst: z.string().optional().nullable(),
-  familyName: z.string().optional().nullable(),
-  givenName: z.string().optional().nullable(),
-  honorificPrefix: z.string().optional().nullable(),
-  honorificSuffix: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  middleName: z.string().optional().nullable(),
-  phoneticFamilyName: z.string().optional().nullable(),
-  phoneticFullName: z.string().optional().nullable(),
-  phoneticGivenName: z.string().optional().nullable(),
-  phoneticHonorificPrefix: z.string().optional().nullable(),
-  phoneticHonorificSuffix: z.string().optional().nullable(),
-  phoneticMiddleName: z.string().optional().nullable(),
-  unstructuredName: z.string().optional().nullable(),
-})
-var peopleV1SchemaNicknameSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaOccupationSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaOrganizationSchema = z.object({
-  costCenter: z.string().optional().nullable(),
-  current: z.boolean().optional().nullable(),
-  department: z.string().optional().nullable(),
-  domain: z.string().optional().nullable(),
-  endDate: peopleV1SchemaDateSchema.optional(),
-  formattedType: z.string().optional().nullable(),
-  fullTimeEquivalentMillipercent: z.number().optional().nullable(),
-  jobDescription: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  name: z.string().optional().nullable(),
-  phoneticName: z.string().optional().nullable(),
-  startDate: peopleV1SchemaDateSchema.optional(),
-  symbol: z.string().optional().nullable(),
-  title: z.string().optional().nullable(),
-  type: z.string().optional().nullable(),
-})
-var peopleV1SchemaPersonMetadataSchema = z.object({
-  deleted: z.boolean().optional().nullable(),
-  linkedPeopleResourceNames: z.array(z.string()).optional().nullable(),
-  objectType: z.string().optional().nullable(),
-  previousResourceNames: z.array(z.string()).optional().nullable(),
-  sources: z.array(peopleV1SchemaSourceSchema).optional(),
-})
-var peopleV1SchemaPhoneNumberSchema = z.object({
-  canonicalForm: z.string().optional().nullable(),
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaPhotoSchema = z.object({
-  default: z.boolean().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  url: z.string().optional().nullable(),
-})
-var peopleV1SchemaRelationSchema = z.object({
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  person: z.string().optional().nullable(),
-  type: z.string().optional().nullable(),
-})
-var peopleV1SchemaRelationshipInterestSchema = z.object({
-  formattedValue: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaRelationshipStatusSchema = z.object({
-  formattedValue: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaResidenceSchema = z.object({
-  current: z.boolean().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaSipAddressSchema = z.object({
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaSkillSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaTaglineSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaUpdateContactGroupRequestSchema = z.object({
-  contactGroup: peopleV1SchemaContactGroupSchema.optional(),
-  readGroupFields: z.string().optional().nullable(),
-  updateGroupFields: z.string().optional().nullable(),
-})
-var peopleV1SchemaUrlSchema = z.object({
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaUserDefinedSchema = z.object({
-  key: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaAddressSchema = z.object({
-  city: z.string().optional().nullable(),
-  country: z.string().optional().nullable(),
-  countryCode: z.string().optional().nullable(),
-  extendedAddress: z.string().optional().nullable(),
-  formattedType: z.string().optional().nullable(),
-  formattedValue: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  poBox: z.string().optional().nullable(),
-  postalCode: z.string().optional().nullable(),
-  region: z.string().optional().nullable(),
-  streetAddress: z.string().optional().nullable(),
-  type: z.string().optional().nullable(),
-})
-var peopleV1SchemaAgeRangeTypeSchema = z.object({
-  ageRange: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-})
-var peopleV1SchemaBatchGetContactGroupsResponseSchema = z.object({
-  responses: z.array(peopleV1SchemaContactGroupResponseSchema).optional(),
-})
-var peopleV1SchemaBiographySchema = z.object({
-  contentType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaBirthdaySchema = z.object({
-  date: peopleV1SchemaDateSchema.optional(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  text: z.string().optional().nullable(),
-})
-var peopleV1SchemaBraggingRightsSchema = z.object({
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaCalendarUrlSchema = z.object({
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  url: z.string().optional().nullable(),
-})
-var peopleV1SchemaClientDataSchema = z.object({
-  key: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaCoverPhotoSchema = z.object({
-  default: z.boolean().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  url: z.string().optional().nullable(),
-})
-var peopleV1SchemaEmailAddressSchema = z.object({
-  displayName: z.string().optional().nullable(),
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaEventSchema = z.object({
-  date: peopleV1SchemaDateSchema.optional(),
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-})
-var peopleV1SchemaExternalIdSchema = z.object({
-  formattedType: z.string().optional().nullable(),
-  metadata: peopleV1SchemaFieldMetadataSchema.optional(),
-  type: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-})
-var peopleV1SchemaPersonSchema = z.object({
-  addresses: z.array(peopleV1SchemaAddressSchema).optional(),
-  ageRange: z.string().optional().nullable(),
-  ageRanges: z.array(peopleV1SchemaAgeRangeTypeSchema).optional(),
-  biographies: z.array(peopleV1SchemaBiographySchema).optional(),
-  birthdays: z.array(peopleV1SchemaBirthdaySchema).optional(),
-  braggingRights: z.array(peopleV1SchemaBraggingRightsSchema).optional(),
-  calendarUrls: z.array(peopleV1SchemaCalendarUrlSchema).optional(),
-  clientData: z.array(peopleV1SchemaClientDataSchema).optional(),
-  coverPhotos: z.array(peopleV1SchemaCoverPhotoSchema).optional(),
-  emailAddresses: z.array(peopleV1SchemaEmailAddressSchema).optional(),
-  etag: z.string().optional().nullable(),
-  events: z.array(peopleV1SchemaEventSchema).optional(),
-  externalIds: z.array(peopleV1SchemaExternalIdSchema).optional(),
-  fileAses: z.array(peopleV1SchemaFileAsSchema).optional(),
-  genders: z.array(peopleV1SchemaGenderSchema).optional(),
-  imClients: z.array(peopleV1SchemaImClientSchema).optional(),
-  interests: z.array(peopleV1SchemaInterestSchema).optional(),
-  locales: z.array(peopleV1SchemaLocaleSchema).optional(),
-  locations: z.array(peopleV1SchemaLocationSchema).optional(),
-  memberships: z.array(peopleV1SchemaMembershipSchema).optional(),
-  metadata: peopleV1SchemaPersonMetadataSchema.optional(),
-  miscKeywords: z.array(peopleV1SchemaMiscKeywordSchema).optional(),
-  names: z.array(peopleV1SchemaNameSchema).optional(),
-  nicknames: z.array(peopleV1SchemaNicknameSchema).optional(),
-  occupations: z.array(peopleV1SchemaOccupationSchema).optional(),
-  organizations: z.array(peopleV1SchemaOrganizationSchema).optional(),
-  phoneNumbers: z.array(peopleV1SchemaPhoneNumberSchema).optional(),
-  photos: z.array(peopleV1SchemaPhotoSchema).optional(),
-  relations: z.array(peopleV1SchemaRelationSchema).optional(),
-  relationshipInterests: z
-    .array(peopleV1SchemaRelationshipInterestSchema)
-    .optional(),
-  relationshipStatuses: z
-    .array(peopleV1SchemaRelationshipStatusSchema)
-    .optional(),
-  residences: z.array(peopleV1SchemaResidenceSchema).optional(),
-  resourceName: z.string().optional().nullable(),
-  sipAddresses: z.array(peopleV1SchemaSipAddressSchema).optional(),
-  skills: z.array(peopleV1SchemaSkillSchema).optional(),
-  taglines: z.array(peopleV1SchemaTaglineSchema).optional(),
-  urls: z.array(peopleV1SchemaUrlSchema).optional(),
-  userDefined: z.array(peopleV1SchemaUserDefinedSchema).optional(),
-})
-var peopleV1SchemaPersonResponseSchema = z.object({
-  httpStatusCode: z.number().optional().nullable(),
-  person: peopleV1SchemaPersonSchema.optional(),
-  requestedResourceName: z.string().optional().nullable(),
-  status: peopleV1SchemaStatusSchema.optional(),
-})
-var peopleV1SchemaSearchDirectoryPeopleResponseSchema = z.object({
-  nextPageToken: z.string().optional().nullable(),
-  people: z.array(peopleV1SchemaPersonSchema).optional(),
-  totalSize: z.number().optional().nullable(),
-})
-var peopleV1SchemaSearchResultSchema = z.object({
-  person: peopleV1SchemaPersonSchema.optional(),
-})
-var peopleV1SchemaUpdateContactPhotoResponseSchema = z.object({
-  person: peopleV1SchemaPersonSchema.optional(),
-})
-var peopleV1SchemaBatchCreateContactsResponseSchema = z.object({
-  createdPeople: z.array(peopleV1SchemaPersonResponseSchema).optional(),
-})
-var peopleV1SchemaBatchUpdateContactsRequestSchema = z.object({
-  contacts: z.record(peopleV1SchemaPersonSchema).optional().nullable(),
-  readMask: z.string().optional().nullable(),
-  sources: z.array(z.string()).optional().nullable(),
-  updateMask: z.string().optional().nullable(),
-})
-var peopleV1SchemaBatchUpdateContactsResponseSchema = z.object({
-  updateResult: z
-    .record(peopleV1SchemaPersonResponseSchema)
-    .optional()
-    .nullable(),
-})
-var peopleV1SchemaContactToCreateSchema = z.object({
-  contactPerson: peopleV1SchemaPersonSchema.optional(),
-})
-var peopleV1SchemaDeleteContactPhotoResponseSchema = z.object({
-  person: peopleV1SchemaPersonSchema.optional(),
-})
-var peopleV1SchemaGetPeopleResponseSchema = z.object({
-  responses: z.array(peopleV1SchemaPersonResponseSchema).optional(),
-})
-var peopleV1SchemaListConnectionsResponseSchema = z.object({
-  connections: z.array(peopleV1SchemaPersonSchema).optional(),
-  nextPageToken: z.string().optional().nullable(),
-  nextSyncToken: z.string().optional().nullable(),
-  totalItems: z.number().optional().nullable(),
-  totalPeople: z.number().optional().nullable(),
-})
-var peopleV1SchemaListDirectoryPeopleResponseSchema = z.object({
-  nextPageToken: z.string().optional().nullable(),
-  nextSyncToken: z.string().optional().nullable(),
-  people: z.array(peopleV1SchemaPersonSchema).optional(),
-})
-var peopleV1SchemaListOtherContactsResponseSchema = z.object({
-  nextPageToken: z.string().optional().nullable(),
-  nextSyncToken: z.string().optional().nullable(),
-  otherContacts: z.array(peopleV1SchemaPersonSchema).optional(),
-  totalSize: z.number().optional().nullable(),
-})
-var peopleV1SchemaSearchResponseSchema = z.object({
-  results: z.array(peopleV1SchemaSearchResultSchema).optional(),
-})
-var peopleV1SchemaBatchCreateContactsRequestSchema = z.object({
-  contacts: z.array(peopleV1SchemaContactToCreateSchema).optional(),
-  readMask: z.string().optional().nullable(),
-  sources: z.array(z.string()).optional().nullable(),
-})
-
 // src/api/Contacts/fetchAllContacts.ts
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
@@ -897,244 +1177,6 @@ var queryContacts = (req, res) =>
 
 // src/api/Drafts/createDraft.ts
 import { google as google3 } from './node_modules/googleapis/build/src/index.js'
-
-// src/types/gmailTypes.ts
-import { z as z2 } from './node_modules/zod/lib/index.mjs'
-var gmailV1SchemaAutoForwardingSchema = z2.object({
-  disposition: z2.string().optional().nullable(),
-  emailAddress: z2.string().optional().nullable(),
-  enabled: z2.boolean().optional().nullable(),
-})
-var gmailV1SchemaBatchDeleteMessagesRequestSchema = z2.object({
-  ids: z2.array(z2.string()).optional().nullable(),
-})
-var gmailV1SchemaBatchModifyMessagesRequestSchema = z2.object({
-  addLabelIds: z2.array(z2.string()).optional().nullable(),
-  ids: z2.array(z2.string()).optional().nullable(),
-  removeLabelIds: z2.array(z2.string()).optional().nullable(),
-})
-var gmailV1SchemaDelegateSchema = z2.object({
-  delegateEmail: z2.string().optional().nullable(),
-  verificationStatus: z2.string().optional().nullable(),
-})
-var gmailV1SchemaFilterActionSchema = z2.object({
-  addLabelIds: z2.array(z2.string()).optional().nullable(),
-  forward: z2.string().optional().nullable(),
-  removeLabelIds: z2.array(z2.string()).optional().nullable(),
-})
-var gmailV1SchemaFilterCriteriaSchema = z2.object({
-  excludeChats: z2.boolean().optional().nullable(),
-  from: z2.string().optional().nullable(),
-  hasAttachment: z2.boolean().optional().nullable(),
-  negatedQuery: z2.string().optional().nullable(),
-  query: z2.string().optional().nullable(),
-  size: z2.number().optional().nullable(),
-  sizeComparison: z2.string().optional().nullable(),
-  subject: z2.string().optional().nullable(),
-  to: z2.string().optional().nullable(),
-})
-var gmailV1SchemaForwardingAddressSchema = z2.object({
-  forwardingEmail: z2.string().optional().nullable(),
-  verificationStatus: z2.string().optional().nullable(),
-})
-var gmailV1SchemaImapSettingsSchema = z2.object({
-  autoExpunge: z2.boolean().optional().nullable(),
-  enabled: z2.boolean().optional().nullable(),
-  expungeBehavior: z2.string().optional().nullable(),
-  maxFolderSize: z2.number().optional().nullable(),
-})
-var gmailV1SchemaLabelColorSchema = z2.object({
-  backgroundColor: z2.string().optional().nullable(),
-  textColor: z2.string().optional().nullable(),
-})
-var gmailV1SchemaLanguageSettingsSchema = z2.object({
-  displayLanguage: z2.string().optional().nullable(),
-})
-var gmailV1SchemaListDelegatesResponseSchema = z2.object({
-  delegates: z2.array(gmailV1SchemaDelegateSchema).optional(),
-})
-var gmailV1SchemaListForwardingAddressesResponseSchema = z2.object({
-  forwardingAddresses: z2
-    .array(gmailV1SchemaForwardingAddressSchema)
-    .optional(),
-})
-var gmailV1SchemaMessagePartBodySchema = z2.object({
-  attachmentId: z2.string().optional().nullable(),
-  data: z2.string().optional().nullable(),
-  size: z2.number().optional().nullable(),
-})
-var gmailV1SchemaMessagePartHeaderSchema = z2.object({
-  name: z2.string().optional().nullable(),
-  value: z2.string().optional().nullable(),
-})
-var gmailV1SchemaModifyMessageRequestSchema = z2.object({
-  addLabelIds: z2.array(z2.string()).optional().nullable(),
-  removeLabelIds: z2.array(z2.string()).optional().nullable(),
-})
-var gmailV1SchemaModifyThreadRequestSchema = z2.object({
-  addLabelIds: z2.array(z2.string()).optional().nullable(),
-  removeLabelIds: z2.array(z2.string()).optional().nullable(),
-})
-var gmailV1SchemaPopSettingsSchema = z2.object({
-  accessWindow: z2.string().optional().nullable(),
-  disposition: z2.string().optional().nullable(),
-})
-var gmailV1SchemaProfileSchema = z2.object({
-  emailAddress: z2.string().optional().nullable(),
-  historyId: z2.string().optional().nullable(),
-  messagesTotal: z2.number().optional().nullable(),
-  threadsTotal: z2.number().optional().nullable(),
-})
-var gmailV1SchemaSmimeInfoSchema = z2.object({
-  encryptedKeyPassword: z2.string().optional().nullable(),
-  expiration: z2.string().optional().nullable(),
-  id: z2.string().optional().nullable(),
-  isDefault: z2.boolean().optional().nullable(),
-  issuerCn: z2.string().optional().nullable(),
-  pem: z2.string().optional().nullable(),
-  pkcs12: z2.string().optional().nullable(),
-})
-var gmailV1SchemaSmtpMsaSchema = z2.object({
-  host: z2.string().optional().nullable(),
-  password: z2.string().optional().nullable(),
-  port: z2.number().optional().nullable(),
-  securityMode: z2.string().optional().nullable(),
-  username: z2.string().optional().nullable(),
-})
-var gmailV1SchemaVacationSettingsSchema = z2.object({
-  enableAutoReply: z2.boolean().optional().nullable(),
-  endTime: z2.string().optional().nullable(),
-  responseBodyHtml: z2.string().optional().nullable(),
-  responseBodyPlainText: z2.string().optional().nullable(),
-  responseSubject: z2.string().optional().nullable(),
-  restrictToContacts: z2.boolean().optional().nullable(),
-  restrictToDomain: z2.boolean().optional().nullable(),
-  startTime: z2.string().optional().nullable(),
-})
-var gmailV1SchemaWatchRequestSchema = z2.object({
-  labelFilterAction: z2.string().optional().nullable(),
-  labelIds: z2.array(z2.string()).optional().nullable(),
-  topicName: z2.string().optional().nullable(),
-})
-var gmailV1SchemaWatchResponseSchema = z2.object({
-  expiration: z2.string().optional().nullable(),
-  historyId: z2.string().optional().nullable(),
-})
-var gmailV1SchemaFilterSchema = z2.object({
-  action: gmailV1SchemaFilterActionSchema.optional(),
-  criteria: gmailV1SchemaFilterCriteriaSchema.optional(),
-  id: z2.string().optional().nullable(),
-})
-var gmailV1SchemaLabelSchema = z2.object({
-  color: gmailV1SchemaLabelColorSchema.optional(),
-  id: z2.string().optional().nullable(),
-  labelListVisibility: z2.string().optional().nullable(),
-  messageListVisibility: z2.string().optional().nullable(),
-  messagesTotal: z2.number().optional().nullable(),
-  messagesUnread: z2.number().optional().nullable(),
-  name: z2.string().optional().nullable(),
-  threadsTotal: z2.number().optional().nullable(),
-  threadsUnread: z2.number().optional().nullable(),
-  type: z2.string().optional().nullable(),
-})
-var gmailV1SchemaListFiltersResponseSchema = z2.object({
-  filter: z2.array(gmailV1SchemaFilterSchema).optional(),
-})
-var gmailV1SchemaListLabelsResponseSchema = z2.object({
-  labels: z2.array(gmailV1SchemaLabelSchema).optional(),
-})
-var gmailV1SchemaListSmimeInfoResponseSchema = z2.object({
-  smimeInfo: z2.array(gmailV1SchemaSmimeInfoSchema).optional(),
-})
-var gmailV1SchemaMessagePartSchema = z2.lazy(() =>
-  z2.object({
-    body: gmailV1SchemaMessagePartBodySchema.optional(),
-    filename: z2.string().optional().nullable(),
-    headers: z2.array(gmailV1SchemaMessagePartHeaderSchema).optional(),
-    mimeType: z2.string().optional().nullable(),
-    partId: z2.string().optional().nullable(),
-    parts: z2.array(gmailV1SchemaMessagePartSchema).optional(),
-  })
-)
-var gmailV1SchemaSendAsSchema = z2.object({
-  displayName: z2.string().optional().nullable(),
-  isDefault: z2.boolean().optional().nullable(),
-  isPrimary: z2.boolean().optional().nullable(),
-  replyToAddress: z2.string().optional().nullable(),
-  sendAsEmail: z2.string().optional().nullable(),
-  signature: z2.string().optional().nullable(),
-  smtpMsa: gmailV1SchemaSmtpMsaSchema.optional(),
-  treatAsAlias: z2.boolean().optional().nullable(),
-  verificationStatus: z2.string().optional().nullable(),
-})
-var gmailV1SchemaListSendAsResponseSchema = z2.object({
-  sendAs: z2.array(gmailV1SchemaSendAsSchema).optional(),
-})
-var gmailV1SchemaMessageSchema = z2.object({
-  historyId: z2.string().optional().nullable(),
-  id: z2.string().optional().nullable(),
-  internalDate: z2.string().optional().nullable(),
-  labelIds: z2.array(z2.string()).optional().nullable(),
-  payload: gmailV1SchemaMessagePartSchema.optional(),
-  raw: z2.string().optional().nullable(),
-  sizeEstimate: z2.number().optional().nullable(),
-  snippet: z2.string().optional().nullable(),
-  threadId: z2.string().optional().nullable(),
-})
-var gmailV1SchemaThreadSchema = z2.object({
-  historyId: z2.string().optional().nullable(),
-  id: z2.string().optional().nullable(),
-  messages: z2.array(gmailV1SchemaMessageSchema).optional(),
-  snippet: z2.string().optional().nullable(),
-})
-var gmailV1SchemaDraftSchema = z2.object({
-  id: z2.string().optional().nullable(),
-  message: gmailV1SchemaMessageSchema.optional(),
-})
-var gmailV1SchemaHistoryLabelAddedSchema = z2.object({
-  labelIds: z2.array(z2.string()).optional().nullable(),
-  message: gmailV1SchemaMessageSchema.optional(),
-})
-var gmailV1SchemaHistoryLabelRemovedSchema = z2.object({
-  labelIds: z2.array(z2.string()).optional().nullable(),
-  message: gmailV1SchemaMessageSchema.optional(),
-})
-var gmailV1SchemaHistoryMessageAddedSchema = z2.object({
-  message: gmailV1SchemaMessageSchema.optional(),
-})
-var gmailV1SchemaHistoryMessageDeletedSchema = z2.object({
-  message: gmailV1SchemaMessageSchema.optional(),
-})
-var gmailV1SchemaListDraftsResponseSchema = z2.object({
-  drafts: z2.array(gmailV1SchemaDraftSchema).optional(),
-  nextPageToken: z2.string().optional().nullable(),
-  resultSizeEstimate: z2.number().optional().nullable(),
-})
-var gmailV1SchemaListMessagesResponseSchema = z2.object({
-  messages: z2.array(gmailV1SchemaMessageSchema).optional(),
-  nextPageToken: z2.string().optional().nullable(),
-  resultSizeEstimate: z2.number().optional().nullable(),
-})
-var gmailV1SchemaListThreadsResponseSchema = z2.object({
-  nextPageToken: z2.string().optional().nullable(),
-  resultSizeEstimate: z2.number().optional().nullable(),
-  threads: z2.array(gmailV1SchemaThreadSchema).optional(),
-})
-var gmailV1SchemaHistorySchema = z2.object({
-  id: z2.string().optional().nullable(),
-  labelsAdded: z2.array(gmailV1SchemaHistoryLabelAddedSchema).optional(),
-  labelsRemoved: z2.array(gmailV1SchemaHistoryLabelRemovedSchema).optional(),
-  messages: z2.array(gmailV1SchemaMessageSchema).optional(),
-  messagesAdded: z2.array(gmailV1SchemaHistoryMessageAddedSchema).optional(),
-  messagesDeleted: z2
-    .array(gmailV1SchemaHistoryMessageDeletedSchema)
-    .optional(),
-})
-var gmailV1SchemaListHistoryResponseSchema = z2.object({
-  history: z2.array(gmailV1SchemaHistorySchema).optional(),
-  historyId: z2.string().optional().nullable(),
-  nextPageToken: z2.string().optional().nullable(),
-})
 
 // src/utils/formFieldParser.ts
 import formidable from './node_modules/formidable/src/index.js'
@@ -1236,7 +1278,7 @@ function setupDraft(auth, req) {
           (response == null ? void 0 : response.data)
         ) {
           gmailV1SchemaDraftSchema.parse(response.data)
-          return response
+          return response.data
         } else {
           return new Error('Draft is not created...')
         }
@@ -1797,61 +1839,62 @@ function handleListUnsubscribe(unsubscribeLink) {
 }
 
 // src/utils/threadRemap/types/threadRemapTypes.ts
-import { z as z3 } from './node_modules/zod/lib/index.mjs'
-var PayloadHeaders = z3.object({
-  deliveredTo: z3.string().nullable(),
-  date: z3.string().nullable(),
-  from: z3.string().nullable(),
-  subject: z3.string().nullable(),
-  to: z3.string().nullable(),
-  cc: z3.string().nullable(),
-  bcc: z3.string().nullable(),
+import { z as z4 } from './node_modules/zod/lib/index.mjs'
+var PayloadHeaders = z4.object({
+  deliveredTo: z4.string().nullable(),
+  date: z4.string().nullable(),
+  from: z4.string().nullable(),
+  subject: z4.string().nullable(),
+  to: z4.string().nullable(),
+  cc: z4.string().nullable(),
+  bcc: z4.string().nullable(),
 })
-var SimpleMessage = z3.object({
-  id: z3.string(),
-  threadId: z3.string(),
-  labelIds: z3.array(z3.string()),
-  snippet: z3.string(),
-  payload: z3.object({
-    mimeType: z3.string(),
+var SimpleMessage = z4.object({
+  id: z4.string(),
+  threadId: z4.string(),
+  labelIds: z4.array(z4.string()),
+  snippet: z4.string(),
+  payload: z4.object({
+    mimeType: z4.string(),
     headers: PayloadHeaders,
-    files: z3.array(z3.any()),
+    files: z4.array(z4.any()),
   }),
-  sizeEstimate: z3.number(),
-  historyId: z3.string(),
-  internalDate: z3.string(),
+  sizeEstimate: z4.number(),
+  historyId: z4.string(),
+  internalDate: z4.string(),
 })
-var ThreadSimpleRemap = z3.object({
-  id: z3.string(),
-  historyId: z3.string(),
-  messages: z3.array(SimpleMessage),
+var ThreadSimpleRemap = z4.object({
+  id: z4.string(),
+  historyId: z4.string(),
+  messages: z4.array(SimpleMessage),
 })
 var PayloadHeadersEnhanced = PayloadHeaders.extend({
-  listUnsubscribe: z3.string().nullable(),
+  listUnsubscribe: z4.string().nullable(),
 })
-var FullMessage = z3.object({
-  id: z3.string(),
-  threadId: z3.string(),
-  labelIds: z3.array(z3.string()),
-  snippet: z3.string(),
-  payload: z3.object({
-    mimeType: z3.string(),
+var FullMessage = z4.object({
+  id: z4.string(),
+  threadId: z4.string(),
+  labelIds: z4.array(z4.string()),
+  snippet: z4.string(),
+  payload: z4.object({
+    mimeType: z4.string(),
     headers: PayloadHeadersEnhanced,
-    body: z3.object({
-      emailHTML: z3.string(),
-      emailFileHTML: z3.array(z3.any()),
+    body: z4.object({
+      emailHTML: z4.string(),
+      emailFileHTML: z4.array(z4.any()),
+      removedTrackers: z4.array(z4.string()).optional(),
     }),
-    files: z3.array(z3.any()),
-    parts: z3.array(gmailV1SchemaMessagePartSchema).optional(),
+    files: z4.array(gmailV1SchemaMessagePartSchema),
+    parts: z4.array(gmailV1SchemaMessagePartSchema).optional(),
   }),
-  sizeEstimate: z3.number(),
-  historyId: z3.string(),
-  internalDate: z3.string(),
+  sizeEstimate: z4.number(),
+  historyId: z4.string(),
+  internalDate: z4.string(),
 })
-var ThreadFullRemap = z3.object({
-  id: z3.string(),
-  historyId: z3.string(),
-  messages: z3.array(FullMessage),
+var ThreadObject = z4.object({
+  id: z4.string(),
+  historyId: z4.string(),
+  messages: z4.array(FullMessage),
 })
 
 // src/utils/threadRemap/threadFullRemap.ts
@@ -1910,7 +1953,7 @@ function threadFullRemap(rawObject, gmail) {
         historyId: rawObject.historyId,
         messages: yield Promise.all(mappedMessages),
       }
-      ThreadFullRemap.parse(result)
+      ThreadObject.parse(result)
       return result
     }
     return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
@@ -2044,7 +2087,184 @@ var health = (req, res) =>
   })
 
 // src/api/History/listHistory.ts
+import { google as google10 } from './node_modules/googleapis/build/src/index.js'
+
+// src/api/Threads/fetchSimpleThreads.ts
 import { google as google9 } from './node_modules/googleapis/build/src/index.js'
+
+// src/utils/threadRemap/threadSimpleRemap.ts
+var remapPayloadHeaders2 = (rawMessage) => {
+  return {
+    deliveredTo: findHeader(rawMessage, 'Delivered-To'),
+    date: findHeader(rawMessage, 'Date'),
+    from: findHeader(rawMessage, 'From'),
+    subject: findHeader(rawMessage, 'Subject'),
+    to: findHeader(rawMessage, 'To'),
+    cc: findHeader(rawMessage, 'Cc'),
+    bcc: findHeader(rawMessage, 'Bcc'),
+  }
+}
+var remapSimpleMessage = (rawMessage) =>
+  __async(void 0, null, function* () {
+    var _a
+    return {
+      id: rawMessage.id,
+      threadId: rawMessage.threadId,
+      labelIds: rawMessage.labelIds,
+      snippet: rawMessage.snippet,
+      payload: {
+        mimeType:
+          (_a = rawMessage == null ? void 0 : rawMessage.payload) == null
+            ? void 0
+            : _a.mimeType,
+        headers: remapPayloadHeaders2(rawMessage),
+        files: checkAttachment(rawMessage),
+      },
+      sizeEstimate: rawMessage.sizeEstimate,
+      historyId: rawMessage.historyId,
+      internalDate: rawMessage.internalDate,
+    }
+  })
+function threadSimpleRemap(rawObject) {
+  return __async(this, null, function* () {
+    if (rawObject.messages) {
+      const mappedMessages = rawObject.messages.map((message) =>
+        remapSimpleMessage(message)
+      )
+      const result = {
+        id: rawObject.id,
+        historyId: rawObject.historyId,
+        messages: yield Promise.all(mappedMessages),
+      }
+      ThreadSimpleRemap.parse(result)
+      return result
+    }
+    return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
+  })
+}
+
+// src/api/Threads/threadRequest.ts
+var requestBodyCreator = (req) => {
+  var _a
+  const requestBody = {
+    userId: USER,
+  }
+  requestBody.maxResults =
+    typeof Number(req.query.maxResults) !== 'number'
+      ? 20
+      : Number(req.query.maxResults)
+  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
+    const typedLabelIdsReq = req.query.labelIds
+    if (!typedLabelIdsReq.includes(ARCHIVE_LABEL)) {
+      requestBody.labelIds = typedLabelIdsReq
+    } else {
+      requestBody.q = '-label:inbox -label:sent -label:drafts -label:Juno/To Do'
+    }
+  }
+  if (
+    ((_a = req == null ? void 0 : req.query) == null ? void 0 : _a.pageToken) &&
+    typeof req.query.pageToken === 'string'
+  ) {
+    requestBody.pageToken = req.query.pageToken
+  }
+  if (req.query.q && typeof req.query.q === 'string') {
+    requestBody.q = req.query.q
+  }
+  return requestBody
+}
+var threadRequest_default = requestBodyCreator
+
+// src/api/Threads/fetchSimpleThreads.ts
+function singleThread(thread, gmail) {
+  return __async(this, null, function* () {
+    const { id } = thread
+    try {
+      if (id) {
+        const response = yield gmail.users.threads.get({
+          userId: USER,
+          id,
+          format: 'full',
+        })
+        if (response && response.data) {
+          gmailV1SchemaThreadSchema.parse(response.data)
+          return response.data
+        }
+      }
+      throw Error('Thread not found...')
+    } catch (err) {
+      if (err.response) {
+        const error = err
+        console.error(error.response)
+        throw error
+      }
+      throw Error(`Threads returned an error: ${err}`)
+    }
+  })
+}
+var hydrateMetaList = (_0) =>
+  __async(void 0, [_0], function* ({ gmail, response, timeStampLastFetch }) {
+    const results = []
+    const { threads } = response
+    if (threads) {
+      for (const thread of threads) {
+        if (thread) {
+          results.push(singleThread(thread, gmail))
+        }
+      }
+      const fetchedThreads = yield Promise.all(results)
+      const result = __spreadProps(
+        __spreadValues(
+          {
+            nextPageToken: null,
+          },
+          response
+        ),
+        {
+          threads: yield Promise.all(
+            fetchedThreads.map((thread) => threadSimpleRemap(thread))
+          ),
+          timestamp: timeStampLastFetch,
+        }
+      )
+      return result
+    }
+  })
+var getSimpleThreads = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = google9.gmail({ version: 'v1', auth })
+    const requestBody = threadRequest_default(req)
+    try {
+      const response = yield gmail.users.threads.list(requestBody)
+      const timeStampLastFetch = Date.now()
+      if (
+        !response ||
+        !(response == null ? void 0 : response.data) ||
+        response.data.resultSizeEstimate === 0
+      ) {
+        return __spreadValues(
+          {
+            nextPageToken: null,
+            threads: [],
+            timestamp: timeStampLastFetch,
+          },
+          response.data
+        )
+      }
+      gmailV1SchemaListThreadsResponseSchema.parse(response.data)
+      const output = yield hydrateMetaList({
+        gmail,
+        response: response.data,
+        timeStampLastFetch,
+      })
+      return output
+    } catch (err) {
+      throw Error(`Threads returned an error: ${err}`)
+    }
+  })
+var fetchSimpleThreads = (req, res) =>
+  __async(void 0, null, function* () {
+    authMiddleware(getSimpleThreads)(req, res)
+  })
 
 // src/utils/onlyLegalLabelObjects.ts
 var onlyLegalLabels = ({ labelNames, storageLabels }) => {
@@ -2317,7 +2537,7 @@ function handleHistoryObject({ history, storageLabels }) {
 // src/api/History/listHistory.ts
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google9.gmail({ version: 'v1', auth })
+    const gmail = google10.gmail({ version: 'v1', auth })
     try {
       const { startHistoryId, storageLabels } = req.body.params
       const response = yield gmail.users.history.list({
@@ -2331,13 +2551,33 @@ var fetchHistory = (auth, req) =>
       ) {
         gmailV1SchemaListHistoryResponseSchema.parse(response.data)
         const { data } = response
+        console.log('Robbert', response.data)
         if (data == null ? void 0 : data.history) {
-          return __spreadProps(__spreadValues({}, data), {
+          const result = __spreadProps(__spreadValues({}, data), {
             history: handleHistoryObject({
               history: data.history,
               storageLabels,
             }),
           })
+          const { history } = result
+          if (history) {
+            const timeStampLastFetch = Date.now()
+            const buffer = []
+            for (let i = 0; i < history.length; i += 1) {
+              if (history[i].threads.length > 0) {
+                buffer.push(
+                  hydrateMetaList({
+                    gmail,
+                    timeStampLastFetch,
+                    response: history[i],
+                  })
+                )
+              }
+              const hydratedOutput = yield Promise.all(buffer)
+              return hydratedOutput
+            }
+          }
+          return result
         }
         return data
       }
@@ -2357,10 +2597,10 @@ var listHistory = (req, res) =>
   })
 
 // src/api/Labels/createLabels.ts
-import { google as google10 } from './node_modules/googleapis/build/src/index.js'
+import { google as google11 } from './node_modules/googleapis/build/src/index.js'
 var newLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google10.gmail({ version: 'v1', auth })
+    const gmail = google11.gmail({ version: 'v1', auth })
     try {
       const {
         body: { labelListVisibility, messageListVisibility, name },
@@ -2390,10 +2630,10 @@ var createLabels = (req, res) =>
   })
 
 // src/api/Labels/fetchLabels.ts
-import { google as google11 } from './node_modules/googleapis/build/src/index.js'
+import { google as google12 } from './node_modules/googleapis/build/src/index.js'
 var getLabels = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = google11.gmail({ version: 'v1', auth })
+    const gmail = google12.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.labels.list({
         userId: USER,
@@ -2418,10 +2658,10 @@ var fetchLabels = (req, res) =>
   })
 
 // src/api/Labels/fetchSingleLabel.ts
-import { google as google12 } from './node_modules/googleapis/build/src/index.js'
+import { google as google13 } from './node_modules/googleapis/build/src/index.js'
 var getLabel = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google12.gmail({ version: 'v1', auth })
+    const gmail = google13.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.labels.get({
@@ -2448,10 +2688,10 @@ var fetchSingleLabel = (req, res) =>
   })
 
 // src/api/Labels/removeLabels.ts
-import { google as google13 } from './node_modules/googleapis/build/src/index.js'
+import { google as google14 } from './node_modules/googleapis/build/src/index.js'
 var removeTheLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google13.gmail({ version: 'v1', auth })
+    const gmail = google14.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -2476,10 +2716,10 @@ var removeLabels = (req, res) =>
   })
 
 // src/api/Labels/updateLabels.ts
-import { google as google14 } from './node_modules/googleapis/build/src/index.js'
+import { google as google15 } from './node_modules/googleapis/build/src/index.js'
 var refreshLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google14.gmail({ version: 'v1', auth })
+    const gmail = google15.gmail({ version: 'v1', auth })
     const {
       body: { id, requestBody },
     } = req
@@ -2509,10 +2749,10 @@ var updateLabels = (req, res) =>
   })
 
 // src/api/Message/deleteMessage.ts
-import { google as google15 } from './node_modules/googleapis/build/src/index.js'
+import { google as google16 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google15.gmail({ version: 'v1', auth })
+    const gmail = google16.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -2537,10 +2777,10 @@ var deleteMessage = (req, res) =>
   })
 
 // src/api/Message/fetchMessageAttachment.ts
-import { google as google16 } from './node_modules/googleapis/build/src/index.js'
+import { google as google17 } from './node_modules/googleapis/build/src/index.js'
 var getAttachment = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google16.gmail({ version: 'v1', auth })
+    const gmail = google17.gmail({ version: 'v1', auth })
     const { messageId } = req.params
     const attachmentId = req.params.id
     try {
@@ -2569,10 +2809,10 @@ var fetchMessageAttachment = (req, res) =>
   })
 
 // src/api/Message/sendMessage.ts
-import { google as google17 } from './node_modules/googleapis/build/src/index.js'
+import { google as google18 } from './node_modules/googleapis/build/src/index.js'
 var exportMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google17.gmail({ version: 'v1', auth })
+    const gmail = google18.gmail({ version: 'v1', auth })
     const { id, threadId } = req.body
     try {
       if ('body' in req) {
@@ -2606,10 +2846,10 @@ var sendMessage = (req, res) =>
   })
 
 // src/api/Message/thrashMessage.ts
-import { google as google18 } from './node_modules/googleapis/build/src/index.js'
+import { google as google19 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google18.gmail({ version: 'v1', auth })
+    const gmail = google19.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.messages.trash({
         userId: USER,
@@ -2635,10 +2875,10 @@ var thrashMessage = (req, res) =>
   })
 
 // src/api/Message/updateMessage.ts
-import { google as google19 } from './node_modules/googleapis/build/src/index.js'
+import { google as google20 } from './node_modules/googleapis/build/src/index.js'
 var modifyMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google19.gmail({ version: 'v1', auth })
+    const gmail = google20.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.messages.modify({
         userId: USER,
@@ -2665,10 +2905,10 @@ var updateMessage = (req, res) =>
   })
 
 // src/api/Threads/deleteThread.ts
-import { google as google20 } from './node_modules/googleapis/build/src/index.js'
+import { google as google21 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google20.gmail({ version: 'v1', auth })
+    const gmail = google21.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -2693,41 +2933,8 @@ var deleteThread = (req, res) =>
   })
 
 // src/api/Threads/fetchFullThreads.ts
-import { google as google21 } from './node_modules/googleapis/build/src/index.js'
-
-// src/api/Threads/threadRequest.ts
-var requestBodyCreator = (req) => {
-  var _a
-  const requestBody = {
-    userId: USER,
-  }
-  requestBody.maxResults =
-    typeof Number(req.query.maxResults) !== 'number'
-      ? 20
-      : Number(req.query.maxResults)
-  if (req.query.labelIds && req.query.labelIds !== 'undefined') {
-    const typedLabelIdsReq = req.query.labelIds
-    if (!typedLabelIdsReq.includes(ARCHIVE_LABEL)) {
-      requestBody.labelIds = typedLabelIdsReq
-    } else {
-      requestBody.q = '-label:inbox -label:sent -label:drafts -label:Juno/To Do'
-    }
-  }
-  if (
-    ((_a = req == null ? void 0 : req.query) == null ? void 0 : _a.pageToken) &&
-    typeof req.query.pageToken === 'string'
-  ) {
-    requestBody.pageToken = req.query.pageToken
-  }
-  if (req.query.q && typeof req.query.q === 'string') {
-    requestBody.q = req.query.q
-  }
-  return requestBody
-}
-var threadRequest_default = requestBodyCreator
-
-// src/api/Threads/fetchFullThreads.ts
-function singleThread(thread, gmail) {
+import { google as google22 } from './node_modules/googleapis/build/src/index.js'
+function singleThread2(thread, gmail) {
   return __async(this, null, function* () {
     const { id } = thread
     try {
@@ -2755,19 +2962,19 @@ function singleThread(thread, gmail) {
 }
 var getFullThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google21.gmail({ version: 'v1', auth })
+    const gmail = google22.gmail({ version: 'v1', auth })
     const requestBody = threadRequest_default(req)
     try {
       const response = yield gmail.users.threads.list(requestBody)
       if (response && response.data) {
         gmailV1SchemaListThreadsResponseSchema.parse(response.data)
-        const hydrateMetaList = () =>
+        const hydrateMetaList2 = () =>
           __async(void 0, null, function* () {
             const results = []
             const { threads } = response.data
             if (threads) {
               for (const thread of threads) {
-                results.push(singleThread(thread, gmail))
+                results.push(singleThread2(thread, gmail))
               }
               const timeStampLastFetch = Date.now()
               const fetchedThreads = yield Promise.all(results)
@@ -2780,7 +2987,7 @@ var getFullThreads = (auth, req) =>
               return result
             }
           })
-        return hydrateMetaList()
+        return hydrateMetaList2()
       }
     } catch (err) {
       throw Error(`Threads returned an error: ${err}`)
@@ -2789,125 +2996,6 @@ var getFullThreads = (auth, req) =>
 var fetchFullThreads = (req, res) =>
   __async(void 0, null, function* () {
     authMiddleware(getFullThreads)(req, res)
-  })
-
-// src/api/Threads/fetchSimpleThreads.ts
-import { google as google22 } from './node_modules/googleapis/build/src/index.js'
-
-// src/utils/threadRemap/threadSimpleRemap.ts
-var remapPayloadHeaders2 = (rawMessage) => {
-  return {
-    deliveredTo: findHeader(rawMessage, 'Delivered-To'),
-    date: findHeader(rawMessage, 'Date'),
-    from: findHeader(rawMessage, 'From'),
-    subject: findHeader(rawMessage, 'Subject'),
-    to: findHeader(rawMessage, 'To'),
-    cc: findHeader(rawMessage, 'Cc'),
-    bcc: findHeader(rawMessage, 'Bcc'),
-  }
-}
-var remapSimpleMessage = (rawMessage) =>
-  __async(void 0, null, function* () {
-    var _a
-    return {
-      id: rawMessage.id,
-      threadId: rawMessage.threadId,
-      labelIds: rawMessage.labelIds,
-      snippet: rawMessage.snippet,
-      payload: {
-        mimeType:
-          (_a = rawMessage == null ? void 0 : rawMessage.payload) == null
-            ? void 0
-            : _a.mimeType,
-        headers: remapPayloadHeaders2(rawMessage),
-        files: checkAttachment(rawMessage),
-      },
-      sizeEstimate: rawMessage.sizeEstimate,
-      historyId: rawMessage.historyId,
-      internalDate: rawMessage.internalDate,
-    }
-  })
-function threadSimpleRemap(rawObject) {
-  return __async(this, null, function* () {
-    if (rawObject.messages) {
-      const mappedMessages = rawObject.messages.map((message) =>
-        remapSimpleMessage(message)
-      )
-      const result = {
-        id: rawObject.id,
-        historyId: rawObject.historyId,
-        messages: yield Promise.all(mappedMessages),
-      }
-      ThreadSimpleRemap.parse(result)
-      return result
-    }
-    return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
-  })
-}
-
-// src/api/Threads/fetchSimpleThreads.ts
-function singleThread2(thread, gmail) {
-  return __async(this, null, function* () {
-    const { id } = thread
-    try {
-      if (id) {
-        const response = yield gmail.users.threads.get({
-          userId: USER,
-          id,
-          format: 'full',
-        })
-        if (response && response.data) {
-          gmailV1SchemaThreadSchema.parse(response.data)
-          return response.data
-        }
-      }
-      throw Error('Thread not found...')
-    } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Threads returned an error: ${err}`)
-    }
-  })
-}
-var getSimpleThreads = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google22.gmail({ version: 'v1', auth })
-    const requestBody = threadRequest_default(req)
-    try {
-      const response = yield gmail.users.threads.list(requestBody)
-      if (response && response.data) {
-        gmailV1SchemaListThreadsResponseSchema.parse(response.data)
-        const hydrateMetaList = () =>
-          __async(void 0, null, function* () {
-            const results = []
-            const { threads } = response.data
-            if (threads) {
-              for (const thread of threads) {
-                results.push(singleThread2(thread, gmail))
-              }
-              const timeStampLastFetch = Date.now()
-              const fetchedThreads = yield Promise.all(results)
-              const result = __spreadProps(__spreadValues({}, response.data), {
-                threads: yield Promise.all(
-                  fetchedThreads.map((thread) => threadSimpleRemap(thread))
-                ),
-                timestamp: timeStampLastFetch,
-              })
-              return result
-            }
-          })
-        return hydrateMetaList()
-      }
-    } catch (err) {
-      throw Error(`Threads returned an error: ${err}`)
-    }
-  })
-var fetchSimpleThreads = (req, res) =>
-  __async(void 0, null, function* () {
-    authMiddleware(getSimpleThreads)(req, res)
   })
 
 // src/api/Threads/fetchSingleThread.ts
@@ -3045,12 +3133,14 @@ var fetchProfile = (auth) =>
           }
           return null
         }
-        return __spreadValues(
+        const result = __spreadValues(
           {
             name: getName(),
           },
           userResponse.value.data
         )
+        extendedGmailV1SchemaProfileSchemaSchema.parse(result)
+        return result
       }
       return new Error('No profile found...')
     } catch (err) {
@@ -3190,7 +3280,7 @@ router.patch('/api/labels', updateLabels)
 router.patch('/api/message/:id?', updateMessage)
 router.patch('/api/thread/:id?', updateThread)
 router.post('/api/auth/oauth/google/', getAuthUrl)
-router.post('/api/auth/oauth/google/callback/', getAuthenticateClient)
+router.post('/api/auth/oauth/google/callback/', getAuthenticateClient2)
 router.post('/api/create-draft', createDraft)
 router.post('/api/history/:startHistoryId?', listHistory)
 router.post('/api/labels', createLabels)

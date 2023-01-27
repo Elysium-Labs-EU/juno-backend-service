@@ -6,6 +6,7 @@ import { GaxiosError } from 'googleapis-common'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import { gmailV1SchemaProfileSchema } from '../../types/gmailTypes'
+import { extendedGmailV1SchemaProfileSchemaSchema } from '../../types/otherTypes'
 import { peopleV1SchemaPersonSchema } from '../../types/peopleTypes'
 
 const fetchProfile = async (auth: OAuth2Client | undefined) => {
@@ -37,10 +38,12 @@ const fetchProfile = async (auth: OAuth2Client | undefined) => {
         }
         return null
       }
-      return {
+      const result = {
         name: getName(),
         ...userResponse.value.data,
       }
+      extendedGmailV1SchemaProfileSchemaSchema.parse(result)
+      return result
     }
     return new Error('No profile found...')
   } catch (err) {

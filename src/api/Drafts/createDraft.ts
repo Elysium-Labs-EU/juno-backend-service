@@ -29,7 +29,7 @@ async function setupDraft(auth: OAuth2Client | undefined, req: Request) {
 
       if (response?.status === 200 && response?.data) {
         gmailV1SchemaDraftSchema.parse(response.data)
-        return response
+        return response.data
       } else {
         return new Error('Draft is not created...')
       }

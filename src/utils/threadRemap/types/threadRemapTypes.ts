@@ -47,8 +47,12 @@ const FullMessage = z.object({
   payload: z.object({
     mimeType: z.string(),
     headers: PayloadHeadersEnhanced,
-    body: z.object({ emailHTML: z.string(), emailFileHTML: z.array(z.any()) }),
-    files: z.array(z.any()),
+    body: z.object({
+      emailHTML: z.string(),
+      emailFileHTML: z.array(z.any()),
+      removedTrackers: z.array(z.string()).optional(),
+    }),
+    files: z.array(gmailV1SchemaMessagePartSchema),
     parts: z.array(gmailV1SchemaMessagePartSchema).optional(),
   }),
   sizeEstimate: z.number(),
@@ -56,7 +60,7 @@ const FullMessage = z.object({
   internalDate: z.string(),
 })
 
-export const ThreadFullRemap = z.object({
+export const ThreadObject = z.object({
   id: z.string(),
   historyId: z.string(),
   messages: z.array(FullMessage),

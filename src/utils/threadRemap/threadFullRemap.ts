@@ -4,7 +4,7 @@ import bodyDecoder from '../bodyDecoder/bodyDecoder'
 import checkAttachment from '../fetchAttachments/fetchAttachments'
 import findHeader from '../findHeader'
 import handleListUnsubscribe from '../handleListUnsubscribe/handleListUnsubscribe'
-import { ThreadFullRemap } from './types/threadRemapTypes'
+import { ThreadObject } from './types/threadRemapTypes'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   return {
@@ -61,7 +61,7 @@ export default async function threadFullRemap(
       historyId: rawObject.historyId,
       messages: await Promise.all(mappedMessages),
     }
-    ThreadFullRemap.parse(result)
+    ThreadObject.parse(result)
 
     return result
   }

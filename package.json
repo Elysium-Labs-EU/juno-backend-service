@@ -17,6 +17,7 @@
     "lint-staged": "lint-staged --config lint-staged.config.mjs",
     "husky-install": "husky install",
     "test": "vitest",
+    "typecheck": "tsc --incremental --noEmit",
     "update-deps": "yarn upgrade-interactive --latest"
   },
   "author": {

@@ -6,6 +6,8 @@ import { GaxiosError } from 'googleapis-common'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 
+// TODO: Double check if this route is being used on the frontend
+
 const deleteSingleMessage = async (
   auth: OAuth2Client | undefined,
   req: Request
