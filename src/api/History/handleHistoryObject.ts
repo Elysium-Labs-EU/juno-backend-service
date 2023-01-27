@@ -10,9 +10,9 @@ export interface LabelIdName {
   id: string
   name: string
 }
-interface IFeedModel {
-  labels: string[]
-  threads: (gmail_v1.Schema$Message | undefined)[]
+export interface IFeedModel {
+  labels: Array<string>
+  threads: Array<gmail_v1.Schema$Message | undefined>
   nextPageToken: string | null
 }
 
@@ -31,9 +31,9 @@ const restructureObject = (message: gmail_v1.Schema$Message | undefined) => {
 
 /**
  * @function handleHistoryObject
- * @param {IHistoryObject[]} history - the history object from the Gmail api.
- * @param {LabelIdName[]} storageLabels - all the available Juno labels in this system.
- * @returns {IFeedModel[]} - End result will be that the function returns multiple arrays. One for each inbox.
+ * @param {Array<gmail_v1.Schema$History>} history - the history object from the Gmail api.
+ * @param {Array<LabelIdName>} storageLabels - all the available Juno labels in this system.
+ * @returns {Array<IFeedModel>} - End result will be that the function returns multiple arrays. One for each inbox.
  * */
 
 // TODO: Make the remove changes also be worked on
@@ -43,9 +43,9 @@ export default function handleHistoryObject({
   history,
   storageLabels,
 }: {
-  history: gmail_v1.Schema$History[]
-  storageLabels: LabelIdName[]
-}): IFeedModel[] {
+  history: Array<gmail_v1.Schema$History>
+  storageLabels: Array<LabelIdName>
+}): Array<IFeedModel> {
   const inboxFeed: IFeedModel = {
     labels: [global.INBOX_LABEL],
     threads: [],

@@ -1,7 +1,8 @@
 import { gmail_v1 } from 'googleapis'
 
-import checkAttachment from './fetchAttachments/fetchAttachments'
-import findHeader from './findHeader'
+import checkAttachment from '../fetchAttachments/fetchAttachments'
+import findHeader from '../findHeader'
+import { ThreadSimpleRemap } from './types/threadRemapTypes'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   return {
@@ -40,11 +41,15 @@ export default async function threadSimpleRemap(
       remapSimpleMessage(message)
     )
 
-    return {
+    const result = {
       id: rawObject.id,
       historyId: rawObject.historyId,
       messages: await Promise.all(mappedMessages),
     }
+
+    ThreadSimpleRemap.parse(result)
+
+    return result
   }
   return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
 }

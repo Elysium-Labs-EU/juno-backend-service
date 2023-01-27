@@ -22,11 +22,7 @@ describe('handleListUnsubscribe', () => {
     )
   })
 
-  it('should return undefined when unsubscribeLink is null', () => {
-    expect(handleListUnsubscribe(null)).toBe(undefined)
-  })
-
-  it('should return undefined when unsubscribeLink is undefined', () => {
-    expect(handleListUnsubscribe(undefined)).toBe(undefined)
+  it('should return null when unsubscribeLink is null', () => {
+    expect(handleListUnsubscribe(null)).toBe(null)
   })
 })

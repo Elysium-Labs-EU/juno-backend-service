@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaSendAsSchema } from '../../types/gmailTypes'
 
 const updateSendAsGmail = async (
   auth: OAuth2Client | undefined,
@@ -21,7 +22,8 @@ const updateSendAsGmail = async (
         signature: request.signature,
       },
     })
-    if (response?.status === 200) {
+    if (response?.data) {
+      gmailV1SchemaSendAsSchema.parse(response.data)
       return response.data
     }
     return new Error('No data found...')

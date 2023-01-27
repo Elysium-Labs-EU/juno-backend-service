@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaSendAsSchema } from '../../types/gmailTypes'
 
 const fetchSendAs = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -16,7 +17,8 @@ const fetchSendAs = async (auth: OAuth2Client | undefined, req: Request) => {
         userId: USER,
         sendAsEmail: emailId,
       })
-      if (response?.status === 200) {
+      if (response?.data) {
+        gmailV1SchemaSendAsSchema.parse(response.data)
         return response.data
       }
       return new Error('No data found...')

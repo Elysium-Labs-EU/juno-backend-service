@@ -5,6 +5,9 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaMessageSchema } from '../../types/gmailTypes'
+
+// TODO: Double check if this route is being used on the frontend
 
 const modifyMessage = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -14,7 +17,8 @@ const modifyMessage = async (auth: OAuth2Client | undefined, req: Request) => {
       id: req.params.id,
       requestBody: req.body,
     })
-    if (response && response.data) {
+    if (response?.data) {
+      gmailV1SchemaMessageSchema.parse(response)
       return response.data
     }
     return new Error('Message not found...')

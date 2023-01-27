@@ -8,14 +8,18 @@ export default function findHeader(
     rawMessage?.payload?.headers &&
     rawMessage?.payload?.headers?.find((e) => e.name === query)
   ) {
-    return rawMessage.payload.headers.find((e) => e.name === query)?.value
+    return (
+      rawMessage.payload.headers.find((e) => e.name === query)?.value ?? null
+    )
   }
   if (
     rawMessage?.payload?.headers &&
     rawMessage.payload.headers.find((e) => e.name === query.toLowerCase())
   ) {
-    return rawMessage.payload.headers.find(
-      (e) => e.name === query.toLowerCase()
-    )?.value
+    return (
+      rawMessage.payload.headers.find((e) => e.name === query.toLowerCase())
+        ?.value ?? null
+    )
   }
+  return null
 }

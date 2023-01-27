@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaLabelSchema } from '../../types/gmailTypes'
 
 const refreshLabels = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -23,7 +24,8 @@ const refreshLabels = async (auth: OAuth2Client | undefined, req: Request) => {
       id,
       requestBody,
     })
-    if (response && response.data) {
+    if (response?.data) {
+      gmailV1SchemaLabelSchema.parse(response.data)
       return response.data
     }
     return new Error('No labels created...')

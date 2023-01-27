@@ -5,6 +5,7 @@ import { GaxiosError } from 'googleapis-common'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { gmailV1SchemaListLabelsResponseSchema } from '../../types/gmailTypes'
 
 const getLabels = async (auth: OAuth2Client | undefined) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -14,6 +15,7 @@ const getLabels = async (auth: OAuth2Client | undefined) => {
       userId: USER,
     })
     if (response?.data) {
+      gmailV1SchemaListLabelsResponseSchema.parse(response.data)
       return response.data
     }
     return new Error('No Labels found...')
