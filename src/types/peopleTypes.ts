@@ -503,6 +503,10 @@ export const peopleV1SchemaSearchResponseSchema = z.object({
   results: z.array(peopleV1SchemaSearchResultSchema).optional(),
 })
 
+export type TPeopleV1SchemaSearchResponseSchema = z.infer<
+  typeof peopleV1SchemaSearchResponseSchema
+>
+
 export const peopleV1SchemaBatchCreateContactsRequestSchema = z.object({
   contacts: z.array(peopleV1SchemaContactToCreateSchema).optional(),
   readMask: z.string().optional().nullable(),
