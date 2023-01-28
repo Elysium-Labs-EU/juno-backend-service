@@ -22,7 +22,6 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
     if (response?.status === 200 && storageLabels) {
       gmailV1SchemaListHistoryResponseSchema.parse(response.data)
       const { data } = response
-      console.log('Robbert', response.data)
       if (data?.history) {
         const result = {
           ...data,
