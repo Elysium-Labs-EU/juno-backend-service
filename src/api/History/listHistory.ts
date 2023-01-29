@@ -51,9 +51,9 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
               })
             )
           }
-          const hydratedOutput = await Promise.all(buffer)
-          return hydratedOutput
         }
+        const hydratedOutput = await Promise.all(buffer)
+        return hydratedOutput
       }
       return result
     }
