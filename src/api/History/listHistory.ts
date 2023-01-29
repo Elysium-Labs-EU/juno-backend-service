@@ -22,35 +22,40 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
     if (response?.status === 200 && storageLabels) {
       gmailV1SchemaListHistoryResponseSchema.parse(response.data)
       const { data } = response
-      if (data?.history) {
-        const result = {
-          ...data,
-          history: handleHistoryObject({
-            history: data.history,
-            storageLabels,
-          }),
+      if (!data.history) {
+        const emptyResponse = {
+          labels: [],
+          threads: [],
         }
-        const { history } = result
-        if (history) {
-          const timeStampLastFetch = Date.now()
-          const buffer: Array<ReturnType<typeof hydrateMetaList>> = []
-          for (let i = 0; i < history.length; i += 1) {
-            if (history[i].threads.length > 0) {
-              buffer.push(
-                hydrateMetaList({
-                  gmail,
-                  timeStampLastFetch,
-                  response: history[i],
-                })
-              )
-            }
-            const hydratedOutput = await Promise.all(buffer)
-            return hydratedOutput
-          }
-        }
-        return result
+        return [emptyResponse]
       }
-      return data
+
+      const result = {
+        ...data,
+        history: handleHistoryObject({
+          history: data.history,
+          storageLabels,
+        }),
+      }
+      const { history } = result
+      if (history) {
+        const timeStampLastFetch = Date.now()
+        const buffer: Array<ReturnType<typeof hydrateMetaList>> = []
+        for (let i = 0; i < history.length; i += 1) {
+          if (history[i].threads.length > 0) {
+            buffer.push(
+              hydrateMetaList({
+                gmail,
+                timeStampLastFetch,
+                response: history[i],
+              })
+            )
+          }
+          const hydratedOutput = await Promise.all(buffer)
+          return hydratedOutput
+        }
+      }
+      return result
     }
     return new Error('No history found...')
   } catch (err) {
