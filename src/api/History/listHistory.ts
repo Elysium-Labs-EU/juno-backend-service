@@ -30,32 +30,26 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
         return [emptyResponse]
       }
 
-      const result = {
-        ...data,
-        history: handleHistoryObject({
-          history: data.history,
-          storageLabels,
-        }),
-      }
-      const { history } = result
-      if (history) {
-        const timeStampLastFetch = Date.now()
-        const buffer: Array<ReturnType<typeof hydrateMetaList>> = []
-        for (let i = 0; i < history.length; i += 1) {
-          if (history[i].threads.length > 0) {
-            buffer.push(
-              hydrateMetaList({
-                gmail,
-                timeStampLastFetch,
-                response: history[i],
-              })
-            )
-          }
+      const history = handleHistoryObject({
+        history: data.history,
+        storageLabels,
+      })
+
+      const timeStampLastFetch = Date.now()
+      const buffer: Array<ReturnType<typeof hydrateMetaList>> = []
+      for (let i = 0; i < history.length; i += 1) {
+        if (history[i].threads.length > 0) {
+          buffer.push(
+            hydrateMetaList({
+              gmail,
+              timeStampLastFetch,
+              response: history[i],
+            })
+          )
         }
-        const hydratedOutput = await Promise.all(buffer)
-        return hydratedOutput
       }
-      return result
+      const hydratedOutput = await Promise.all(buffer)
+      return hydratedOutput
     }
     return new Error('No history found...')
   } catch (err) {
