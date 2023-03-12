@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 
-import { IAttachment } from '../../types/emailAttachmentTypes'
+import type { IBodyProps } from './../../bodyDecoderTypes'
 
 const TRACKERS_SELECTORS = [
   { attribute: 'width', value: '0' },
@@ -73,15 +73,46 @@ function detectAndRemove(documentImage: cheerio.Element) {
   return foundImage
 }
 
-export default function removeTrackers(orderedObject: {
-  emailHTML: string
-  emailFileHTML: Array<IAttachment>
-}) {
-  const localCopyOrderedObject: {
-    emailHTML: string
-    emailFileHTML: Array<IAttachment>
-    removedTrackers: Array<string>
-  } = { ...orderedObject, removedTrackers: [] }
+/**
+ * This function removes tracking images from the email body by looking for images with specific
+ * attributes and styles that are commonly used for tracking purposes. It returns a new object with
+ * the cleaned HTML, and an array of the removed trackers' URLs.
+ *
+ * @param {IBodyProps} orderedObject - An object that contains the email HTML and optional file attachments.
+ *
+ * @returns {IBodyProps} A new object with the cleaned HTML and an array of the removed trackers' URLs.
+ *
+ * @example
+ *
+ * // Case 1: Input email with tracking images
+ * const emailBody = {
+ *   emailHTML: '<img src="http://mailstat.us/tracker1.jpg" style="height:0;width:1px;"> \
+ *               <img src="https://open.convertkit-1.com/tracker2.gif" style="height:0;width:0">',
+ *   emailFileHTML: []
+ * };
+ * const cleanedEmail = removeTrackers(emailBody);
+ * console.log(cleanedEmail.emailHTML);
+ * // Output: '<html><head></head><body></body></html>'
+ * console.log(cleanedEmail.removedTrackers);
+ * // Output: ['http://mailstat.us/tracker1.jpg', 'https://open.convertkit-1.com/tracker2.gif']
+ *
+ * // Case 2: Input email without tracking images
+ * const emailBody = {
+ *   emailHTML: '<html><head></head><body><p>This email does not contain any tracking images.</p></body></html>',
+ *   emailFileHTML: []
+ * };
+ * const cleanedEmail = removeTrackers(emailBody);
+ * console.log(cleanedEmail.emailHTML);
+ * // Output: '<html><head></head><body><p>This email does not contain any tracking images.</p></body></html>'
+ * console.log(cleanedEmail.removedTrackers);
+ * // Output: []
+ */
+
+export default function removeTrackers(orderedObject: IBodyProps) {
+  const localCopyOrderedObject: IBodyProps = {
+    ...orderedObject,
+    removedTrackers: [],
+  }
 
   const $ = cheerio.load(orderedObject.emailHTML)
   let foundImage: cheerio.Element | null = null
@@ -106,7 +137,7 @@ export default function removeTrackers(orderedObject: {
       const srcOfTracker = documentImage?.attributes.filter(
         (attribute) => attribute.name === 'src'
       )[0]
-      if (srcOfTracker) {
+      if (srcOfTracker && localCopyOrderedObject.removedTrackers) {
         localCopyOrderedObject.removedTrackers.push(srcOfTracker.value)
       }
     }

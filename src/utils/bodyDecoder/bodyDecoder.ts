@@ -4,9 +4,13 @@ import { gmail_v1 } from 'googleapis'
 import * as global from '../../constants/globalConstants'
 import type { IAttachment } from '../../types/emailAttachmentTypes'
 import { baseBase64, decodeBase64 } from '../decodeBase64'
-import removeScripts from '../removeScripts'
-import removeTrackers from '../removeTrackers/removeTrackers'
+import type { IBodyProps } from './bodyDecoderTypes'
+import changeSignatureColor from './utils/changeSignatureColor/changeSignatureColor'
+import cleanLink from './utils/cleanLink'
 import enhancePlainText from './utils/enhancePlainText'
+import openLinkInNewTab from './utils/openLinkInNewTab'
+import removeScripts from './utils/removeScripts'
+import removeTrackers from './utils/removeTrackers/removeTrackers'
 
 let decodedString: string | undefined
 let localMessageId: string | null
@@ -205,10 +209,7 @@ export const prioritizeHTMLbodyObject = (response: {
 
 // TODO: Possible enhancement: Check for header on file: Content-Disposition "attachment"
 // Check the string body for CID (files) if there is a match, replace the img tag with the fetched file
-export const placeInlineImage = (orderedObject: {
-  emailHTML: string
-  emailFileHTML: Array<IAttachment>
-}): { emailHTML: string; emailFileHTML: Array<IAttachment> } => {
+export const placeInlineImage = (orderedObject: IBodyProps): IBodyProps => {
   if (orderedObject.emailFileHTML.length > 0) {
     const processedObjectArray: Array<IAttachment> = []
     const $ = cheerio.load(orderedObject.emailHTML)
@@ -245,21 +246,18 @@ export const placeInlineImage = (orderedObject: {
  */
 
 interface IBodyDecoder {
-  messageId: string | undefined | null
-  inputObject: gmail_v1.Schema$MessagePart | undefined
-  signal?: AbortSignal
   gmail: gmail_v1.Gmail | undefined
+  inputObject: gmail_v1.Schema$MessagePart | undefined
+  messageId: string | undefined | null
+  signal?: AbortSignal
 }
 
 const bodyDecoder = async ({
-  messageId,
-  inputObject,
-  signal,
   gmail,
-}: IBodyDecoder): Promise<{
-  emailHTML: string
-  emailFileHTML: Array<IAttachment>
-}> => {
+  inputObject,
+  messageId,
+  signal,
+}: IBodyDecoder): Promise<IBodyProps> => {
   try {
     if (inputObject) {
       if (messageId) {
@@ -282,7 +280,10 @@ const bodyDecoder = async ({
         const inlinedImages = placeInlineImage(prioritized)
         const removedTrackers = removeTrackers(inlinedImages)
         const removedScript = removeScripts(removedTrackers)
-        return removedScript
+        const openLinks = openLinkInNewTab(removedScript)
+        const cleanedLinks = cleanLink(openLinks)
+        const alteredSignature = changeSignatureColor(cleanedLinks)
+        return alteredSignature
       } else {
         throw Error('Got no response from the body parts')
       }
