@@ -10,6 +10,6 @@ describe('removeTrackers', () => {
     const orderedObject = { emailHTML, emailFileHTML }
     const result = removeTrackers(orderedObject)
     expect(result.emailHTML).not.toContain('http://mailstat.us/tracker.gif')
-    expect(result.removedTrackers.length).toBeGreaterThan(0)
+    expect(result.removedTrackers?.length).toBeGreaterThan(0)
   })
 })

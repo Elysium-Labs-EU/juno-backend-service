@@ -4,15 +4,20 @@ import bodyDecoder from '../bodyDecoder/bodyDecoder'
 import checkAttachment from '../fetchAttachments/fetchAttachments'
 import findHeader from '../findHeader'
 import handleListUnsubscribe from '../handleListUnsubscribe/handleListUnsubscribe'
+import type { IBodyProps } from './../bodyDecoder/bodyDecoderTypes'
 import { ThreadObject } from './types/threadRemapTypes'
 
-const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
+const remapPayloadHeaders = (
+  rawMessage: gmail_v1.Schema$Message,
+  convertedBody: IBodyProps
+) => {
   return {
     deliveredTo: findHeader(rawMessage, 'Delivered-To'),
     date: findHeader(rawMessage, 'Date'),
     from: findHeader(rawMessage, 'From'),
     subject: findHeader(rawMessage, 'Subject'),
     listUnsubscribe: handleListUnsubscribe(
+      convertedBody,
       findHeader(rawMessage, 'List-Unsubscribe')
     ),
     to: findHeader(rawMessage, 'To'),
@@ -25,6 +30,11 @@ export const remapFullMessage = async (
   rawMessage: gmail_v1.Schema$Message,
   gmail: gmail_v1.Gmail
 ) => {
+  const convertedBody = await bodyDecoder({
+    gmail,
+    inputObject: rawMessage.payload,
+    messageId: rawMessage?.id,
+  })
   return {
     id: rawMessage.id,
     threadId: rawMessage.threadId,
@@ -32,12 +42,8 @@ export const remapFullMessage = async (
     snippet: rawMessage.snippet,
     payload: {
       mimeType: rawMessage?.payload?.mimeType,
-      headers: remapPayloadHeaders(rawMessage),
-      body: await bodyDecoder({
-        inputObject: rawMessage.payload,
-        messageId: rawMessage?.id,
-        gmail,
-      }),
+      headers: remapPayloadHeaders(rawMessage, convertedBody),
+      body: convertedBody,
       files: checkAttachment(rawMessage),
       parts: rawMessage?.payload?.parts,
     },

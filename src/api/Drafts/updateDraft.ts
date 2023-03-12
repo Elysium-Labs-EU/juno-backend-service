@@ -7,7 +7,7 @@ import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import { gmailV1SchemaDraftSchema } from '../../types/gmailTypes'
 import formFieldParser from '../../utils/formFieldParser'
-import messageEncoding from '../../utils/messageEncoding'
+import messageEncoding from '../../utils/messageEncoding/messageEncoding'
 
 const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -38,6 +38,7 @@ const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
   } catch (err) {
     if ((err as GaxiosError).response) {
       const error = err as Common.GaxiosError
+      // eslint-disable-next-line no-console
       console.error(error.response)
       throw error
     }
