@@ -1993,10 +1993,10 @@ flatted@^3.1.0:
   version "3.1.1"
   resolved "https://registry.npmjs.org/flatted/-/flatted-3.1.1.tgz"
 
-formidable@3.2.4:
-  version "3.2.4"
-  resolved "https://registry.yarnpkg.com/formidable/-/formidable-3.2.4.tgz#c0019368718de33ecb637c66d03b6342a677893a"
-  integrity sha512-8/5nJsq+o2o1+Dryx1k5gLTDaw0dNE9kL4P3srKArO6zhoerGm42/R8zq+L5EkV7kckNTvJpJke0kI8JseL3RQ==
+formidable@3.2.5:
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/formidable/-/formidable-3.2.5.tgz#95d6e0b0110c5e6f31ef5be4b0bd2d0791fd9232"
+  integrity sha512-GRGDJTWAZ3H+umZbF2bKcqjsTov25zgon1St05ziKdiSw3kxvI+meMJrXx3ylRmuSADOpviSakBuS4yvGCGnSg==
   dependencies:
     dezalgo "1.0.3"
     hexoid "1.0.0"
