@@ -4,7 +4,9 @@ import { google } from 'googleapis'
 import type { people_v1 } from 'googleapis'
 
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { peopleV1SchemaListOtherContactsResponseSchema } from '../../types/peopleTypes'
+import errorHandeling from '../../utils/errorHandeling'
 
 const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
   const people = google.people({ version: 'v1', auth })
@@ -30,10 +32,11 @@ const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
     }
     return new Error('No contacts found...')
   } catch (err) {
-    throw Error(`Contacts returned an error: ${err}`)
+    errorHandeling(err, 'fetchAllContacts')
   }
 }
 
 export async function fetchAllContacts(req: Request, res: Response) {
-  authMiddleware(getContacts)(req, res)
+  const { data, statusCode } = await authMiddleware(getContacts)(req)
+  responseMiddleware(res, statusCode, data)
 }

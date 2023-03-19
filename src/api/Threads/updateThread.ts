@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaThreadSchema } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 
 const updateSingleThread = async (
   auth: OAuth2Client | undefined,
@@ -24,14 +25,10 @@ const updateSingleThread = async (
     }
     return new Error('Message not found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Single message returned an error: ${err}`)
+    errorHandeling(err, 'updateThread')
   }
 }
 export const updateThread = async (req: Request, res: Response) => {
-  authMiddleware(updateSingleThread)(req, res)
+  const { data, statusCode } = await authMiddleware(updateSingleThread)(req)
+  responseMiddleware(res, statusCode, data)
 }

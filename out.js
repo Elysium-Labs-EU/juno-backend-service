@@ -119,8 +119,8 @@ function initSentry(app2) {
 // src/routes/index.ts
 import express from './node_modules/express/index.js'
 
-// src/api/Contacts/fetchAllContacts.ts
-import { google } from './node_modules/googleapis/build/src/index.js'
+// src/api/Base/getBase.ts
+import { z as z4 } from './node_modules/zod/lib/index.mjs'
 
 // src/constants/globalConstants.ts
 var ARCHIVE_LABEL = 'ARCHIVE'
@@ -1095,7 +1095,7 @@ var authenticateUserLocal = (req) =>
   })
 
 // src/middleware/authMiddleware.ts
-var authMiddleware = (requestFunction) => (req, res) =>
+var authMiddleware = (requestFunction) => (req) =>
   __async(void 0, null, function* () {
     var _a
     try {
@@ -1106,19 +1106,330 @@ var authMiddleware = (requestFunction) => (req, res) =>
           ? yield authenticateUserLocal(req)
           : yield authenticateUserSession(req)
         const response = yield requestFunction(auth, req)
-        return res.status(200).json(response)
+        if (response instanceof Error) {
+          return { success: false, data: response, statusCode: 400 }
+        }
+        return { success: true, data: response, statusCode: 200 }
       }
-      return res.status(401).json('There is no authorization header found')
+      return {
+        success: false,
+        data: 'There is no authorization header found',
+        statusCode: 401,
+      }
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
-      res.status(401).json(err == null ? void 0 : err.message)
+      return {
+        statusCode: 401,
+        success: false,
+        error: err,
+        data: (err == null ? void 0 : err.message) || 'Internal server error',
+      }
     }
   })
 
+// src/api/Labels/createLabel.ts
+import { google } from './node_modules/googleapis/build/src/index.js'
+
+// src/middleware/responseMiddleware.ts
+var responseMiddleware = (res, statusCode, message) => {
+  return res.status(statusCode).json(message)
+}
+
+// src/utils/errorHandeling.ts
+function errorHandeling(err, functionName) {
+  if (err.response) {
+    const error = err
+    if ('response' in error) {
+      console.error(error.response)
+    }
+    return error
+  }
+  return Error(`${functionName} returned an error: ${err}`)
+}
+
+// src/api/Labels/createLabel.ts
+var newLabel = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = google.gmail({ version: 'v1', auth })
+    try {
+      const {
+        body: { labelListVisibility, messageListVisibility, name },
+      } = req
+      const response = gmail.users.labels.create({
+        userId: USER,
+        requestBody: {
+          labelListVisibility,
+          messageListVisibility,
+          name,
+        },
+      })
+      const validatedResponse = gmailV1SchemaLabelSchema.parse(response)
+      return validatedResponse
+    } catch (err) {
+      errorHandeling(err, 'createLabel')
+    }
+  })
+var createLabel = (req, res) =>
+  __async(void 0, null, function* () {
+    const { data, statusCode } = yield authMiddleware(newLabel)(req)
+    responseMiddleware(res, statusCode, data)
+  })
+
+// src/api/Labels/getLabels.ts
+import { google as google2 } from './node_modules/googleapis/build/src/index.js'
+var fetchLabels = (auth) =>
+  __async(void 0, null, function* () {
+    const gmail = google2.gmail({ version: 'v1', auth })
+    try {
+      const response = yield gmail.users.labels.list({
+        userId: USER,
+      })
+      if (response == null ? void 0 : response.data) {
+        gmailV1SchemaListLabelsResponseSchema.parse(response.data)
+        return response.data
+      }
+      return new Error('No Labels found...')
+    } catch (err) {
+      errorHandeling(err, 'getLabels')
+    }
+  })
+var getLabels = (req, res) =>
+  __async(void 0, null, function* () {
+    const { data, statusCode } = yield authMiddleware(fetchLabels)(req)
+    responseMiddleware(res, statusCode, data)
+  })
+
+// src/api/Users/getProfile.ts
+import { google as google3 } from './node_modules/googleapis/build/src/index.js'
+var fetchProfile = (auth) =>
+  __async(void 0, null, function* () {
+    const gmail = google3.gmail({ version: 'v1', auth })
+    const people = google3.people({ version: 'v1', auth })
+    try {
+      const [userResponse, contactsResponse] = yield Promise.allSettled([
+        gmail.users.getProfile({
+          userId: USER,
+        }),
+        people.people.get({
+          resourceName: 'people/me',
+          personFields: 'emailAddresses,names,photos',
+        }),
+      ])
+      if (
+        userResponse.status === 'fulfilled' &&
+        contactsResponse.status === 'fulfilled'
+      ) {
+        gmailV1SchemaProfileSchema.parse(userResponse.value.data)
+        peopleV1SchemaPersonSchema.parse(contactsResponse.value.data)
+        const getName = () => {
+          var _a, _b, _c, _d, _e
+          if (
+            ((_b = (_a = contactsResponse.value) == null ? void 0 : _a.data) ==
+            null
+              ? void 0
+              : _b.names) &&
+            ((_e =
+              (_d = (_c = contactsResponse.value) == null ? void 0 : _c.data) ==
+              null
+                ? void 0
+                : _d.names) == null
+              ? void 0
+              : _e.length) > 0
+          ) {
+            return contactsResponse.value.data.names[0].displayName
+          }
+          return null
+        }
+        const result = __spreadValues(
+          {
+            name: getName(),
+          },
+          userResponse.value.data
+        )
+        const validatedResponse =
+          extendedGmailV1SchemaProfileSchemaSchema.parse(result)
+        return validatedResponse
+      }
+      return new Error('No profile found...')
+    } catch (err) {
+      errorHandeling(err, 'getProfile')
+    }
+  })
+var getProfile = (req, res) =>
+  __async(void 0, null, function* () {
+    const { data, statusCode } = yield authMiddleware(fetchProfile)(req)
+    responseMiddleware(res, statusCode, data)
+  })
+
+// src/api/Users/getSendAs.ts
+import { google as google4 } from './node_modules/googleapis/build/src/index.js'
+var fetchSendAs = (auth, req) =>
+  __async(void 0, null, function* () {
+    const gmail = google4.gmail({ version: 'v1', auth })
+    const { emailId } = req.query
+    if (typeof emailId === 'string') {
+      try {
+        const response = yield gmail.users.settings.sendAs.get({
+          userId: USER,
+          sendAsEmail: emailId,
+        })
+        if (response == null ? void 0 : response.data) {
+          gmailV1SchemaSendAsSchema.parse(response.data)
+          return response.data
+        }
+        return new Error('No data found...')
+      } catch (err) {
+        errorHandeling(err, 'getSendAs')
+      }
+    } else {
+      throw Error('Invalid email id request')
+    }
+  })
+var getSendAs = (req, res) =>
+  __async(void 0, null, function* () {
+    const { data, statusCode } = yield authMiddleware(fetchSendAs)(req)
+    responseMiddleware(res, statusCode, data)
+  })
+
+// src/api/Base/getBase.ts
+var createMissingLabel = (label, req) =>
+  __async(void 0, null, function* () {
+    try {
+      const body = {
+        name: label,
+        labelVisibility: 'labelShow',
+        messageListVisibility: 'show',
+      }
+      req.body = body
+      const labelResponse = yield authMiddleware(newLabel)(req)
+      return labelResponse
+    } catch (err) {
+      console.error(err)
+      return void 0
+    }
+  })
+var stringArraySchema = z4.array(z4.string())
+function getBase(req, res) {
+  return __async(this, null, function* () {
+    var _a, _b, _c, _d
+    try {
+      const { BASE_ARRAY } = req.body
+      const validatedRequestBody = stringArraySchema.parse(BASE_ARRAY)
+      const userResponse = yield authMiddleware(fetchProfile)(req)
+      const { data } = userResponse || {}
+      if (!data || data instanceof Error) {
+        throw new Error('Invalid user response data')
+      }
+      const { emailAddress } = data
+      if (!emailAddress) {
+        throw new Error('Invalid user email address')
+      }
+      req.query = { emailId: emailAddress }
+      const [sendAsResponse, labelResponse] = yield Promise.allSettled([
+        authMiddleware(fetchSendAs)(req),
+        authMiddleware(fetchLabels)(req),
+      ])
+      if (labelResponse.status === 'rejected') {
+        return res.status(500).json({
+          error: `Network Error. ${
+            (labelResponse == null ? void 0 : labelResponse.reason) ||
+            JSON.stringify(labelResponse)
+          }. Please try again later.`,
+        })
+      }
+      if (sendAsResponse.status === 'rejected') {
+        return res.status(500).json({
+          error: `Network Error. ${
+            (sendAsResponse == null ? void 0 : sendAsResponse.reason) ||
+            JSON.stringify(sendAsResponse)
+          }. Please try again later.`,
+        })
+      }
+      const promisesHaveSettledWithValues =
+        sendAsResponse.status === 'fulfilled' &&
+        'data' in sendAsResponse.value &&
+        labelResponse.status === 'fulfilled' &&
+        'data' in labelResponse.value
+      if (
+        !promisesHaveSettledWithValues ||
+        sendAsResponse.value.data instanceof Error ||
+        labelResponse.value.data instanceof Error
+      ) {
+        throw new Error('Invalid sendAs or label response data')
+      }
+      const possibleLabels =
+        ((_a = labelResponse.value.data) == null ? void 0 : _a.labels) || []
+      const nameMapLabels = new Set(possibleLabels.map((label) => label.name))
+      const missingLabels = validatedRequestBody.filter(
+        (item) => !nameMapLabels.has(item)
+      )
+      const batchCreateLabels = yield Promise.all(
+        missingLabels.map((item) => createMissingLabel(item, req))
+      )
+      if (
+        batchCreateLabels.some((createdLabel) => createdLabel instanceof Error)
+      ) {
+        throw new Error('Invalid response on creation of labels')
+      }
+      const newlyCreatedLabels = batchCreateLabels
+        .map((createdLabel) => {
+          const checkValue = createdLabel == null ? void 0 : createdLabel.data
+          if (checkValue && !(checkValue instanceof Error)) {
+            return checkValue
+          }
+          return void 0
+        })
+        .filter((item) => item !== void 0)
+      const labels = [
+        .../* @__PURE__ */ new Set([...newlyCreatedLabels, ...possibleLabels]),
+      ]
+      const prefetchedBoxes = validatedRequestBody
+        .map((baseLabel) => labels.find((item) => item.name === baseLabel))
+        .filter((item) => item !== void 0)
+      const extendedPrefetchedBoxesWithArchiveLabel = [
+        {
+          id: ARCHIVE_LABEL,
+          name: ARCHIVE_LABEL,
+          messageListVisibility: 'show',
+          labelListVisibility: 'labelShow',
+          type: 'junoCustom',
+        },
+        ...prefetchedBoxes,
+      ]
+      const profile = __spreadValues(
+        {
+          signature:
+            (_d =
+              (_c =
+                (_b = sendAsResponse == null ? void 0 : sendAsResponse.value) ==
+                null
+                  ? void 0
+                  : _b.data) == null
+                ? void 0
+                : _c.signature) != null
+              ? _d
+              : '',
+        },
+        userResponse.data
+      )
+      const returnObject = {
+        profile,
+        labels,
+        prefetchedBoxes: extendedPrefetchedBoxesWithArchiveLabel,
+      }
+      return res.status(200).json(returnObject)
+    } catch (error) {
+      console.error(error)
+      return res.status(500).json({ error: error.message })
+    }
+  })
+}
+
 // src/api/Contacts/fetchAllContacts.ts
+import { google as google5 } from './node_modules/googleapis/build/src/index.js'
 var getContacts = (auth, req) =>
   __async(void 0, null, function* () {
-    const people = google.people({ version: 'v1', auth })
+    const people = google5.people({ version: 'v1', auth })
     const requestBody = {}
     requestBody.pageSize =
       typeof Number(req.query.pageSize) !== 'number'
@@ -1138,17 +1449,18 @@ var getContacts = (auth, req) =>
       }
       return new Error('No contacts found...')
     } catch (err) {
-      throw Error(`Contacts returned an error: ${err}`)
+      errorHandeling(err, 'fetchAllContacts')
     }
   })
 function fetchAllContacts(req, res) {
   return __async(this, null, function* () {
-    authMiddleware(getContacts)(req, res)
+    const { data, statusCode } = yield authMiddleware(getContacts)(req)
+    responseMiddleware(res, statusCode, data)
   })
 }
 
 // src/api/Contacts/queryContacts.ts
-import { google as google2 } from './node_modules/googleapis/build/src/index.js'
+import { google as google6 } from './node_modules/googleapis/build/src/index.js'
 
 // src/api/Contacts/utils/remapContacts.ts
 function remapContacts({ results }) {
@@ -1197,7 +1509,7 @@ function remapContacts({ results }) {
 // src/api/Contacts/queryContacts.ts
 var getContacts2 = (auth, req) =>
   __async(void 0, null, function* () {
-    const people = google2.people({ version: 'v1', auth })
+    const people = google6.people({ version: 'v1', auth })
     const requestBody = {}
     if (typeof req.query.query === 'string') {
       requestBody.query = req.query.query
@@ -1213,24 +1525,25 @@ var getContacts2 = (auth, req) =>
       }
       return new Error('No contacts found...')
     } catch (err) {
-      throw Error(`Contacts returned an error: ${err}`)
+      errorHandeling(err, 'queryContacts')
     }
   })
 var queryContacts = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getContacts2)(req, res)
+    const { data, statusCode } = yield authMiddleware(getContacts2)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Drafts/createDraft.ts
-import { google as google3 } from './node_modules/googleapis/build/src/index.js'
+import { google as google7 } from './node_modules/googleapis/build/src/index.js'
 
-// src/utils/formFieldParser.ts
+// src/utils/formFieldParser/formFieldParser.ts
 import formidable from './node_modules/formidable/src/index.js'
 function formFieldParser(req) {
   return __async(this, null, function* () {
     const form = formidable({ multiples: true })
-    const formFields = yield new Promise(function (resolve, reject) {
-      form.parse(req, function (err, fields, files) {
+    const formFields = yield new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
         if (err) {
           reject(err)
           return
@@ -1305,7 +1618,7 @@ var messageEncoding_default = messageEncoding
 // src/api/Drafts/createDraft.ts
 function setupDraft(auth, req) {
   return __async(this, null, function* () {
-    const gmail = google3.gmail({ version: 'v1', auth })
+    const gmail = google7.gmail({ version: 'v1', auth })
     try {
       if ('body' in req) {
         const parsedResult = yield formFieldParser(req)
@@ -1330,25 +1643,21 @@ function setupDraft(auth, req) {
         }
       }
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Create Draft returned an error ${err}`)
+      errorHandeling(err, 'createDraft')
     }
   })
 }
 var createDraft = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(setupDraft)(req, res)
+    const { data, statusCode } = yield authMiddleware(setupDraft)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Drafts/deleteDraft.ts
-import { google as google4 } from './node_modules/googleapis/build/src/index.js'
+import { google as google8 } from './node_modules/googleapis/build/src/index.js'
 var removeDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google4.gmail({ version: 'v1', auth })
+    const gmail = google8.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -1359,24 +1668,20 @@ var removeDraft = (auth, req) =>
       })
       return response
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Draft returned an error: ${err}`)
+      errorHandeling(err, 'deleteDraft')
     }
   })
 var deleteDraft = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(removeDraft)(req, res)
+    const { data, statusCode } = yield authMiddleware(removeDraft)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Drafts/fetchDrafts.ts
-import { google as google5 } from './node_modules/googleapis/build/src/index.js'
+import { google as google9 } from './node_modules/googleapis/build/src/index.js'
 var getDrafts = (auth) =>
   __async(void 0, null, function* () {
-    const gmail = google5.gmail({ version: 'v1', auth })
+    const gmail = google9.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.list({
         userId: USER,
@@ -1387,21 +1692,17 @@ var getDrafts = (auth) =>
       }
       return new Error('No drafts found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Drafts returned an error: ${err}`)
+      errorHandeling(err, 'fetchDrafts')
     }
   })
 var fetchDrafts = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getDrafts)(req, res)
+    const { data, statusCode } = yield authMiddleware(getDrafts)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Drafts/fetchSingleDraft.ts
-import { google as google6 } from './node_modules/googleapis/build/src/index.js'
+import { google as google10 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/bodyDecoder/bodyDecoder.ts
 import * as cheerio6 from './node_modules/cheerio/lib/esm/index.js'
@@ -2016,62 +2317,62 @@ function handleListUnsubscribe(convertedBody, unsubscribeLink) {
 }
 
 // src/utils/threadRemap/types/threadRemapTypes.ts
-import { z as z4 } from './node_modules/zod/lib/index.mjs'
-var PayloadHeaders = z4.object({
-  deliveredTo: z4.string().nullable(),
-  date: z4.string().nullable(),
-  from: z4.string().nullable(),
-  subject: z4.string().nullable(),
-  to: z4.string().nullable(),
-  cc: z4.string().nullable(),
-  bcc: z4.string().nullable(),
+import { z as z5 } from './node_modules/zod/lib/index.mjs'
+var PayloadHeaders = z5.object({
+  deliveredTo: z5.string().nullable(),
+  date: z5.string().nullable(),
+  from: z5.string().nullable(),
+  subject: z5.string().nullable(),
+  to: z5.string().nullable(),
+  cc: z5.string().nullable(),
+  bcc: z5.string().nullable(),
 })
-var SimpleMessage = z4.object({
-  id: z4.string(),
-  threadId: z4.string(),
-  labelIds: z4.array(z4.string()),
-  snippet: z4.string(),
-  payload: z4.object({
-    mimeType: z4.string(),
+var SimpleMessage = z5.object({
+  id: z5.string(),
+  threadId: z5.string(),
+  labelIds: z5.array(z5.string()),
+  snippet: z5.string(),
+  payload: z5.object({
+    mimeType: z5.string(),
     headers: PayloadHeaders,
-    files: z4.array(z4.any()),
+    files: z5.array(z5.any()),
   }),
-  sizeEstimate: z4.number(),
-  historyId: z4.string(),
-  internalDate: z4.string(),
+  sizeEstimate: z5.number(),
+  historyId: z5.string(),
+  internalDate: z5.string(),
 })
-var ThreadSimpleRemap = z4.object({
-  id: z4.string(),
-  historyId: z4.string(),
-  messages: z4.array(SimpleMessage),
+var ThreadSimpleRemap = z5.object({
+  id: z5.string(),
+  historyId: z5.string(),
+  messages: z5.array(SimpleMessage),
 })
 var PayloadHeadersEnhanced = PayloadHeaders.extend({
-  listUnsubscribe: z4.string().nullable(),
+  listUnsubscribe: z5.string().nullable(),
 })
-var FullMessage = z4.object({
-  id: z4.string(),
-  threadId: z4.string(),
-  labelIds: z4.array(z4.string()),
-  snippet: z4.string(),
-  payload: z4.object({
-    mimeType: z4.string(),
+var FullMessage = z5.object({
+  id: z5.string(),
+  threadId: z5.string(),
+  labelIds: z5.array(z5.string()),
+  snippet: z5.string(),
+  payload: z5.object({
+    mimeType: z5.string(),
     headers: PayloadHeadersEnhanced,
-    body: z4.object({
-      emailHTML: z4.string(),
-      emailFileHTML: z4.array(z4.any()),
-      removedTrackers: z4.array(z4.string()).optional(),
+    body: z5.object({
+      emailHTML: z5.string(),
+      emailFileHTML: z5.array(z5.any()),
+      removedTrackers: z5.array(z5.string()).optional(),
     }),
-    files: z4.array(gmailV1SchemaMessagePartSchema),
-    parts: z4.array(gmailV1SchemaMessagePartSchema).optional(),
+    files: z5.array(gmailV1SchemaMessagePartSchema),
+    parts: z5.array(gmailV1SchemaMessagePartSchema).optional(),
   }),
-  sizeEstimate: z4.number(),
-  historyId: z4.string(),
-  internalDate: z4.string(),
+  sizeEstimate: z5.number(),
+  historyId: z5.string(),
+  internalDate: z5.string(),
 })
-var ThreadObject = z4.object({
-  id: z4.string(),
-  historyId: z4.string(),
-  messages: z4.array(FullMessage),
+var ThreadObject = z5.object({
+  id: z5.string(),
+  historyId: z5.string(),
+  messages: z5.array(FullMessage),
 })
 
 // src/utils/threadRemap/threadFullRemap.ts
@@ -2143,7 +2444,7 @@ function threadFullRemap(rawObject, gmail) {
 var getDraft = (auth, req) =>
   __async(void 0, null, function* () {
     var _a
-    const gmail = google6.gmail({ version: 'v1', auth })
+    const gmail = google10.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.drafts.get({
         userId: USER,
@@ -2164,24 +2465,20 @@ var getDraft = (auth, req) =>
       }
       return new Error('Draft not found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Fetching Draft returned an error ${err}`)
+      errorHandeling(err, 'fetchSingleDraft')
     }
   })
 var fetchSingleDraft = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getDraft)(req, res)
+    const { data, statusCode } = yield authMiddleware(getDraft)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Drafts/sendDraft.ts
-import { google as google7 } from './node_modules/googleapis/build/src/index.js'
+import { google as google11 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google7.gmail({ version: 'v1', auth })
+    const gmail = google11.gmail({ version: 'v1', auth })
     const { id } = req.body
     try {
       const response = yield gmail.users.drafts.send({
@@ -2196,24 +2493,20 @@ var exportDraft = (auth, req) =>
       }
       return new Error('Mail was not sent...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Sending Draft encountered an error ${err}`)
+      errorHandeling(err, 'sendDraft')
     }
   })
 var sendDraft = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(exportDraft)(req, res)
+    const { data, statusCode } = yield authMiddleware(exportDraft)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Drafts/updateDraft.ts
-import { google as google8 } from './node_modules/googleapis/build/src/index.js'
+import { google as google12 } from './node_modules/googleapis/build/src/index.js'
 var exportDraft2 = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google8.gmail({ version: 'v1', auth })
+    const gmail = google12.gmail({ version: 'v1', auth })
     try {
       if ('body' in req) {
         const parsedResult = yield formFieldParser(req)
@@ -2240,17 +2533,13 @@ var exportDraft2 = (auth, req) =>
         }
       }
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Draft update encountered an error ${err}`)
+      errorHandeling(err, 'updateDraft')
     }
   })
 var updateDraft = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(exportDraft2)(req, res)
+    const { data, statusCode } = yield authMiddleware(exportDraft2)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/health.ts
@@ -2266,10 +2555,10 @@ var health = (req, res) =>
   })
 
 // src/api/History/listHistory.ts
-import { google as google10 } from './node_modules/googleapis/build/src/index.js'
+import { google as google14 } from './node_modules/googleapis/build/src/index.js'
 
 // src/api/Threads/fetchSimpleThreads.ts
-import { google as google9 } from './node_modules/googleapis/build/src/index.js'
+import { google as google13 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/threadRemap/threadSimpleRemap.ts
 var remapPayloadHeaders2 = (rawMessage) => {
@@ -2371,46 +2660,38 @@ function singleThread(thread, gmail) {
       }
       throw Error('Thread not found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Threads returned an error: ${err}`)
+      errorHandeling(err, 'singleThread')
     }
   })
 }
 var hydrateMetaList = (_0) =>
   __async(void 0, [_0], function* ({ gmail, response, timeStampLastFetch }) {
-    const results = []
     const { threads } = response
-    if (threads) {
-      for (const thread of threads) {
-        if (thread) {
-          results.push(singleThread(thread, gmail))
-        }
-      }
-      const fetchedThreads = yield Promise.all(results)
-      const result = __spreadProps(
-        __spreadValues(
-          {
-            nextPageToken: null,
-          },
-          response
-        ),
-        {
-          threads: yield Promise.all(
-            fetchedThreads.map((thread) => threadSimpleRemap(thread))
-          ),
-          timestamp: timeStampLastFetch,
-        }
-      )
-      return result
+    if (!threads) {
+      throw new Error('No threads found on the response')
     }
+    const fetchedThreads = yield Promise.all(
+      threads.map((thread) => singleThread(thread, gmail))
+    )
+    const result = __spreadProps(
+      __spreadValues(
+        {
+          nextPageToken: null,
+        },
+        response
+      ),
+      {
+        threads: yield Promise.all(
+          fetchedThreads.map((thread) => thread && threadSimpleRemap(thread))
+        ),
+        timestamp: timeStampLastFetch,
+      }
+    )
+    return result
   })
 var getSimpleThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google9.gmail({ version: 'v1', auth })
+    const gmail = google13.gmail({ version: 'v1', auth })
     const requestBody = threadRequest_default(req)
     try {
       const response = yield gmail.users.threads.list(requestBody)
@@ -2429,20 +2710,23 @@ var getSimpleThreads = (auth, req) =>
           response.data
         )
       }
-      gmailV1SchemaListThreadsResponseSchema.parse(response.data)
+      const validatedData = gmailV1SchemaListThreadsResponseSchema.parse(
+        response.data
+      )
       const output = yield hydrateMetaList({
         gmail,
-        response: response.data,
+        response: validatedData,
         timeStampLastFetch,
       })
       return output
     } catch (err) {
-      throw Error(`Threads returned an error: ${err}`)
+      errorHandeling(err, 'fetchSimpleThreads')
     }
   })
 var fetchSimpleThreads = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getSimpleThreads)(req, res)
+    const { data, statusCode } = yield authMiddleware(getSimpleThreads)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/utils/onlyLegalLabelObjects.ts
@@ -2716,7 +3000,7 @@ function handleHistoryObject({ history, storageLabels }) {
 // src/api/History/listHistory.ts
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google10.gmail({ version: 'v1', auth })
+    const gmail = google14.gmail({ version: 'v1', auth })
     try {
       const { startHistoryId, storageLabels } = req.body.params
       const response = yield gmail.users.history.list({
@@ -2759,85 +3043,20 @@ var fetchHistory = (auth, req) =>
       }
       return new Error('No history found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Profile returned an error: ${err}`)
+      errorHandeling(err, 'listHistory')
     }
   })
 var listHistory = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(fetchHistory)(req, res)
+    const { data, statusCode } = yield authMiddleware(fetchHistory)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
-// src/api/Labels/createLabels.ts
-import { google as google11 } from './node_modules/googleapis/build/src/index.js'
-var newLabels = (auth, req) =>
+// src/api/Labels/getSingleLabel.ts
+import { google as google15 } from './node_modules/googleapis/build/src/index.js'
+var fetchSingleLabel = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google11.gmail({ version: 'v1', auth })
-    try {
-      const {
-        body: { labelListVisibility, messageListVisibility, name },
-      } = req
-      const response = gmail.users.labels.create({
-        userId: USER,
-        requestBody: {
-          labelListVisibility,
-          messageListVisibility,
-          name,
-        },
-      })
-      gmailV1SchemaLabelSchema.parse(response)
-      return response
-    } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Create labels returned an error: ${err}`)
-    }
-  })
-var createLabels = (req, res) =>
-  __async(void 0, null, function* () {
-    authMiddleware(newLabels)(req, res)
-  })
-
-// src/api/Labels/fetchLabels.ts
-import { google as google12 } from './node_modules/googleapis/build/src/index.js'
-var getLabels = (auth) =>
-  __async(void 0, null, function* () {
-    const gmail = google12.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.labels.list({
-        userId: USER,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaListLabelsResponseSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No Labels found...')
-    } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Labels returned an error: ${err}`)
-    }
-  })
-var fetchLabels = (req, res) =>
-  __async(void 0, null, function* () {
-    authMiddleware(getLabels)(req, res)
-  })
-
-// src/api/Labels/fetchSingleLabel.ts
-import { google as google13 } from './node_modules/googleapis/build/src/index.js'
-var getLabel = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google13.gmail({ version: 'v1', auth })
+    const gmail = google15.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.labels.get({
@@ -2850,24 +3069,20 @@ var getLabel = (auth, req) =>
       }
       return new Error('No Label found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Label returned an error: ${err}`)
+      errorHandeling(err, 'getSingleLabel')
     }
   })
-var fetchSingleLabel = (req, res) =>
+var getSingleLabel = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getLabel)(req, res)
+    const { data, statusCode } = yield authMiddleware(fetchSingleLabel)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Labels/removeLabels.ts
-import { google as google14 } from './node_modules/googleapis/build/src/index.js'
-var removeTheLabels = (auth, req) =>
+import { google as google16 } from './node_modules/googleapis/build/src/index.js'
+var deleteLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google14.gmail({ version: 'v1', auth })
+    const gmail = google16.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -2878,24 +3093,20 @@ var removeTheLabels = (auth, req) =>
       })
       return response
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Create labels returned an error: ${err}`)
+      errorHandeling(err, 'removeLabels')
     }
   })
 var removeLabels = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(removeTheLabels)(req, res)
+    const { data, statusCode } = yield authMiddleware(deleteLabels)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Labels/updateLabels.ts
-import { google as google15 } from './node_modules/googleapis/build/src/index.js'
+import { google as google17 } from './node_modules/googleapis/build/src/index.js'
 var refreshLabels = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google15.gmail({ version: 'v1', auth })
+    const gmail = google17.gmail({ version: 'v1', auth })
     const {
       body: { id, requestBody },
     } = req
@@ -2911,24 +3122,20 @@ var refreshLabels = (auth, req) =>
       }
       return new Error('No labels created...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw new Error(`Create labels returned an error: ${err}`)
+      errorHandeling(err, 'updateLabels')
     }
   })
 var updateLabels = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(refreshLabels)(req, res)
+    const { data, statusCode } = yield authMiddleware(refreshLabels)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Message/deleteMessage.ts
-import { google as google16 } from './node_modules/googleapis/build/src/index.js'
+import { google as google18 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google16.gmail({ version: 'v1', auth })
+    const gmail = google18.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -2939,24 +3146,20 @@ var deleteSingleMessage = (auth, req) =>
       })
       return response
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error('Message not removed...')
+      errorHandeling(err, 'deleteMessage')
     }
   })
 var deleteMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(deleteSingleMessage)(req, res)
+    const { data, statusCode } = yield authMiddleware(deleteSingleMessage)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Message/fetchMessageAttachment.ts
-import { google as google17 } from './node_modules/googleapis/build/src/index.js'
+import { google as google19 } from './node_modules/googleapis/build/src/index.js'
 var getAttachment = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google17.gmail({ version: 'v1', auth })
+    const gmail = google19.gmail({ version: 'v1', auth })
     const { messageId } = req.params
     const attachmentId = req.params.id
     try {
@@ -2971,24 +3174,20 @@ var getAttachment = (auth, req) =>
       }
       return new Error('Message attachment not found4...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Get Attachment returned an error: ${err}`)
+      errorHandeling(err, 'fetchMessageAttachment')
     }
   })
 var fetchMessageAttachment = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getAttachment)(req, res)
+    const { data, statusCode } = yield authMiddleware(getAttachment)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Message/sendMessage.ts
-import { google as google18 } from './node_modules/googleapis/build/src/index.js'
+import { google as google20 } from './node_modules/googleapis/build/src/index.js'
 var exportMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google18.gmail({ version: 'v1', auth })
+    const gmail = google20.gmail({ version: 'v1', auth })
     const { id, threadId } = req.body
     try {
       if ('body' in req) {
@@ -3008,24 +3207,20 @@ var exportMessage = (auth, req) =>
         return new Error('Mail was not sent...')
       }
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Mail was not sent...: ${err}`)
+      errorHandeling(err, 'sendMessage')
     }
   })
 var sendMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(exportMessage)(req, res)
+    const { data, statusCode } = yield authMiddleware(exportMessage)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Message/thrashMessage.ts
-import { google as google19 } from './node_modules/googleapis/build/src/index.js'
+import { google as google21 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google19.gmail({ version: 'v1', auth })
+    const gmail = google21.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.messages.trash({
         userId: USER,
@@ -3037,24 +3232,20 @@ var thrashSingleMessage = (auth, req) =>
       }
       return new Error('No message found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Single message return an error: ${err}`)
+      errorHandeling(err, 'thrashMessage')
     }
   })
 var thrashMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(thrashSingleMessage)(req, res)
+    const { data, statusCode } = yield authMiddleware(thrashSingleMessage)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Message/updateMessage.ts
-import { google as google20 } from './node_modules/googleapis/build/src/index.js'
+import { google as google22 } from './node_modules/googleapis/build/src/index.js'
 var modifyMessage = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google20.gmail({ version: 'v1', auth })
+    const gmail = google22.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.messages.modify({
         userId: USER,
@@ -3067,24 +3258,20 @@ var modifyMessage = (auth, req) =>
       }
       return new Error('Message not found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Single message returned an error: ${err}`)
+      errorHandeling(err, 'updateMessage')
     }
   })
 var updateMessage = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(modifyMessage)(req, res)
+    const { data, statusCode } = yield authMiddleware(modifyMessage)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Threads/deleteThread.ts
-import { google as google21 } from './node_modules/googleapis/build/src/index.js'
+import { google as google23 } from './node_modules/googleapis/build/src/index.js'
 var deleteSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google21.gmail({ version: 'v1', auth })
+    const gmail = google23.gmail({ version: 'v1', auth })
     const {
       body: { id },
     } = req
@@ -3095,90 +3282,85 @@ var deleteSingleThread = (auth, req) =>
       })
       return response
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error('Message not removed...')
+      errorHandeling(err, 'deleteThread')
     }
   })
 var deleteThread = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(deleteSingleThread)(req, res)
+    const { data, statusCode } = yield authMiddleware(deleteSingleThread)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Threads/fetchFullThreads.ts
-import { google as google22 } from './node_modules/googleapis/build/src/index.js'
+import { google as google24 } from './node_modules/googleapis/build/src/index.js'
 function singleThread2(thread, gmail) {
   return __async(this, null, function* () {
-    const { id } = thread
     try {
+      const { id } = thread
       if (id) {
         const response = yield gmail.users.threads.get({
           userId: USER,
           id,
           format: 'full',
         })
-        if (response == null ? void 0 : response.data) {
-          gmailV1SchemaThreadSchema.parse(response.data)
-          return response.data
+        if (!response.data) {
+          throw Error('Thread not found...')
         }
+        const validatedData = gmailV1SchemaThreadSchema.parse(response.data)
+        return validatedData
       }
       throw Error('Thread not found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Threads returned an error: ${err}`)
+      errorHandeling(err, 'singleThread')
     }
   })
 }
 var getFullThreads = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google22.gmail({ version: 'v1', auth })
+    const gmail = google24.gmail({ version: 'v1', auth })
     const requestBody = threadRequest_default(req)
     try {
       const response = yield gmail.users.threads.list(requestBody)
-      if (response && response.data) {
-        gmailV1SchemaListThreadsResponseSchema.parse(response.data)
-        const hydrateMetaList2 = () =>
-          __async(void 0, null, function* () {
-            const results = []
-            const { threads } = response.data
-            if (threads) {
-              for (const thread of threads) {
-                results.push(singleThread2(thread, gmail))
-              }
-              const timeStampLastFetch = Date.now()
-              const fetchedThreads = yield Promise.all(results)
-              const result = __spreadProps(__spreadValues({}, response.data), {
-                threads: yield Promise.all(
-                  fetchedThreads.map((thread) => threadFullRemap(thread, gmail))
-                ),
-                timestamp: timeStampLastFetch,
-              })
-              return result
-            }
-          })
-        return hydrateMetaList2()
+      if (!response || !response.data) {
+        throw new Error('Invalid response on listing threads')
       }
+      gmailV1SchemaListThreadsResponseSchema.parse(response.data)
+      const hydrateMetaList2 = () =>
+        __async(void 0, null, function* () {
+          const { threads } = response.data
+          if (!threads) {
+            throw new Error('No threads found in response')
+          }
+          const timeStampLastFetch = Date.now()
+          const fetchedThreads = yield Promise.all(
+            threads.map((thread) => singleThread2(thread, gmail))
+          )
+          const result = __spreadProps(__spreadValues({}, response.data), {
+            threads: yield Promise.all(
+              fetchedThreads.map(
+                (thread) => thread && threadFullRemap(thread, gmail)
+              )
+            ),
+            timestamp: timeStampLastFetch,
+          })
+          return result
+        })
+      return hydrateMetaList2()
     } catch (err) {
-      throw Error(`Threads returned an error: ${err}`)
+      errorHandeling(err, 'fetchFullThreads')
     }
   })
 var fetchFullThreads = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getFullThreads)(req, res)
+    const { data, statusCode } = yield authMiddleware(getFullThreads)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Threads/fetchSingleThread.ts
-import { google as google23 } from './node_modules/googleapis/build/src/index.js'
+import { google as google25 } from './node_modules/googleapis/build/src/index.js'
 var getThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google23.gmail({ version: 'v1', auth })
+    const gmail = google25.gmail({ version: 'v1', auth })
     const { id } = req.params
     try {
       const response = yield gmail.users.threads.get({
@@ -3193,25 +3375,21 @@ var getThread = (auth, req) =>
       }
       return new Error('Thread not found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Threads returned an error: ${err}`)
+      errorHandeling(err, 'fetchSingleThread')
     }
   })
 var fetchSingleThread = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(getThread)(req, res)
+    const { data, statusCode } = yield authMiddleware(getThread)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Threads/thrashThread.ts
-import { google as google24 } from './node_modules/googleapis/build/src/index.js'
+import { google as google26 } from './node_modules/googleapis/build/src/index.js'
 var thrashSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google24.gmail({ version: 'v1', auth })
-    google24.options({
+    const gmail = google26.gmail({ version: 'v1', auth })
+    google26.options({
       http2: false,
     })
     try {
@@ -3225,24 +3403,20 @@ var thrashSingleThread = (auth, req) =>
       }
       return new Error('No message found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Single message return an error: ${err}`)
+      errorHandeling(err, 'thrashThread')
     }
   })
 var thrashThread = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(thrashSingleThread)(req, res)
+    const { data, statusCode } = yield authMiddleware(thrashSingleThread)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Threads/updateThread.ts
-import { google as google25 } from './node_modules/googleapis/build/src/index.js'
+import { google as google27 } from './node_modules/googleapis/build/src/index.js'
 var updateSingleThread = (auth, req) =>
   __async(void 0, null, function* () {
-    const gmail = google25.gmail({ version: 'v1', auth })
+    const gmail = google27.gmail({ version: 'v1', auth })
     try {
       const response = yield gmail.users.threads.modify({
         userId: USER,
@@ -3255,116 +3429,13 @@ var updateSingleThread = (auth, req) =>
       }
       return new Error('Message not found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Single message returned an error: ${err}`)
+      errorHandeling(err, 'updateThread')
     }
   })
 var updateThread = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(updateSingleThread)(req, res)
-  })
-
-// src/api/Users/getProfile.ts
-import { google as google26 } from './node_modules/googleapis/build/src/index.js'
-var fetchProfile = (auth) =>
-  __async(void 0, null, function* () {
-    const gmail = google26.gmail({ version: 'v1', auth })
-    const people = google26.people({ version: 'v1', auth })
-    try {
-      const [userResponse, contactsResponse] = yield Promise.allSettled([
-        gmail.users.getProfile({
-          userId: USER,
-        }),
-        people.people.get({
-          resourceName: 'people/me',
-          personFields: 'emailAddresses,names,photos',
-        }),
-      ])
-      if (
-        userResponse.status === 'fulfilled' &&
-        contactsResponse.status === 'fulfilled'
-      ) {
-        gmailV1SchemaProfileSchema.parse(userResponse.value.data)
-        peopleV1SchemaPersonSchema.parse(contactsResponse.value.data)
-        const getName = () => {
-          var _a, _b, _c, _d, _e
-          if (
-            ((_b = (_a = contactsResponse.value) == null ? void 0 : _a.data) ==
-            null
-              ? void 0
-              : _b.names) &&
-            ((_e =
-              (_d = (_c = contactsResponse.value) == null ? void 0 : _c.data) ==
-              null
-                ? void 0
-                : _d.names) == null
-              ? void 0
-              : _e.length) > 0
-          ) {
-            return contactsResponse.value.data.names[0].displayName
-          }
-          return null
-        }
-        const result = __spreadValues(
-          {
-            name: getName(),
-          },
-          userResponse.value.data
-        )
-        extendedGmailV1SchemaProfileSchemaSchema.parse(result)
-        return result
-      }
-      return new Error('No profile found...')
-    } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Profile returned an error: ${err}`)
-    }
-  })
-var getProfile = (req, res) =>
-  __async(void 0, null, function* () {
-    authMiddleware(fetchProfile)(req, res)
-  })
-
-// src/api/Users/getSendAs.ts
-import { google as google27 } from './node_modules/googleapis/build/src/index.js'
-var fetchSendAs = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google27.gmail({ version: 'v1', auth })
-    const { emailId } = req.query
-    if (typeof emailId === 'string') {
-      try {
-        const response = yield gmail.users.settings.sendAs.get({
-          userId: USER,
-          sendAsEmail: emailId,
-        })
-        if (response == null ? void 0 : response.data) {
-          gmailV1SchemaSendAsSchema.parse(response.data)
-          return response.data
-        }
-        return new Error('No data found...')
-      } catch (err) {
-        if (err.response) {
-          const error = err
-          console.error(error.response)
-          throw error
-        }
-        throw Error(`Send as returned an error: ${err}`)
-      }
-    } else {
-      throw Error('Invalid email id request')
-    }
-  })
-var getSendAs = (req, res) =>
-  __async(void 0, null, function* () {
-    authMiddleware(fetchSendAs)(req, res)
+    const { data, statusCode } = yield authMiddleware(updateSingleThread)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/api/Users/logoutUser.ts
@@ -3379,7 +3450,7 @@ var logoutUser = (req, res) =>
         }
         req.session.destroy(function (err) {
           if (err) {
-            console.log('logout err', err)
+            console.error('logout err', err)
             return res.status(401).json(err.message)
           }
           return res.status(205).json()
@@ -3410,21 +3481,18 @@ var updateSendAsGmail = (auth, req) =>
       }
       return new Error('No data found...')
     } catch (err) {
-      if (err.response) {
-        const error = err
-        console.error(error.response)
-        throw error
-      }
-      throw Error(`Send as returned an error: ${err}`)
+      errorHandeling(err, 'updateSendAs')
     }
   })
 var updateSendAs = (req, res) =>
   __async(void 0, null, function* () {
-    authMiddleware(updateSendAsGmail)(req, res)
+    const { data, statusCode } = yield authMiddleware(updateSendAsGmail)(req)
+    responseMiddleware(res, statusCode, data)
   })
 
 // src/routes/index.ts
 var router = express.Router()
+router.post('/api/base', getBase)
 router.delete('/api/draft/', deleteDraft)
 router.delete('/api/labels', removeLabels)
 router.delete('/api/message/', deleteMessage)
@@ -3446,8 +3514,8 @@ router.get(
 )
 router.get('/api/draft/:id?', fetchSingleDraft)
 router.get('/api/health', health)
-router.get('/api/label/:id?', fetchSingleLabel)
-router.get('/api/labels', fetchLabels)
+router.get('/api/label/:id?', getSingleLabel)
+router.get('/api/labels', getLabels)
 router.get('/api/settings/getSendAs', getSendAs)
 router.get('/api/thread/:id?', fetchSingleThread)
 router.get('/api/user', getProfile)
@@ -3459,7 +3527,7 @@ router.post('/api/auth/oauth/google/', getAuthUrl)
 router.post('/api/auth/oauth/google/callback/', getAuthenticateClient2)
 router.post('/api/create-draft', createDraft)
 router.post('/api/history/:startHistoryId?', listHistory)
-router.post('/api/labels', createLabels)
+router.post('/api/labels', createLabel)
 router.post('/api/message/thrash/:id?', thrashMessage)
 router.post('/api/send-draft', sendDraft)
 router.post('/api/send-message', sendMessage)

@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
+import errorHandeling from '../../utils/errorHandeling'
 
 const deleteSingleThread = async (
   auth: OAuth2Client | undefined,
@@ -22,14 +23,10 @@ const deleteSingleThread = async (
     })
     return response
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error('Message not removed...')
+    errorHandeling(err, 'deleteThread')
   }
 }
 export const deleteThread = async (req: Request, res: Response) => {
-  authMiddleware(deleteSingleThread)(req, res)
+  const { data, statusCode } = await authMiddleware(deleteSingleThread)(req)
+  responseMiddleware(res, statusCode, data)
 }

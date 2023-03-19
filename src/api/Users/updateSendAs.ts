@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaSendAsSchema } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 
 const updateSendAsGmail = async (
   auth: OAuth2Client | undefined,
@@ -28,14 +29,10 @@ const updateSendAsGmail = async (
     }
     return new Error('No data found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Send as returned an error: ${err}`)
+    errorHandeling(err, 'updateSendAs')
   }
 }
 export const updateSendAs = async (req: Request, res: Response) => {
-  authMiddleware(updateSendAsGmail)(req, res)
+  const { data, statusCode } = await authMiddleware(updateSendAsGmail)(req)
+  responseMiddleware(res, statusCode, data)
 }

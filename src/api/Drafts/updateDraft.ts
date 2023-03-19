@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaDraftSchema } from '../../types/gmailTypes'
-import formFieldParser from '../../utils/formFieldParser'
+import errorHandeling from '../../utils/errorHandeling'
+import formFieldParser from '../../utils/formFieldParser/formFieldParser'
 import messageEncoding from '../../utils/messageEncoding/messageEncoding'
 
 const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
@@ -36,16 +37,11 @@ const exportDraft = async (auth: OAuth2Client | undefined, req: Request) => {
       }
     }
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      // eslint-disable-next-line no-console
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Draft update encountered an error ${err}`)
+    errorHandeling(err, 'updateDraft')
   }
 }
 
 export const updateDraft = async (req: Request, res: Response) => {
-  authMiddleware(exportDraft)(req, res)
+  const { data, statusCode } = await authMiddleware(exportDraft)(req)
+  responseMiddleware(res, statusCode, data)
 }

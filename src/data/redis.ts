@@ -26,6 +26,7 @@ const initiateRedis = () => {
         })
       : cloudRedis()
 
+  // eslint-disable-next-line no-console
   redisClient.connect().catch(console.error)
   return redisClient
 }

@@ -12,7 +12,8 @@ export const logoutUser = async (req: Request, res: Response) => {
       }
       req.session.destroy(function (err) {
         if (err) {
-          console.log('logout err', err)
+          // eslint-disable-next-line no-console
+          console.error('logout err', err)
           return res.status(401).json(err.message)
         }
         return res.status(205).json()

@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaListHistoryResponseSchema } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 import { hydrateMetaList } from '../Threads/fetchSimpleThreads'
 import handleHistoryObject from './handleHistoryObject'
 
@@ -53,14 +54,10 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
     }
     return new Error('No history found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Profile returned an error: ${err}`)
+    errorHandeling(err, 'listHistory')
   }
 }
 export const listHistory = async (req: Request, res: Response) => {
-  authMiddleware(fetchHistory)(req, res)
+  const { data, statusCode } = await authMiddleware(fetchHistory)(req)
+  responseMiddleware(res, statusCode, data)
 }
