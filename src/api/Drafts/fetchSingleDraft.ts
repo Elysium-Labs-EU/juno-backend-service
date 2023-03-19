@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaDraftSchema } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 import { remapFullMessage } from '../../utils/threadRemap/threadFullRemap'
 
 const getDraft = async (auth: OAuth2Client | undefined, req: Request) => {
@@ -24,14 +25,10 @@ const getDraft = async (auth: OAuth2Client | undefined, req: Request) => {
     }
     return new Error('Draft not found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Fetching Draft returned an error ${err}`)
+    errorHandeling(err, 'fetchSingleDraft')
   }
 }
 export const fetchSingleDraft = async (req: Request, res: Response) => {
-  authMiddleware(getDraft)(req, res)
+  const { data, statusCode } = await authMiddleware(getDraft)(req)
+  responseMiddleware(res, statusCode, data)
 }

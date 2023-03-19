@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaThreadSchema } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 import threadFullRemap from '../../utils/threadRemap/threadFullRemap'
 
 const getThread = async (auth: OAuth2Client | undefined, req: Request) => {
@@ -25,14 +26,10 @@ const getThread = async (auth: OAuth2Client | undefined, req: Request) => {
     }
     return new Error('Thread not found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Threads returned an error: ${err}`)
+    errorHandeling(err, 'fetchSingleThread')
   }
 }
 export const fetchSingleThread = async (req: Request, res: Response) => {
-  authMiddleware(getThread)(req, res)
+  const { data, statusCode } = await authMiddleware(getThread)(req)
+  responseMiddleware(res, statusCode, data)
 }

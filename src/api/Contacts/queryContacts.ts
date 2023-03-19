@@ -3,7 +3,9 @@ import { OAuth2Client } from 'google-auth-library'
 import { google, people_v1 } from 'googleapis'
 
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { peopleV1SchemaSearchResponseSchema } from '../../types/peopleTypes'
+import errorHandeling from '../../utils/errorHandeling'
 import remapContacts from './utils/remapContacts'
 
 const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
@@ -25,10 +27,11 @@ const getContacts = async (auth: OAuth2Client | undefined, req: Request) => {
     }
     return new Error('No contacts found...')
   } catch (err) {
-    throw Error(`Contacts returned an error: ${err}`)
+    errorHandeling(err, 'queryContacts')
   }
 }
 
 export const queryContacts = async (req: Request, res: Response) => {
-  authMiddleware(getContacts)(req, res)
+  const { data, statusCode } = await authMiddleware(getContacts)(req)
+  responseMiddleware(res, statusCode, data)
 }

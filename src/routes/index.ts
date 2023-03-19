@@ -1,5 +1,6 @@
 import express from 'express'
 
+import { getBase } from '../api/Base/getBase'
 import { fetchAllContacts } from '../api/Contacts/fetchAllContacts'
 import { queryContacts } from '../api/Contacts/queryContacts'
 import { createDraft } from '../api/Drafts/createDraft'
@@ -10,9 +11,9 @@ import { sendDraft } from '../api/Drafts/sendDraft'
 import { updateDraft } from '../api/Drafts/updateDraft'
 import { health } from '../api/health'
 import { listHistory } from '../api/History/listHistory'
-import { createLabels } from '../api/Labels/createLabels'
-import { fetchLabels } from '../api/Labels/fetchLabels'
-import { fetchSingleLabel } from '../api/Labels/fetchSingleLabel'
+import { createLabel } from '../api/Labels/createLabel'
+import { getLabels } from '../api/Labels/getLabels'
+import { getSingleLabel } from '../api/Labels/getSingleLabel'
 import { removeLabels } from '../api/Labels/removeLabels'
 import { updateLabels } from '../api/Labels/updateLabels'
 import { deleteMessage } from '../api/Message/deleteMessage'
@@ -34,6 +35,7 @@ import { getAuthenticateClient, getAuthUrl } from '../google/index'
 
 const router = express.Router()
 
+router.post('/api/base', getBase)
 router.delete('/api/draft/', deleteDraft)
 router.delete('/api/labels', removeLabels)
 router.delete('/api/message/', deleteMessage)
@@ -55,8 +57,8 @@ router.get(
 )
 router.get('/api/draft/:id?', fetchSingleDraft)
 router.get('/api/health', health)
-router.get('/api/label/:id?', fetchSingleLabel)
-router.get('/api/labels', fetchLabels)
+router.get('/api/label/:id?', getSingleLabel)
+router.get('/api/labels', getLabels)
 router.get('/api/settings/getSendAs', getSendAs)
 router.get('/api/thread/:id?', fetchSingleThread)
 router.get('/api/user', getProfile)
@@ -68,7 +70,7 @@ router.post('/api/auth/oauth/google/', getAuthUrl)
 router.post('/api/auth/oauth/google/callback/', getAuthenticateClient)
 router.post('/api/create-draft', createDraft)
 router.post('/api/history/:startHistoryId?', listHistory)
-router.post('/api/labels', createLabels)
+router.post('/api/labels', createLabel)
 router.post('/api/message/thrash/:id?', thrashMessage)
 router.post('/api/send-draft', sendDraft)
 router.post('/api/send-message', sendMessage)

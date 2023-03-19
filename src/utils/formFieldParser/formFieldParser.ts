@@ -4,8 +4,8 @@ import formidable from 'formidable'
 export default async function formFieldParser(req: Request) {
   const form = formidable({ multiples: true })
 
-  const formFields = await new Promise(function (resolve, reject) {
-    form.parse(req, function (err, fields, files) {
+  const formFields = await new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
       if (err) {
         reject(err)
         return

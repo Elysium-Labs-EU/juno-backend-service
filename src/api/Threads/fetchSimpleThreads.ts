@@ -1,14 +1,15 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, gmail_v1, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { gmail_v1, google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import {
   gmailV1SchemaListThreadsResponseSchema,
   gmailV1SchemaThreadSchema,
 } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 import threadSimpleRemap from '../../utils/threadRemap/threadSimpleRemap'
 import type { IFeedModel } from '../History/handleHistoryObject'
 import requestBodyCreator from './threadRequest'
@@ -32,12 +33,7 @@ async function singleThread(
     }
     throw Error('Thread not found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Threads returned an error: ${err}`)
+    errorHandeling(err, 'singleThread')
   }
 }
 
@@ -59,26 +55,23 @@ export const hydrateMetaList = async ({
   response: gmail_v1.Schema$ListThreadsResponse | IFeedModel
   timeStampLastFetch: number
 }) => {
-  const results: Array<Promise<gmail_v1.Schema$Thread>> = []
-
   const { threads } = response
-  if (threads) {
-    for (const thread of threads) {
-      if (thread) {
-        results.push(singleThread(thread, gmail))
-      }
-    }
-    const fetchedThreads = await Promise.all(results)
-    const result = {
-      nextPageToken: null,
-      ...response,
-      threads: await Promise.all(
-        fetchedThreads.map((thread) => threadSimpleRemap(thread))
-      ),
-      timestamp: timeStampLastFetch,
-    }
-    return result
+  if (!threads) {
+    throw new Error('No threads found on the response')
   }
+
+  const fetchedThreads = await Promise.all(
+    threads.map((thread) => singleThread(thread, gmail))
+  )
+  const result = {
+    nextPageToken: null,
+    ...response,
+    threads: await Promise.all(
+      fetchedThreads.map((thread) => thread && threadSimpleRemap(thread))
+    ),
+    timestamp: timeStampLastFetch,
+  }
+  return result
 }
 
 const getSimpleThreads = async (
@@ -103,18 +96,21 @@ const getSimpleThreads = async (
         ...response.data,
       }
     }
-    gmailV1SchemaListThreadsResponseSchema.parse(response.data)
+    const validatedData = gmailV1SchemaListThreadsResponseSchema.parse(
+      response.data
+    )
     const output = await hydrateMetaList({
       gmail,
-      response: response.data,
+      response: validatedData,
       timeStampLastFetch,
     })
     return output
   } catch (err) {
-    throw Error(`Threads returned an error: ${err}`)
+    errorHandeling(err, 'fetchSimpleThreads')
   }
 }
 
 export const fetchSimpleThreads = async (req: Request, res: Response) => {
-  authMiddleware(getSimpleThreads)(req, res)
+  const { data, statusCode } = await authMiddleware(getSimpleThreads)(req)
+  responseMiddleware(res, statusCode, data)
 }

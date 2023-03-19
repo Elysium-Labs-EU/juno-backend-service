@@ -17,6 +17,7 @@ import initSentry from '../utils/initSentry'
 import indexRoute from './index'
 
 process.env.NODE_ENV !== 'production' &&
+  // eslint-disable-next-line no-console
   console.log('Booted and ready for usage')
 
 const app = express()

@@ -216,6 +216,7 @@ export default function handleHistoryObject({
         }
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       process.env.NODE_ENV === 'development' && console.error(err)
     }
   }

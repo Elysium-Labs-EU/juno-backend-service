@@ -1,13 +1,14 @@
 import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
-import { Common, google } from 'googleapis'
-import { GaxiosError } from 'googleapis-common'
+import { google } from 'googleapis'
 
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
+import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaListLabelsResponseSchema } from '../../types/gmailTypes'
+import errorHandeling from '../../utils/errorHandeling'
 
-const getLabels = async (auth: OAuth2Client | undefined) => {
+export const fetchLabels = async (auth: OAuth2Client | undefined) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
   try {
@@ -20,14 +21,10 @@ const getLabels = async (auth: OAuth2Client | undefined) => {
     }
     return new Error('No Labels found...')
   } catch (err) {
-    if ((err as GaxiosError).response) {
-      const error = err as Common.GaxiosError
-      console.error(error.response)
-      throw error
-    }
-    throw Error(`Labels returned an error: ${err}`)
+    errorHandeling(err, 'getLabels')
   }
 }
-export const fetchLabels = async (req: Request, res: Response) => {
-  authMiddleware(getLabels)(req, res)
+export const getLabels = async (req: Request, res: Response) => {
+  const { data, statusCode } = await authMiddleware(fetchLabels)(req)
+  responseMiddleware(res, statusCode, data)
 }

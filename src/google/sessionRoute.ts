@@ -25,6 +25,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       oAuth2Client.setCredentials(req.session.oAuthClient)
       const checkedAccessToken = await oAuth2Client.getAccessToken()
       if (!checkedAccessToken) {
+        // eslint-disable-next-line no-console
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
       }
@@ -33,6 +34,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       return oAuth2Client
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.log('err', err)
     return 'Error during authorization'
   }
@@ -53,6 +55,7 @@ export const authenticateSession = async ({ req }: { req: Request }) => {
     // If session is invalid, require the user to sign in again.
     return global.INVALID_SESSION
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Error on authenticateSession', err)
   }
 }

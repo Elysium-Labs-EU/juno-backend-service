@@ -21,12 +21,14 @@ export const authorizeLocal = async ({
       oAuth2Client.setCredentials(credentials)
       const checkedAccessToken = await oAuth2Client.getAccessToken()
       if (!checkedAccessToken) {
+        // eslint-disable-next-line no-console
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
       }
       return oAuth2Client
     } catch (err) {
       return 'Error during authorization'
+      // eslint-disable-next-line no-console
       console.log('err', JSON.stringify(err))
     }
   } else {
@@ -53,6 +55,7 @@ export const authenticateLocal = async ({
     // If a token is invalid, require the user to sign in again.
     return global.INVALID_TOKEN
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err)
   }
 }
