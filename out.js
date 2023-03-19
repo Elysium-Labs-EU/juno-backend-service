@@ -54,7 +54,7 @@ import http from 'http'
 import './node_modules/dotenv/config.js'
 import * as Sentry2 from './node_modules/@sentry/node/cjs/index.js'
 import compression from './node_modules/compression/index.js'
-import redis from './node_modules/connect-redis/index.js'
+import RedisStore from './node_modules/connect-redis/dist/esm/index.js'
 import express2 from './node_modules/express/index.js'
 import session from './node_modules/express-session/index.js'
 import { google as google29 } from './node_modules/googleapis/build/src/index.js'
@@ -84,16 +84,11 @@ var cloudRedis = () => {
       host: process.env.REDIS_HOST,
       port: parseInt(process.env.REDIS_PORT),
     },
-    legacyMode: true,
   })
 }
 var initiateRedis = () => {
   const redisClient2 =
-    process.env.NODE_ENV === 'development'
-      ? createClient({
-          legacyMode: true,
-        })
-      : cloudRedis()
+    process.env.NODE_ENV === 'development' ? createClient() : cloudRedis()
   redisClient2.connect().catch(console.error)
   return redisClient2
 }
@@ -101,17 +96,23 @@ var redis_default = initiateRedis
 
 // src/utils/initSentry.ts
 import * as Sentry from './node_modules/@sentry/node/cjs/index.js'
+import { ProfilingIntegration } from './node_modules/@sentry/profiling-node/lib/index.js'
 import * as Tracing from './node_modules/@sentry/tracing/cjs/index.js'
 function initSentry(app2) {
   assertNonNullish(process.env.SENTRY_DSN, 'No Sentry DSN provided')
   if (process.env.SENTRY_DSN) {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
-      integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-        new Tracing.Integrations.Express({ app: app2 }),
-      ],
       tracesSampleRate: 1,
+      profilesSampleRate: 1,
+      // Profiling sample rate is relative to tracesSampleRate
+      integrations: [
+        // enable HTTP calls tracing
+        new Sentry.Integrations.Http({ tracing: true }),
+        // enable Express.js middleware tracing
+        new Tracing.Integrations.Express({ app: app2 }),
+        new ProfilingIntegration(),
+      ],
     })
   }
 }
@@ -960,13 +961,17 @@ var getAuthUrl = (req, res) =>
       req.session.hashSecret = randomID
       const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
+        // Use 'select_account' to ensure that the user is always using the wanted user.
         prompt: 'select_account',
         scope: SCOPES,
+        // Use a SHA256 state for security reasons when the cloud version is used.
         state: (
           (_a = req == null ? void 0 : req.body) == null ? void 0 : _a.noSession
         )
           ? 'noSession'
           : hashState,
+        // code_challenge_method: S256,
+        // code_challenge: createHash('sha256').digest('hex'),
       })
       getAuthUrlResponseSchema.parse(authorizeUrl)
       return res.status(200).json(authorizeUrl)
@@ -1138,13 +1143,20 @@ var responseMiddleware = (res, statusCode, message) => {
 // src/utils/errorHandeling.ts
 function errorHandeling(err, functionName) {
   if (err.response) {
-    const error = err
-    if ('response' in error) {
-      console.error(error.response)
+    const error2 = err
+    if ('response' in error2) {
+      console.error(error2.response)
     }
-    return error
+    throw error2
   }
-  return Error(`${functionName} returned an error: ${err}`)
+  const errorMessage = `${functionName} returned an error: ${err}`
+  const error = new Error(errorMessage)
+  error.status = 500
+  const errorObject = {
+    status: error.status,
+    message: error.message,
+  }
+  throw { error: errorObject, originalError: err }
 }
 
 // src/api/Labels/createLabel.ts
@@ -3537,11 +3549,14 @@ router.put('/api/update-draft/?:id?', updateDraft)
 var routes_default = router
 
 // src/routes/app.ts
-process.env.NODE_ENV !== 'production' &&
+process.env.NODE_ENV !== 'production' && // eslint-disable-next-line no-console
   console.log('Booted and ready for usage')
 var app = express2()
-var redisStore = redis(session)
 var redisClient = redis_default()
+var redisStore = new RedisStore({
+  client: redisClient,
+  prefix: 'juno:',
+})
 app.use(compression())
 app.set('trust proxy', 1)
 assertNonNullish(process.env.SESSION_SECRET, 'No Session Secret.')
@@ -3549,7 +3564,7 @@ var SEVEN_DAYS = 1e3 * 60 * 10080
 app.use(
   session({
     name: 'junoSession',
-    store: new redisStore({ client: redisClient }),
+    store: redisStore,
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -3658,10 +3673,24 @@ var swaggerOptions = {
 var swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 process.env.NODE_ENV !== 'development' && initSentry(app)
-app.use('/', routes_default)
+function rootHandler(req, res) {
+  routes_default(req, res, () => {
+    res.status(404).send('Page not found')
+  })
+}
+app.use('/', rootHandler)
 app.use(Sentry2.Handlers.requestHandler())
 app.use(Sentry2.Handlers.tracingHandler())
-app.use(Sentry2.Handlers.errorHandler())
+app.use(
+  Sentry2.Handlers.errorHandler({
+    shouldHandleError(error) {
+      if (error.status === 404 || error.status === 500) {
+        return true
+      }
+      return false
+    },
+  })
+)
 app.use(function onError(err, req, res, next) {
   res.statusCode = 500
   res.end(res.sentry + '\n')

@@ -2,7 +2,7 @@ import 'dotenv/config'
 
 import * as Sentry from '@sentry/node'
 import compression from 'compression'
-import redis from 'connect-redis'
+import RedisStore from 'connect-redis'
 import express, { Request } from 'express'
 import session from 'express-session'
 import { google } from 'googleapis'
@@ -11,6 +11,7 @@ import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 
 import initiateRedis from '../data/redis'
+import { expressErrorHandler } from '../middleware/expressErrorHandler'
 import assertNonNullish from '../utils/assertNonNullish'
 import initSentry from '../utils/initSentry'
 
@@ -21,8 +22,11 @@ process.env.NODE_ENV !== 'production' &&
   console.log('Booted and ready for usage')
 
 const app = express()
-const redisStore = redis(session)
 const redisClient = initiateRedis()
+const redisStore = new RedisStore({
+  client: redisClient,
+  prefix: 'juno:',
+})
 
 // Compress all HTTP responses
 app.use(compression())
@@ -34,7 +38,7 @@ const SEVEN_DAYS = 1000 * 60 * 10080
 app.use(
   session({
     name: 'junoSession',
-    store: new redisStore({ client: redisClient }),
+    store: redisStore,
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -167,19 +171,40 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJSDoc(swaggerOptions)
 app.use('/swagger', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
+// app.use('/', indexRoute)
 // Don't run Sentry when developing.
 process.env.NODE_ENV !== 'development' && initSentry(app)
 
-app.use('/', indexRoute)
+// All controllers should live here
+function rootHandler(req, res) {
+  // Use the indexRoute router as middleware to handle the request
+  indexRoute(req, res, () => {
+    // This callback function will be called if no routes in indexRoute match the request
+    res.status(404).send('Page not found')
+  })
+}
+
+// Use the rootHandler function as middleware for the root path ("/")
+app.use('/', rootHandler)
 
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
-app.use(Sentry.Handlers.requestHandler())
+app.use(Sentry.Handlers.requestHandler() as express.RequestHandler)
 // TracingHandler creates a trace for every incoming request
 app.use(Sentry.Handlers.tracingHandler())
 
 // The error handler must be before any other error middleware and after all controllers
-app.use(Sentry.Handlers.errorHandler())
+app.use(
+  Sentry.Handlers.errorHandler({
+    shouldHandleError(error) {
+      // Capture all 404 and 500 errors
+      if (error.status === 404 || error.status === 500) {
+        return true
+      }
+      return false
+    },
+  }) as express.ErrorRequestHandler
+)
 
 // Optional fallthrough error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

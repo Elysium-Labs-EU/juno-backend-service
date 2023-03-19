@@ -14,17 +14,12 @@ const cloudRedis = () => {
       host: process.env.REDIS_HOST,
       port: parseInt(process.env.REDIS_PORT),
     },
-    legacyMode: true,
   })
 }
 
 const initiateRedis = () => {
   const redisClient =
-    process.env.NODE_ENV === 'development'
-      ? createClient({
-          legacyMode: true,
-        })
-      : cloudRedis()
+    process.env.NODE_ENV === 'development' ? createClient() : cloudRedis()
 
   // eslint-disable-next-line no-console
   redisClient.connect().catch(console.error)
