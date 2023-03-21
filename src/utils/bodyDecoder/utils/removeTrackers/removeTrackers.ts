@@ -31,8 +31,9 @@ function parseStyleIntoObject(documentImage: cheerio.Element) {
       .map((item) => item.value?.split(/\s*;\s*/g))
       .flat(1)
     for (let i = 0; parsedStyle.length > i; i += 1) {
-      if (parsedStyle[i]) {
-        const parts = parsedStyle[i].match(/^([^:]+)\s*:\s*(.+)/)
+      const parsedStyleEntry = parsedStyle[i]
+      if (parsedStyleEntry) {
+        const parts = parsedStyleEntry.match(/^([^:]+)\s*:\s*(.+)/)
         if (
           parts &&
           TRACKERS_SELECTORS.some(

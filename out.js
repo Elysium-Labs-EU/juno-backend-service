@@ -1234,23 +1234,24 @@ var fetchProfile = (auth) =>
         gmailV1SchemaProfileSchema.parse(userResponse.value.data)
         peopleV1SchemaPersonSchema.parse(contactsResponse.value.data)
         const getName = () => {
-          var _a, _b, _c, _d, _e
-          if (
-            ((_b = (_a = contactsResponse.value) == null ? void 0 : _a.data) ==
-            null
-              ? void 0
-              : _b.names) &&
-            ((_e =
-              (_d = (_c = contactsResponse.value) == null ? void 0 : _c.data) ==
-              null
+          var _a, _b, _c, _d
+          const displayName =
+            (_d =
+              (_c =
+                (_b =
+                  (_a =
+                    contactsResponse == null
+                      ? void 0
+                      : contactsResponse.value) == null
+                    ? void 0
+                    : _a.data) == null
+                  ? void 0
+                  : _b.names) == null
                 ? void 0
-                : _d.names) == null
+                : _c.at(0)) == null
               ? void 0
-              : _e.length) > 0
-          ) {
-            return contactsResponse.value.data.names[0].displayName
-          }
-          return null
+              : _d.displayName
+          return displayName
         }
         const result = __spreadValues(
           {
@@ -1719,21 +1720,6 @@ import { google as google10 } from './node_modules/googleapis/build/src/index.js
 // src/utils/bodyDecoder/bodyDecoder.ts
 import * as cheerio6 from './node_modules/cheerio/lib/esm/index.js'
 
-// src/utils/decodeBase64.ts
-import base64url from './node_modules/base64url/index.js'
-function baseBase64(base64Data) {
-  const b64 = base64url.toBase64(base64Data)
-  return b64
-}
-function decodeBase64(base64Data) {
-  if (base64Data !== void 0 && base64Data !== 'undefined') {
-    const checkedString = base64Data.replaceAll(/-/g, '+')
-    const b64 = base64url.decode(checkedString)
-    return b64
-  }
-  return void 0
-}
-
 // src/utils/bodyDecoder/utils/changeSignatureColor/changeSignatureColor.ts
 import * as cheerio from './node_modules/cheerio/lib/esm/index.js'
 function changeSignatureColor(activeDocument) {
@@ -1839,8 +1825,9 @@ function parseStyleIntoObject(documentImage) {
       })
       .flat(1)
     for (let i = 0; parsedStyle.length > i; i += 1) {
-      if (parsedStyle[i]) {
-        const parts = parsedStyle[i].match(/^([^:]+)\s*:\s*(.+)/)
+      const parsedStyleEntry = parsedStyle[i]
+      if (parsedStyleEntry) {
+        const parts = parsedStyleEntry.match(/^([^:]+)\s*:\s*(.+)/)
         if (
           parts &&
           TRACKERS_SELECTORS.some(
@@ -1920,6 +1907,21 @@ function removeTrackers(orderedObject) {
   return localCopyOrderedObject
 }
 
+// src/utils/decodeBase64.ts
+import base64url from './node_modules/base64url/index.js'
+function baseBase64(base64Data) {
+  const b64 = base64url.toBase64(base64Data)
+  return b64
+}
+function decodeBase64(base64Data) {
+  if (base64Data !== void 0 && base64Data !== 'undefined') {
+    const checkedString = base64Data.replaceAll(/-/g, '+')
+    const b64 = base64url.decode(checkedString)
+    return b64
+  }
+  return void 0
+}
+
 // src/utils/bodyDecoder/bodyDecoder.ts
 var decodedString
 var localMessageId
@@ -1977,7 +1979,6 @@ var inlineImageDecoder = (_0) =>
       }
       return
     }
-    return
   })
 var loopThroughBodyParts = (_0) =>
   __async(void 0, [_0], function* ({ inputObject, signal }) {
@@ -2074,7 +2075,7 @@ var orderArrayPerType = (response) => {
 var prioritizeHTMLbodyObject = (response) => {
   let htmlObject = ''
   let noHtmlObject = ''
-  if (response.emailHTML.length === 1) {
+  if (response.emailHTML.length === 1 && response.emailHTML[0]) {
     return __spreadProps(__spreadValues({}, response), {
       emailHTML: response.emailHTML[0],
     })
@@ -2569,6 +2570,241 @@ var health = (req, res) =>
 // src/api/History/listHistory.ts
 import { google as google14 } from './node_modules/googleapis/build/src/index.js'
 
+// src/utils/onlyLegalLabelObjects.ts
+var onlyLegalLabels = ({ labelNames, storageLabels }) => {
+  const idMapStorageLabels = storageLabels.map((label) => label.id)
+  const filterArray = labelNames.filter((el) => idMapStorageLabels.includes(el))
+  const newArray = []
+  for (let i = 0; i < filterArray.length; i += 1) {
+    const pushItem = storageLabels.find((item) => item.id === filterArray[i])
+    if (pushItem) {
+      newArray.push(pushItem)
+    }
+  }
+  return newArray
+}
+var onlyLegalLabelObjects_default = onlyLegalLabels
+
+// src/api/History/handleHistoryObject.ts
+var HISTORY_NEXT_PAGETOKEN = 'history'
+var restructureObject = (message) => {
+  if (message === void 0) {
+    return
+  }
+  const newObject = __spreadProps(__spreadValues({}, message), {
+    id: message.threadId,
+  })
+  return newObject
+}
+function handleHistoryObject({ history, storageLabels }) {
+  var _a
+  const inboxFeed = {
+    labels: [INBOX_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const toDoLabelId =
+    (_a = storageLabels.find((label) => label.name === 'Juno/To Do')) == null
+      ? void 0
+      : _a.id
+  if (!toDoLabelId) {
+    throw Error('Cannot find the to do label')
+  }
+  const todoFeed = {
+    labels: [toDoLabelId],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const sentFeed = {
+    labels: [SENT_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const draftFeed = {
+    labels: [DRAFT_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const archiveFeed = {
+    labels: [ARCHIVE_LABEL],
+    threads: [],
+    nextPageToken: HISTORY_NEXT_PAGETOKEN,
+  }
+  const handleRemovalUnreadLabel = (item) => {
+    var _a2, _b, _c, _d
+    const message =
+      (_b =
+        (_a2 = item == null ? void 0 : item.labelsRemoved) == null
+          ? void 0
+          : _a2.at(0)) == null
+        ? void 0
+        : _b.message
+    const labelIds =
+      (_d =
+        (_c = item == null ? void 0 : item.labelsRemoved) == null
+          ? void 0
+          : _c.at(0)) == null
+        ? void 0
+        : _d.labelIds
+    const messageLabelIds = message == null ? void 0 : message.labelIds
+    const labelIdsHasUnread =
+      labelIds == null ? void 0 : labelIds.includes(UNREAD_LABEL)
+    if (labelIdsHasUnread && messageLabelIds) {
+      const staticOnlyLegalLabels = onlyLegalLabelObjects_default({
+        labelNames: messageLabelIds,
+        storageLabels,
+      })
+      if (
+        staticOnlyLegalLabels.length > 0 &&
+        staticOnlyLegalLabels.some((label) => label.id === INBOX_LABEL)
+      ) {
+        inboxFeed.threads.push(restructureObject(message))
+      }
+      if (
+        staticOnlyLegalLabels.length > 0 &&
+        staticOnlyLegalLabels.some((label) => label.id === toDoLabelId)
+      ) {
+        todoFeed.threads.push(restructureObject(message))
+      }
+      archiveFeed.threads.push(restructureObject(message))
+    }
+  }
+  const handleRemovalOriginFeed = (item) => {
+    var _a2, _b, _c, _d
+    const message =
+      (_b =
+        (_a2 = item == null ? void 0 : item.labelsRemoved) == null
+          ? void 0
+          : _a2.at(0)) == null
+        ? void 0
+        : _b.message
+    const labelIds =
+      (_d =
+        (_c = item == null ? void 0 : item.labelsRemoved) == null
+          ? void 0
+          : _c.at(0)) == null
+        ? void 0
+        : _d.labelIds
+    if (message == null ? void 0 : message.threadId) {
+      if (labelIds == null ? void 0 : labelIds.includes(INBOX_LABEL)) {
+        const output = inboxFeed.threads.filter(
+          (filterItem) =>
+            (filterItem == null ? void 0 : filterItem.id) !==
+            (message == null ? void 0 : message.threadId)
+        )
+        inboxFeed.threads = output
+      }
+      if (labelIds == null ? void 0 : labelIds.includes(toDoLabelId)) {
+        const output = todoFeed.threads.filter(
+          (filterItem) =>
+            (filterItem == null ? void 0 : filterItem.id) !==
+            (message == null ? void 0 : message.threadId)
+        )
+        todoFeed.threads = output
+      }
+    }
+  }
+  const handleAdditionLabel = (item) => {
+    var _a2, _b, _c, _d
+    const message =
+      (_b =
+        (_a2 = item == null ? void 0 : item.labelsAdded) == null
+          ? void 0
+          : _a2.at(0)) == null
+        ? void 0
+        : _b.message
+    const labelIds =
+      (_d = (_c = item.labelsAdded) == null ? void 0 : _c.at(0)) == null
+        ? void 0
+        : _d.labelIds
+    if (labelIds == null ? void 0 : labelIds.includes(INBOX_LABEL)) {
+      inboxFeed.threads.push(restructureObject(message))
+    }
+    if (labelIds == null ? void 0 : labelIds.includes(toDoLabelId)) {
+      todoFeed.threads.push(restructureObject(message))
+    }
+    if (labelIds == null ? void 0 : labelIds.includes(SENT_LABEL)) {
+      sentFeed.threads.push(restructureObject(message))
+    }
+  }
+  const handleAdditionDraftMessage = (item) => {
+    var _a2, _b
+    const message =
+      (_b =
+        (_a2 = item == null ? void 0 : item.messagesAdded) == null
+          ? void 0
+          : _a2.at(0)) == null
+        ? void 0
+        : _b.message
+    if (message == null ? void 0 : message.labelIds) {
+      const draftThreadIndex = draftFeed.threads.findIndex((thread) => {
+        if (item == null ? void 0 : item.messagesAdded) {
+          return (
+            (thread == null ? void 0 : thread.threadId) ===
+            (message == null ? void 0 : message.threadId)
+          )
+        }
+        return -1
+      })
+      if (draftThreadIndex > -1) {
+        draftFeed.threads.splice(draftThreadIndex, 1)
+        draftFeed.threads.push(restructureObject(message))
+      } else {
+        draftFeed.threads.push(restructureObject(message))
+      }
+    }
+  }
+  const handleAdditionMessage = (item) => {
+    var _a2, _b
+    const message =
+      (_b =
+        (_a2 = item == null ? void 0 : item.messagesAdded) == null
+          ? void 0
+          : _a2.at(0)) == null
+        ? void 0
+        : _b.message
+    const messageLabelIds = message == null ? void 0 : message.labelIds
+    if (messageLabelIds) {
+      if (messageLabelIds.includes(INBOX_LABEL)) {
+        inboxFeed.threads.push(restructureObject(message))
+      }
+      if (messageLabelIds.includes(toDoLabelId)) {
+        todoFeed.threads.push(restructureObject(message))
+      }
+      if (messageLabelIds.includes(SENT_LABEL)) {
+        sentFeed.threads.push(restructureObject(message))
+      }
+      if (messageLabelIds.includes(DRAFT_LABEL)) {
+        handleAdditionDraftMessage(item)
+      }
+    }
+  }
+  if (Array.isArray(history)) {
+    try {
+      const cleanHistoryArray = history.filter(
+        (item) => Object.keys(item).length > 2
+      )
+      for (const item of cleanHistoryArray) {
+        if (item) {
+          if (Object.prototype.hasOwnProperty.call(item, 'labelsRemoved')) {
+            handleRemovalUnreadLabel(item)
+            handleRemovalOriginFeed(item)
+          }
+          if (Object.prototype.hasOwnProperty.call(item, 'labelsAdded')) {
+            handleAdditionLabel(item)
+          }
+          if (Object.prototype.hasOwnProperty.call(item, 'messagesAdded')) {
+            handleAdditionMessage(item)
+          }
+        }
+      }
+    } catch (err) {
+      process.env.NODE_ENV === 'development' && console.error(err)
+    }
+  }
+  return [inboxFeed, todoFeed, sentFeed, draftFeed, archiveFeed]
+}
+
 // src/api/Threads/fetchSimpleThreads.ts
 import { google as google13 } from './node_modules/googleapis/build/src/index.js'
 
@@ -2741,274 +2977,6 @@ var fetchSimpleThreads = (req, res) =>
     responseMiddleware(res, statusCode, data)
   })
 
-// src/utils/onlyLegalLabelObjects.ts
-var onlyLegalLabels = ({ labelNames, storageLabels }) => {
-  const idMapStorageLabels = storageLabels.map((label) => label.id)
-  const filterArray = labelNames.filter((el) => idMapStorageLabels.includes(el))
-  const newArray = []
-  for (let i = 0; i < filterArray.length; i += 1) {
-    const pushItem = storageLabels.find((item) => item.id === filterArray[i])
-    if (pushItem) {
-      newArray.push(pushItem)
-    }
-  }
-  return newArray
-}
-var onlyLegalLabelObjects_default = onlyLegalLabels
-
-// src/api/History/handleHistoryObject.ts
-var HISTORY_NEXT_PAGETOKEN = 'history'
-var restructureObject = (message) => {
-  if (message === void 0) {
-    return
-  }
-  const newObject = __spreadProps(__spreadValues({}, message), {
-    id: message.threadId,
-  })
-  return newObject
-}
-function handleHistoryObject({ history, storageLabels }) {
-  var _a
-  const inboxFeed = {
-    labels: [INBOX_LABEL],
-    threads: [],
-    nextPageToken: HISTORY_NEXT_PAGETOKEN,
-  }
-  const toDoLabelId =
-    (_a = storageLabels.find((label) => label.name === 'Juno/To Do')) == null
-      ? void 0
-      : _a.id
-  if (!toDoLabelId) {
-    throw Error('Cannot find the to do label')
-  }
-  const todoFeed = {
-    labels: [toDoLabelId],
-    threads: [],
-    nextPageToken: HISTORY_NEXT_PAGETOKEN,
-  }
-  const sentFeed = {
-    labels: [SENT_LABEL],
-    threads: [],
-    nextPageToken: HISTORY_NEXT_PAGETOKEN,
-  }
-  const draftFeed = {
-    labels: [DRAFT_LABEL],
-    threads: [],
-    nextPageToken: HISTORY_NEXT_PAGETOKEN,
-  }
-  const archiveFeed = {
-    labels: [ARCHIVE_LABEL],
-    threads: [],
-    nextPageToken: HISTORY_NEXT_PAGETOKEN,
-  }
-  const handleRemovalUnreadLabel = (item) => {
-    var _a2, _b, _c
-    if (item.labelsRemoved && item.labelsRemoved[0]) {
-      if (
-        ((_a2 = item.labelsRemoved[0].labelIds) == null
-          ? void 0
-          : _a2.includes(UNREAD_LABEL)) &&
-        ((_c = (_b = item.labelsRemoved[0]) == null ? void 0 : _b.message) ==
-        null
-          ? void 0
-          : _c.labelIds)
-      ) {
-        const staticOnlyLegalLabels = onlyLegalLabelObjects_default({
-          labelNames: item.labelsRemoved[0].message.labelIds,
-          storageLabels,
-        })
-        if (
-          staticOnlyLegalLabels.length > 0 &&
-          staticOnlyLegalLabels.some((label) => label.id === INBOX_LABEL)
-        ) {
-          inboxFeed.threads.push(
-            restructureObject(item.labelsRemoved[0].message)
-          )
-        }
-        if (
-          staticOnlyLegalLabels.length > 0 &&
-          staticOnlyLegalLabels.some((label) => label.id === toDoLabelId)
-        ) {
-          todoFeed.threads.push(
-            restructureObject(item.labelsRemoved[0].message)
-          )
-        }
-        archiveFeed.threads.push(
-          restructureObject(item.labelsRemoved[0].message)
-        )
-      }
-    }
-  }
-  const handleRemovalOriginFeed = (item) => {
-    var _a2, _b, _c, _d, _e, _f
-    if (item.labelsRemoved) {
-      if (
-        (_b = (_a2 = item.labelsRemoved[0]) == null ? void 0 : _a2.message) ==
-        null
-          ? void 0
-          : _b.threadId
-      ) {
-        const toHandleObject = item.labelsRemoved[0]
-        if (
-          (_d = (_c = item.labelsRemoved[0]) == null ? void 0 : _c.labelIds) ==
-          null
-            ? void 0
-            : _d.includes(INBOX_LABEL)
-        ) {
-          const output = inboxFeed.threads.filter((filterItem) => {
-            var _a3
-            return (
-              (filterItem == null ? void 0 : filterItem.id) !==
-              ((_a3 =
-                toHandleObject == null ? void 0 : toHandleObject.message) ==
-              null
-                ? void 0
-                : _a3.threadId)
-            )
-          })
-          inboxFeed.threads = output
-        }
-        if (
-          (_f = (_e = item.labelsRemoved[0]) == null ? void 0 : _e.labelIds) ==
-          null
-            ? void 0
-            : _f.includes(toDoLabelId)
-        ) {
-          const output = todoFeed.threads.filter((filterItem) => {
-            var _a3
-            return (
-              (filterItem == null ? void 0 : filterItem.id) !==
-              ((_a3 =
-                toHandleObject == null ? void 0 : toHandleObject.message) ==
-              null
-                ? void 0
-                : _a3.threadId)
-            )
-          })
-          todoFeed.threads = output
-        }
-      }
-    }
-  }
-  const handleAdditionLabel = (item) => {
-    var _a2, _b, _c, _d
-    if (item.labelsAdded) {
-      if (
-        (_a2 = item.labelsAdded[0].labelIds) == null
-          ? void 0
-          : _a2.includes(INBOX_LABEL)
-      ) {
-        inboxFeed.threads.push(
-          restructureObject(
-            (_b = item == null ? void 0 : item.labelsAdded[0]) == null
-              ? void 0
-              : _b.message
-          )
-        )
-      }
-      if (
-        (_c = item.labelsAdded[0].labelIds) == null
-          ? void 0
-          : _c.includes(toDoLabelId)
-      ) {
-        todoFeed.threads.push(restructureObject(item.labelsAdded[0].message))
-      }
-      if (
-        (_d = item.labelsAdded[0].labelIds) == null
-          ? void 0
-          : _d.includes(SENT_LABEL)
-      ) {
-        sentFeed.threads.push(restructureObject(item.labelsAdded[0].message))
-      }
-    }
-  }
-  const handleAdditionDraftMessage = (item) => {
-    var _a2, _b, _c
-    if (
-      (item == null ? void 0 : item.messagesAdded) &&
-      ((_a2 = item == null ? void 0 : item.messagesAdded[0]) == null
-        ? void 0
-        : _a2.message) &&
-      ((_c =
-        (_b = item == null ? void 0 : item.messagesAdded[0]) == null
-          ? void 0
-          : _b.message) == null
-        ? void 0
-        : _c.labelIds)
-    ) {
-      const draftThreadIndex = draftFeed.threads.findIndex((thread) => {
-        var _a3
-        if (item == null ? void 0 : item.messagesAdded) {
-          return (
-            (thread == null ? void 0 : thread.threadId) ===
-            ((_a3 = item.messagesAdded[0].message) == null
-              ? void 0
-              : _a3.threadId)
-          )
-        }
-        return -1
-      })
-      if (draftThreadIndex > -1) {
-        draftFeed.threads.splice(draftThreadIndex, 1)
-        draftFeed.threads.push(restructureObject(item.messagesAdded[0].message))
-      } else {
-        draftFeed.threads.push(restructureObject(item.messagesAdded[0].message))
-      }
-    }
-  }
-  const handleAdditionMessage = (item) => {
-    var _a2, _b, _c
-    if (
-      (item == null ? void 0 : item.messagesAdded) &&
-      ((_a2 = item == null ? void 0 : item.messagesAdded[0]) == null
-        ? void 0
-        : _a2.message) &&
-      ((_c =
-        (_b = item == null ? void 0 : item.messagesAdded[0]) == null
-          ? void 0
-          : _b.message) == null
-        ? void 0
-        : _c.labelIds)
-    ) {
-      if (item.messagesAdded[0].message.labelIds.includes(INBOX_LABEL)) {
-        inboxFeed.threads.push(restructureObject(item.messagesAdded[0].message))
-      }
-      if (item.messagesAdded[0].message.labelIds.includes(toDoLabelId)) {
-        todoFeed.threads.push(restructureObject(item.messagesAdded[0].message))
-      }
-      if (item.messagesAdded[0].message.labelIds.includes(SENT_LABEL)) {
-        sentFeed.threads.push(restructureObject(item.messagesAdded[0].message))
-      }
-      if (item.messagesAdded[0].message.labelIds.includes(DRAFT_LABEL)) {
-        handleAdditionDraftMessage(item)
-      }
-    }
-  }
-  if (Array.isArray(history)) {
-    try {
-      const cleanHistoryArray = history.filter(
-        (item) => Object.keys(item).length > 2
-      )
-      for (let i = 0; i < cleanHistoryArray.length; i += 1) {
-        const item = cleanHistoryArray[i]
-        if (Object.prototype.hasOwnProperty.call(item, 'labelsRemoved')) {
-          handleRemovalUnreadLabel(item)
-          handleRemovalOriginFeed(item)
-        }
-        if (Object.prototype.hasOwnProperty.call(item, 'labelsAdded')) {
-          handleAdditionLabel(item)
-        }
-        if (Object.prototype.hasOwnProperty.call(item, 'messagesAdded')) {
-          handleAdditionMessage(item)
-        }
-      }
-    } catch (err) {
-      process.env.NODE_ENV === 'development' && console.error(err)
-    }
-  }
-  return [inboxFeed, todoFeed, sentFeed, draftFeed, archiveFeed]
-}
-
 // src/api/History/listHistory.ts
 var fetchHistory = (auth, req) =>
   __async(void 0, null, function* () {
@@ -3038,19 +3006,15 @@ var fetchHistory = (auth, req) =>
           storageLabels,
         })
         const timeStampLastFetch = Date.now()
-        const buffer = []
-        for (let i = 0; i < history.length; i += 1) {
-          if (history[i].threads.length > 0) {
-            buffer.push(
-              hydrateMetaList({
-                gmail,
-                timeStampLastFetch,
-                response: history[i],
-              })
-            )
-          }
-        }
-        const hydratedOutput = yield Promise.all(buffer)
+        const hydratedOutput = yield Promise.all(
+          history.map((historyItem) =>
+            hydrateMetaList({
+              gmail,
+              timeStampLastFetch,
+              response: historyItem,
+            })
+          )
+        )
         return hydratedOutput
       }
       return new Error('No history found...')

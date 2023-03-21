@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    /* Docs: https://www.typescriptlang.org/tsconfig */
     "allowJs": true,
     "allowUnreachableCode": true,
     "checkJs": true,
@@ -10,6 +9,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": false,
+    "noUncheckedIndexedAccess": true,
     "outDir": "dist",
     "resolveJsonModule": true,
     "rootDir": "src",

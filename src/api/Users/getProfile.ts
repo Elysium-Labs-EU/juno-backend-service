@@ -31,13 +31,9 @@ export const fetchProfile = async (auth: OAuth2Client | undefined) => {
       gmailV1SchemaProfileSchema.parse(userResponse.value.data)
       peopleV1SchemaPersonSchema.parse(contactsResponse.value.data)
       const getName = () => {
-        if (
-          contactsResponse.value?.data?.names &&
-          contactsResponse.value?.data?.names?.length > 0
-        ) {
-          return contactsResponse.value.data.names[0].displayName
-        }
-        return null
+        const displayName =
+          contactsResponse?.value?.data?.names?.at(0)?.displayName
+        return displayName
       }
       const result = {
         name: getName(),
