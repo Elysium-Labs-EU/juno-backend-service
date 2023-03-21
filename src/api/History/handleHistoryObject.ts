@@ -80,84 +80,79 @@ export default function handleHistoryObject({
   }
 
   const handleRemovalUnreadLabel = (item: gmail_v1.Schema$History) => {
-    if (item.labelsRemoved && item.labelsRemoved[0]) {
+    const message = item?.labelsRemoved?.at(0)?.message
+    const labelIds = item?.labelsRemoved?.at(0)?.labelIds
+
+    // if (item.labelsRemoved && item.labelsRemoved.at(0)) {
+    const messageLabelIds = message?.labelIds
+    const labelIdsHasUnread = labelIds?.includes(global.UNREAD_LABEL)
+    if (labelIdsHasUnread && messageLabelIds) {
+      const staticOnlyLegalLabels = onlyLegalLabelObjects({
+        labelNames: messageLabelIds,
+        storageLabels,
+      })
       if (
-        item.labelsRemoved[0].labelIds?.includes(global.UNREAD_LABEL) &&
-        item.labelsRemoved[0]?.message?.labelIds
+        staticOnlyLegalLabels.length > 0 &&
+        staticOnlyLegalLabels.some((label) => label.id === global.INBOX_LABEL)
       ) {
-        const staticOnlyLegalLabels = onlyLegalLabelObjects({
-          labelNames: item.labelsRemoved[0].message.labelIds,
-          storageLabels,
-        })
-        if (
-          staticOnlyLegalLabels.length > 0 &&
-          staticOnlyLegalLabels.some((label) => label.id === global.INBOX_LABEL)
-        ) {
-          inboxFeed.threads.push(
-            restructureObject(item.labelsRemoved[0].message)
-          )
-        }
-        if (
-          staticOnlyLegalLabels.length > 0 &&
-          staticOnlyLegalLabels.some((label) => label.id === toDoLabelId)
-        ) {
-          todoFeed.threads.push(
-            restructureObject(item.labelsRemoved[0].message)
-          )
-        }
-        archiveFeed.threads.push(
-          restructureObject(item.labelsRemoved[0].message)
-        )
+        inboxFeed.threads.push(restructureObject(message))
       }
+      if (
+        staticOnlyLegalLabels.length > 0 &&
+        staticOnlyLegalLabels.some((label) => label.id === toDoLabelId)
+      ) {
+        todoFeed.threads.push(restructureObject(message))
+      }
+      archiveFeed.threads.push(restructureObject(message))
     }
+    // }
   }
 
   const handleRemovalOriginFeed = (item: gmail_v1.Schema$History) => {
-    if (item.labelsRemoved) {
-      if (item.labelsRemoved[0]?.message?.threadId) {
-        // The all feed doesn't listen to this function set, since the All Feed doesn't need to be filtered.
-        const toHandleObject = item.labelsRemoved[0]
+    const message = item?.labelsRemoved?.at(0)?.message
+    const labelIds = item?.labelsRemoved?.at(0)?.labelIds
 
-        if (item.labelsRemoved[0]?.labelIds?.includes(global.INBOX_LABEL)) {
-          const output = inboxFeed.threads.filter(
-            (filterItem) => filterItem?.id !== toHandleObject?.message?.threadId
-          )
-          inboxFeed.threads = output
-        }
+    if (message?.threadId) {
+      // The all feed doesn't listen to this function set, since the All Feed doesn't need to be filtered.
+      // const toHandleObject = item.labelsRemoved.at(0)
 
-        if (item.labelsRemoved[0]?.labelIds?.includes(toDoLabelId)) {
-          const output = todoFeed.threads.filter(
-            (filterItem) => filterItem?.id !== toHandleObject?.message?.threadId
-          )
-          todoFeed.threads = output
-        }
+      if (labelIds?.includes(global.INBOX_LABEL)) {
+        const output = inboxFeed.threads.filter(
+          (filterItem) => filterItem?.id !== message?.threadId
+        )
+        inboxFeed.threads = output
+      }
+
+      if (labelIds?.includes(toDoLabelId)) {
+        const output = todoFeed.threads.filter(
+          (filterItem) => filterItem?.id !== message?.threadId
+        )
+        todoFeed.threads = output
       }
     }
   }
 
   const handleAdditionLabel = (item: gmail_v1.Schema$History) => {
-    if (item.labelsAdded) {
-      if (item.labelsAdded[0].labelIds?.includes(global.INBOX_LABEL)) {
-        inboxFeed.threads.push(restructureObject(item?.labelsAdded[0]?.message))
-      }
-      if (item.labelsAdded[0].labelIds?.includes(toDoLabelId)) {
-        todoFeed.threads.push(restructureObject(item.labelsAdded[0].message))
-      }
-      if (item.labelsAdded[0].labelIds?.includes(global.SENT_LABEL)) {
-        sentFeed.threads.push(restructureObject(item.labelsAdded[0].message))
-      }
+    const message = item?.labelsAdded?.at(0)?.message
+    const labelIds = item.labelsAdded?.at(0)?.labelIds
+
+    if (labelIds?.includes(global.INBOX_LABEL)) {
+      inboxFeed.threads.push(restructureObject(message))
+    }
+    if (labelIds?.includes(toDoLabelId)) {
+      todoFeed.threads.push(restructureObject(message))
+    }
+    if (labelIds?.includes(global.SENT_LABEL)) {
+      sentFeed.threads.push(restructureObject(message))
     }
   }
 
   const handleAdditionDraftMessage = (item: gmail_v1.Schema$History) => {
-    if (
-      item?.messagesAdded &&
-      item?.messagesAdded[0]?.message &&
-      item?.messagesAdded[0]?.message?.labelIds
-    ) {
+    const message = item?.messagesAdded?.at(0)?.message
+    if (message?.labelIds) {
       const draftThreadIndex = draftFeed.threads.findIndex((thread) => {
         if (item?.messagesAdded) {
-          return thread?.threadId === item.messagesAdded[0].message?.threadId
+          return thread?.threadId === message?.threadId
         }
         return -1
       })
@@ -165,32 +160,30 @@ export default function handleHistoryObject({
       // So the draftFeed object should overwrite an entry if the loop finds another one with the same threadId
       if (draftThreadIndex > -1) {
         draftFeed.threads.splice(draftThreadIndex, 1)
-        draftFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+        draftFeed.threads.push(restructureObject(message))
       } else {
-        draftFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+        draftFeed.threads.push(restructureObject(message))
       }
     }
   }
 
   const handleAdditionMessage = (item: gmail_v1.Schema$History) => {
-    if (
-      item?.messagesAdded &&
-      item?.messagesAdded[0]?.message &&
-      item?.messagesAdded[0]?.message?.labelIds
-    ) {
-      if (item.messagesAdded[0].message.labelIds.includes(global.INBOX_LABEL)) {
-        inboxFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+    const message = item?.messagesAdded?.at(0)?.message
+    const messageLabelIds = message?.labelIds
+    if (messageLabelIds) {
+      if (messageLabelIds.includes(global.INBOX_LABEL)) {
+        inboxFeed.threads.push(restructureObject(message))
       }
-      if (item.messagesAdded[0].message.labelIds.includes(toDoLabelId)) {
-        todoFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      if (messageLabelIds.includes(toDoLabelId)) {
+        todoFeed.threads.push(restructureObject(message))
       }
-      if (item.messagesAdded[0].message.labelIds.includes(global.SENT_LABEL)) {
-        sentFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      if (messageLabelIds.includes(global.SENT_LABEL)) {
+        sentFeed.threads.push(restructureObject(message))
       }
-      if (item.messagesAdded[0].message.labelIds.includes(global.DRAFT_LABEL)) {
+      if (messageLabelIds.includes(global.DRAFT_LABEL)) {
         handleAdditionDraftMessage(item)
       }
-      // allFeed.threads.push(restructureObject(item.messagesAdded[0].message))
+      // allFeed.threads.push(restructureObject(item.messagesAdded.at(0)?.message))
     }
   }
 
@@ -202,17 +195,18 @@ export default function handleHistoryObject({
       )
       // If item has been marked as read and is also archived, the item is coming up twice in the feed.
       // Make sure that the end feed doesn't include these items for the labelsRemoved
-      for (let i = 0; i < cleanHistoryArray.length; i += 1) {
-        const item = cleanHistoryArray[i]
-        if (Object.prototype.hasOwnProperty.call(item, 'labelsRemoved')) {
-          handleRemovalUnreadLabel(item)
-          handleRemovalOriginFeed(item)
-        }
-        if (Object.prototype.hasOwnProperty.call(item, 'labelsAdded')) {
-          handleAdditionLabel(item)
-        }
-        if (Object.prototype.hasOwnProperty.call(item, 'messagesAdded')) {
-          handleAdditionMessage(item)
+      for (const item of cleanHistoryArray) {
+        if (item) {
+          if (Object.prototype.hasOwnProperty.call(item, 'labelsRemoved')) {
+            handleRemovalUnreadLabel(item)
+            handleRemovalOriginFeed(item)
+          }
+          if (Object.prototype.hasOwnProperty.call(item, 'labelsAdded')) {
+            handleAdditionLabel(item)
+          }
+          if (Object.prototype.hasOwnProperty.call(item, 'messagesAdded')) {
+            handleAdditionMessage(item)
+          }
         }
       }
     } catch (err) {

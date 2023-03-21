@@ -2,13 +2,13 @@ import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
 
+import handleHistoryObject from './handleHistoryObject'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaListHistoryResponseSchema } from '../../types/gmailTypes'
 import errorHandeling from '../../utils/errorHandeling'
 import { hydrateMetaList } from '../Threads/fetchSimpleThreads'
-import handleHistoryObject from './handleHistoryObject'
 
 const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
@@ -37,19 +37,16 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
       })
 
       const timeStampLastFetch = Date.now()
-      const buffer: Array<ReturnType<typeof hydrateMetaList>> = []
-      for (let i = 0; i < history.length; i += 1) {
-        if (history[i].threads.length > 0) {
-          buffer.push(
-            hydrateMetaList({
-              gmail,
-              timeStampLastFetch,
-              response: history[i],
-            })
-          )
-        }
-      }
-      const hydratedOutput = await Promise.all(buffer)
+      const hydratedOutput = await Promise.all(
+        history.map((historyItem) =>
+          hydrateMetaList({
+            gmail,
+            timeStampLastFetch,
+            response: historyItem,
+          })
+        )
+      )
+
       return hydratedOutput
     }
     return new Error('No history found...')

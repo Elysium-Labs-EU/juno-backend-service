@@ -1,9 +1,6 @@
 import * as cheerio from 'cheerio'
 import { gmail_v1 } from 'googleapis'
 
-import * as global from '../../constants/globalConstants'
-import type { IAttachment } from '../../types/emailAttachmentTypes'
-import { baseBase64, decodeBase64 } from '../decodeBase64'
 import type { IBodyProps } from './bodyDecoderTypes'
 import changeSignatureColor from './utils/changeSignatureColor/changeSignatureColor'
 import cleanLink from './utils/cleanLink'
@@ -11,6 +8,9 @@ import enhancePlainText from './utils/enhancePlainText'
 import openLinkInNewTab from './utils/openLinkInNewTab'
 import removeScripts from './utils/removeScripts'
 import removeTrackers from './utils/removeTrackers/removeTrackers'
+import * as global from '../../constants/globalConstants'
+import type { IAttachment } from '../../types/emailAttachmentTypes'
+import { baseBase64, decodeBase64 } from '../decodeBase64'
 
 let decodedString: string | undefined
 let localMessageId: string | null
@@ -65,7 +65,6 @@ const inlineImageDecoder = async ({
     }
     return
   }
-  return
 }
 
 // This function recursively loops in the emailbody to find a body to decode. If initially priotizes the last object in a parts array.
@@ -180,7 +179,7 @@ export const prioritizeHTMLbodyObject = (response: {
   let htmlObject = ''
   let noHtmlObject = ''
 
-  if (response.emailHTML.length === 1) {
+  if (response.emailHTML.length === 1 && response.emailHTML[0]) {
     return { ...response, emailHTML: response.emailHTML[0] }
   }
   if (response.emailHTML.length > 1) {
