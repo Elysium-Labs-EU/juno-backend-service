@@ -11,7 +11,7 @@ import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUI from 'swagger-ui-express'
 
 import initiateRedis from '../data/redis'
-import { expressErrorHandler } from '../middleware/expressErrorHandler'
+// import { expressErrorHandler } from '../middleware/expressErrorHandler'
 import assertNonNullish from '../utils/assertNonNullish'
 import initSentry from '../utils/initSentry'
 
@@ -197,8 +197,17 @@ app.use(Sentry.Handlers.tracingHandler())
 app.use(
   Sentry.Handlers.errorHandler({
     shouldHandleError(error) {
-      // Capture all 404 and 500 errors
-      if (error.status === 404 || error.status === 500) {
+      const regex = /Redis/
+      const isRedisError = regex.test(error.toString())
+      // eslint-disable-next-line no-console
+      console.log('Error detected by Sentry:', error)
+      // Capture all 401, 404 and 500 errors
+      if (
+        error.status === 401 ||
+        error.status === 404 ||
+        error.status === 500 ||
+        isRedisError
+      ) {
         return true
       }
       return false

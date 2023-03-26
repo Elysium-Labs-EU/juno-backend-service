@@ -80,27 +80,39 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
           req.session?.hashSecret &&
           createHashState(req.session.hashSecret) === state
         ) {
-          if (tokens?.id_token && (await checkIdValidity(tokens.id_token))) {
+          if (
+            tokens &&
+            tokens?.id_token &&
+            (await checkIdValidity(tokens.id_token))
+          ) {
             oAuth2Client.setCredentials(tokens)
             req.session.oAuthClient = tokens
           } else {
-            return res.status(400).json(global.INVALID_TOKEN)
+            return res.status(401).json(global.INVALID_TOKEN)
           }
         } else {
-          return res.status(400).json('Invalid state detected')
+          const errorMessage = 'Invalid state detected'
+          res.status(401).json('Invalid state detected')
+          throw Error(errorMessage)
         }
       }
 
       // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
       if (state === 'noSession') {
-        oAuth2Client.setCredentials(tokens)
-        const result = {
-          credentials: oAuth2Client.credentials,
+        if (tokens) {
+          oAuth2Client.setCredentials(tokens)
+          const result = {
+            credentials: oAuth2Client.credentials,
+          }
+          credentialsSchema.parse(result.credentials)
+          return res.status(200).json({
+            credentials: oAuth2Client.credentials,
+          })
+        } else {
+          const errorMessage = 'Token not found'
+          return res.status(401).json(errorMessage)
+          throw Error(errorMessage)
         }
-        credentialsSchema.parse(result.credentials)
-        return res.status(200).json({
-          credentials: oAuth2Client.credentials,
-        })
       }
       // If the session route is used, only send back an random id to the user.
       return res.status(200).json({

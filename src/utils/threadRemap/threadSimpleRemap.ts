@@ -1,8 +1,8 @@
 import { gmail_v1 } from 'googleapis'
 
+import { ThreadSimpleRemap } from './types/threadRemapTypes'
 import checkAttachment from '../fetchAttachments/fetchAttachments'
 import findHeader from '../findHeader'
-import { ThreadSimpleRemap } from './types/threadRemapTypes'
 
 const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   return {
@@ -16,7 +16,7 @@ const remapPayloadHeaders = (rawMessage: gmail_v1.Schema$Message) => {
   }
 }
 
-const remapSimpleMessage = async (rawMessage: gmail_v1.Schema$Message) => {
+const remapSimpleMessage = (rawMessage: gmail_v1.Schema$Message) => {
   return {
     id: rawMessage.id,
     threadId: rawMessage.threadId,

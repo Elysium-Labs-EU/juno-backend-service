@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express'
 
-export const health = async (req: Request, res: Response) => {
+export const health = (req: Request, res: Response) => {
   try {
     const response = 'I am healthy.'
     return res.status(200).json(response)

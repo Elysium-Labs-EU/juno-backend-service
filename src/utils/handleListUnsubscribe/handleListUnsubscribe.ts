@@ -1,5 +1,5 @@
-import type { IBodyProps } from '../bodyDecoder/bodyDecoderTypes'
 import fetchUnsubscribeLink from './fetchUnsubscribeLink'
+import type { IBodyProps } from '../bodyDecoder/bodyDecoderTypes'
 
 /**
  * This function handles the list-unsubscribe functionality in an email message. If the

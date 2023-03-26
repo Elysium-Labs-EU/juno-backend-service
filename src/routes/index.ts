@@ -14,8 +14,8 @@ import { listHistory } from '../api/History/listHistory'
 import { createLabel } from '../api/Labels/createLabel'
 import { getLabels } from '../api/Labels/getLabels'
 import { getSingleLabel } from '../api/Labels/getSingleLabel'
-import { removeLabels } from '../api/Labels/removeLabels'
-import { updateLabels } from '../api/Labels/updateLabels'
+import { removeLabel } from '../api/Labels/removeLabel'
+import { updateLabel } from '../api/Labels/updateLabel'
 import { deleteMessage } from '../api/Message/deleteMessage'
 import { fetchMessageAttachment } from '../api/Message/fetchMessageAttachment'
 import { sendMessage } from '../api/Message/sendMessage'
@@ -28,54 +28,149 @@ import { fetchSingleThread } from '../api/Threads/fetchSingleThread'
 import { thrashThread } from '../api/Threads/thrashThread'
 import { updateThread } from '../api/Threads/updateThread'
 import { getProfile } from '../api/Users/getProfile'
-import { getSendAs } from '../api/Users/getSendAs'
 import { logoutUser } from '../api/Users/logoutUser'
 import { updateSendAs } from '../api/Users/updateSendAs'
 import { getAuthenticateClient, getAuthUrl } from '../google/index'
 
 const router = express.Router()
 
-router.post('/api/base', getBase)
-router.delete('/api/draft/', deleteDraft)
-router.delete('/api/labels', removeLabels)
-router.delete('/api/message/', deleteMessage)
-router.delete('/api/thread/', deleteThread)
-router.get('/api/contact/search/:query?/:readMask?', queryContacts)
-router.get(
-  '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?',
-  fetchAllContacts
-)
-router.get('/api/drafts/:maxResults?/:nextPageToken?', fetchDrafts)
-router.get('/api/message/attachment/:messageId?/:id?', fetchMessageAttachment)
-router.get(
-  '/api/threads_full/:labelIds?/:maxResults?/:nextPageToken?',
-  fetchFullThreads
-)
-router.get(
-  '/api/threads/:labelIds?/:maxResults?/:nextPageToken?',
-  fetchSimpleThreads
-)
-router.get('/api/draft/:id?', fetchSingleDraft)
-router.get('/api/health', health)
-router.get('/api/label/:id?', getSingleLabel)
-router.get('/api/labels', getLabels)
-router.get('/api/settings/getSendAs', getSendAs)
-router.get('/api/thread/:id?', fetchSingleThread)
-router.get('/api/user', getProfile)
-router.get('/api/user/logout', logoutUser)
-router.patch('/api/labels', updateLabels)
-router.patch('/api/message/:id?', updateMessage)
-router.patch('/api/thread/:id?', updateThread)
-router.post('/api/auth/oauth/google/', getAuthUrl)
-router.post('/api/auth/oauth/google/callback/', getAuthenticateClient)
-router.post('/api/create-draft', createDraft)
-router.post('/api/history/:startHistoryId?', listHistory)
-router.post('/api/labels', createLabel)
-router.post('/api/message/thrash/:id?', thrashMessage)
-router.post('/api/send-draft', sendDraft)
-router.post('/api/send-message', sendMessage)
-router.post('/api/thread/thrash/:id?', thrashThread)
-router.put('/api/settings/updateSendAs', updateSendAs)
-router.put('/api/update-draft/?:id?', updateDraft)
+const authEndpoints = {
+  '/api/auth/oauth/google/': {
+    post: getAuthUrl,
+  },
+  '/api/auth/oauth/google/callback/': {
+    post: getAuthenticateClient,
+  },
+}
+
+const baseEndpoints = {
+  '/api/base': {
+    post: getBase,
+  },
+}
+
+const contactEndpoints = {
+  '/api/contact/search/:query?/:readMask?': {
+    get: queryContacts,
+  },
+  '/api/contacts/:pageSize?/:readMask/:sources?/:pageToken?': {
+    get: fetchAllContacts,
+  },
+}
+
+const draftEndpoints = {
+  '/api/drafts/:maxResults?/:nextPageToken?': {
+    get: fetchDrafts,
+  },
+  '/api/draft/:id?': {
+    get: fetchSingleDraft,
+  },
+  '/api/create-draft': {
+    post: createDraft,
+  },
+  '/api/update-draft/?:id?': {
+    put: updateDraft,
+  },
+  '/api/send-draft': {
+    post: sendDraft,
+  },
+  '/api/delete-draft/': {
+    delete: deleteDraft,
+  },
+}
+
+const healthEndpoints = {
+  '/api/health': {
+    get: health,
+  },
+}
+
+const historyEndpoints = {
+  '/api/history/:startHistoryId?': {
+    post: listHistory,
+  },
+}
+
+const labelEndpoints = {
+  '/api/labels': {
+    get: getLabels,
+    post: createLabel,
+    patch: updateLabel,
+    delete: removeLabel,
+  },
+  '/api/label/:id?': {
+    get: getSingleLabel,
+  },
+}
+
+const messageEndpoints = {
+  '/api/message/attachment/:messageId?/:id?': {
+    get: fetchMessageAttachment,
+  },
+  '/api/send-message': {
+    post: sendMessage,
+  },
+  '/api/message/:id?': {
+    patch: updateMessage,
+  },
+  '/api/message/thrash/:id?': {
+    post: thrashMessage,
+  },
+  '/api/delete-message/': {
+    delete: deleteMessage,
+  },
+}
+
+const threadEndpoints = {
+  '/api/thread/:id?': {
+    get: fetchSingleThread,
+  },
+  '/api/threads/:labelIds?/:maxResults?/:nextPageToken?': {
+    get: fetchSimpleThreads,
+  },
+  '/api/threads_full/:labelIds?/:maxResults?/:nextPageToken?': {
+    get: fetchFullThreads,
+  },
+  '/api/thread/thrash/:id?': {
+    post: thrashThread,
+  },
+  '/api/update-thread/:id?': {
+    patch: updateThread,
+  },
+  '/api/delete-thread/': {
+    delete: deleteThread,
+  },
+}
+
+const userEndpoints = {
+  '/api/user': {
+    get: getProfile,
+  },
+  '/api/user/logout': {
+    get: logoutUser,
+  },
+  '/api/settings/updateSendAs': {
+    put: updateSendAs,
+  },
+}
+
+const combinedRoutes = {
+  ...authEndpoints,
+  ...baseEndpoints,
+  ...contactEndpoints,
+  ...draftEndpoints,
+  ...healthEndpoints,
+  ...historyEndpoints,
+  ...labelEndpoints,
+  ...messageEndpoints,
+  ...threadEndpoints,
+  ...userEndpoints,
+}
+
+for (const [path, handlers] of Object.entries(combinedRoutes)) {
+  for (const [method, handler] of Object.entries(handlers)) {
+    router[method](path, handler)
+  }
+}
 
 export default router

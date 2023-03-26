@@ -6,11 +6,19 @@ import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaLabelSchema } from '../../types/gmailTypes'
+import type { TGmailV1SchemaLabelSchema } from '../../types/gmailTypes'
 import errorHandeling from '../../utils/errorHandeling'
 
 export const newLabel = async (
   auth: OAuth2Client | undefined,
-  req: Request
+  req:
+    | Request
+    | {
+        body: Pick<
+          TGmailV1SchemaLabelSchema,
+          'labelListVisibility' | 'messageListVisibility' | 'name'
+        >
+      }
 ) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
@@ -18,7 +26,7 @@ export const newLabel = async (
     const {
       body: { labelListVisibility, messageListVisibility, name },
     } = req
-    const response = gmail.users.labels.create({
+    const response = await gmail.users.labels.create({
       userId: USER,
       requestBody: {
         labelListVisibility,
@@ -26,9 +34,10 @@ export const newLabel = async (
         name,
       },
     })
-    const validatedResponse = gmailV1SchemaLabelSchema.parse(response)
+    const validatedResponse = gmailV1SchemaLabelSchema.parse(response.data)
     return validatedResponse
   } catch (err) {
+    console.error(err)
     errorHandeling(err, 'createLabel')
   }
 }

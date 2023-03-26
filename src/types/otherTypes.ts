@@ -51,3 +51,17 @@ export const extendedGmailV1SchemaProfileSchemaSchema =
   gmailV1SchemaProfileSchema.and(
     peopleV1SchemaNameSchema.pick({ displayName: true })
   )
+
+export const userSettingsSchemaBase = z.object({
+  alternateActions: z.boolean(),
+  isAvatarVisible: z.boolean(),
+  isFlexibleFlowActive: z.boolean(),
+  showIntroduction: z.boolean(),
+})
+
+export const userSettingsSchemaNumericalSizes = userSettingsSchemaBase.extend({
+  emailFetchSize: z.union([z.literal(20), z.literal(25), z.literal(30)]),
+})
+export const userSettingsSchemaStringSizes = userSettingsSchemaBase.extend({
+  emailFetchSize: z.union([z.literal('20'), z.literal('25'), z.literal('30')]),
+})

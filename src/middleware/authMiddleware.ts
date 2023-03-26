@@ -27,16 +27,12 @@ export const authMiddleware =
           return { success: false, data: response, statusCode: 400 }
         }
         return { success: true, data: response, statusCode: 200 }
-        // return res.status(200).json({ status: 200, data: response });
       }
       return {
         success: false,
         data: 'There is no authorization header found',
         statusCode: 401,
       }
-      // return res
-      //   .status(401)
-      //   .json({ status: 401, message: 'There is no authorization header found' });
     } catch (err) {
       process.env.NODE_ENV !== 'production' && console.error(err)
       return {
@@ -45,6 +41,5 @@ export const authMiddleware =
         error: err,
         data: err?.message || 'Internal server error',
       }
-      // res.status(401).json({ status: 401, message: err?.message });
     }
   }

@@ -1,19 +1,29 @@
-import type { Request, Response } from 'express'
+import type { Request } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+import QueryString from 'qs'
 
 import { USER } from '../../constants/globalConstants'
-import { authMiddleware } from '../../middleware/authMiddleware'
-import { responseMiddleware } from '../../middleware/responseMiddleware'
 import { gmailV1SchemaSendAsSchema } from '../../types/gmailTypes'
 import errorHandeling from '../../utils/errorHandeling'
 
 export const fetchSendAs = async (
   auth: OAuth2Client | undefined,
-  req: Request
+  req: Request | string
 ) => {
   const gmail = google.gmail({ version: 'v1', auth })
-  const { emailId } = req.query
+  let emailId:
+    | QueryString.ParsedQs
+    | Array<QueryString.ParsedQs>
+    | string
+    | Array<string>
+    | undefined = ''
+
+  if (typeof req === 'string') {
+    emailId = req
+  } else {
+    emailId = req.query.emailId
+  }
 
   if (typeof emailId === 'string') {
     try {
@@ -32,8 +42,4 @@ export const fetchSendAs = async (
   } else {
     throw Error('Invalid email id request')
   }
-}
-export const getSendAs = async (req: Request, res: Response) => {
-  const { data, statusCode } = await authMiddleware(fetchSendAs)(req)
-  responseMiddleware(res, statusCode, data)
 }

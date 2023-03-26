@@ -7,6 +7,7 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 13,
+    "project": "./tsconfig.json",
     "sourceType": "module"
   },
   "plugins": ["import", "@typescript-eslint"],
@@ -36,6 +37,8 @@
         }
       }
     ],
-    "no-console": "warn"
+    "no-console": "warn",
+    "require-await": "off",
+    "@typescript-eslint/require-await": "error"
   }
 }

@@ -1,28 +1,62 @@
 import type { Request, Response } from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import { z } from 'zod'
 
 import { ARCHIVE_LABEL } from '../../constants/globalConstants'
-import { authMiddleware } from '../../middleware/authMiddleware'
+import type { TGmailV1SchemaLabelSchema } from '../../types/gmailTypes'
+import { userSettingsSchemaNumericalSizes } from '../../types/otherTypes'
+import errorHandeling from '../../utils/errorHandeling'
+import createSettingsLabel from '../../utils/settingsLabel/createSettings'
+import findSettings from '../../utils/settingsLabel/findSettings'
+import parseSettings from '../../utils/settingsLabel/parseSettings'
 import { newLabel } from '../Labels/createLabel'
 import { fetchLabels } from '../Labels/getLabels'
+import {
+  authenticateUserLocal,
+  authenticateUserSession,
+} from '../Users/authenticateUser'
+import { fetchSendAs } from '../Users/fetchSendAs'
 import { fetchProfile } from '../Users/getProfile'
-import { fetchSendAs } from '../Users/getSendAs'
 
-const createMissingLabel = async (label: string, req: Request) => {
+const createMissingLabel = async ({
+  auth,
+  label,
+}: {
+  auth: OAuth2Client
+  label: string
+}) => {
   try {
-    const body = {
-      name: label,
-      labelVisibility: 'labelShow',
-      messageListVisibility: 'show',
+    const req = {
+      body: {
+        name: label,
+        labelListVisibility: 'labelShow',
+        messageListVisibility: 'show',
+      },
     }
-    // Reassign the request body to be used by the function.
-    req.body = body
-    const labelResponse = await authMiddleware(newLabel)(req)
+    const labelResponse = await newLabel(auth, req)
     return labelResponse
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(err)
+    errorHandeling(err, 'createMissingLabel')
     return undefined
+  }
+}
+
+const detectSettingsLabel = async ({
+  auth,
+  labels,
+}: {
+  auth: OAuth2Client
+  labels: Array<TGmailV1SchemaLabelSchema>
+}) => {
+  const settingsLabel = findSettings(labels, auth)
+  if (!settingsLabel || !settingsLabel.id) {
+    const response = await createSettingsLabel(auth)
+    if (!response) {
+      throw Error('Cannot create settings label')
+    }
+    return response
+  } else {
+    return settingsLabel
   }
 }
 
@@ -34,15 +68,29 @@ export async function getBase(req: Request, res: Response) {
 
     const validatedRequestBody = stringArraySchema.parse(BASE_ARRAY)
 
-    const userResponse = await authMiddleware(fetchProfile)(req)
+    if (!req.headers.authorization) {
+      throw Error('No Authorization header found')
+      // TODO: Handle auth error
+    }
+    // A boolean to determine if the local or session authorization route should be used.
+    const useLocalRoute =
+      typeof JSON.parse(req.headers.authorization) === 'object'
+    const auth = useLocalRoute
+      ? await authenticateUserLocal(req)
+      : await authenticateUserSession(req)
 
-    const { data } = userResponse || {}
+    if (!auth) {
+      throw new Error('Unable to auth the user')
+    }
+    const userResponse = await fetchProfile(auth)
 
-    if (!data || data instanceof Error) {
+    const userData = userResponse || {}
+
+    if (!userData || userData instanceof Error) {
       throw new Error('Invalid user response data')
     }
 
-    const { emailAddress } = data
+    const { emailAddress } = userData
 
     if (!emailAddress) {
       throw new Error('Invalid user email address')
@@ -52,8 +100,8 @@ export async function getBase(req: Request, res: Response) {
     req.query = { emailId: emailAddress }
 
     const [sendAsResponse, labelResponse] = await Promise.allSettled([
-      authMiddleware(fetchSendAs)(req),
-      authMiddleware(fetchLabels)(req),
+      fetchSendAs(auth, req),
+      fetchLabels(auth),
     ])
 
     if (labelResponse.status === 'rejected') {
@@ -73,19 +121,17 @@ export async function getBase(req: Request, res: Response) {
 
     const promisesHaveSettledWithValues =
       sendAsResponse.status === 'fulfilled' &&
-      'data' in sendAsResponse.value &&
-      labelResponse.status === 'fulfilled' &&
-      'data' in labelResponse.value
+      labelResponse.status === 'fulfilled'
 
     if (
       !promisesHaveSettledWithValues ||
-      sendAsResponse.value.data instanceof Error ||
-      labelResponse.value.data instanceof Error
+      sendAsResponse.value instanceof Error ||
+      labelResponse.value instanceof Error
     ) {
       throw new Error('Invalid sendAs or label response data')
     }
 
-    const possibleLabels = labelResponse.value.data?.labels || []
+    const possibleLabels = labelResponse.value?.labels || []
 
     const nameMapLabels = new Set(possibleLabels.map((label) => label.name))
 
@@ -94,7 +140,9 @@ export async function getBase(req: Request, res: Response) {
     )
 
     const batchCreateLabels = await Promise.all(
-      missingLabels.map((item) => createMissingLabel(item, req))
+      missingLabels.map((item) => {
+        return createMissingLabel({ auth, label: item })
+      })
     )
 
     if (
@@ -103,10 +151,9 @@ export async function getBase(req: Request, res: Response) {
       throw new Error('Invalid response on creation of labels')
     }
 
-    //TODO: Fix up the types here
     const newlyCreatedLabels = batchCreateLabels
       .map((createdLabel) => {
-        const checkValue = createdLabel?.data
+        const checkValue = createdLabel
         if (checkValue && !(checkValue instanceof Error)) {
           return checkValue
         }
@@ -116,11 +163,17 @@ export async function getBase(req: Request, res: Response) {
 
     const labels = [...new Set([...newlyCreatedLabels, ...possibleLabels])]
 
+    const detectedSettingsLabel = await detectSettingsLabel({ auth, labels })
+    const userSettingsLabel = detectedSettingsLabel
+    const parsedSettings = userSettingsSchemaNumericalSizes.parse(
+      parseSettings(detectedSettingsLabel)
+    )
+
     const prefetchedBoxes = validatedRequestBody
       .map((baseLabel) => labels.find((item) => item.name === baseLabel))
       .filter((item): item is NonNullable<typeof item> => item !== undefined)
 
-    // Add an empty label to have the option to show ALL emails.
+    // Add an empty label to have the option to show ARCHIVE emails.
     const extendedPrefetchedBoxesWithArchiveLabel = [
       {
         id: ARCHIVE_LABEL,
@@ -133,14 +186,15 @@ export async function getBase(req: Request, res: Response) {
     ]
 
     const profile = {
-      signature: sendAsResponse?.value?.data?.signature ?? '',
-      ...userResponse.data,
+      signature: sendAsResponse?.value?.signature ?? '',
+      ...userResponse,
     }
 
     const returnObject = {
-      profile,
-      labels,
       prefetchedBoxes: extendedPrefetchedBoxesWithArchiveLabel,
+      profile,
+      userSettings: parsedSettings,
+      userSettingsLabel,
     }
     return res.status(200).json(returnObject)
   } catch (error) {
