@@ -1,11 +1,11 @@
 import { gmail_v1 } from 'googleapis'
 
+import type { IBodyProps } from './../bodyDecoder/bodyDecoderTypes'
+import { ThreadObject } from './types/threadRemapTypes'
 import bodyDecoder from '../bodyDecoder/bodyDecoder'
 import checkAttachment from '../fetchAttachments/fetchAttachments'
 import findHeader from '../findHeader'
 import handleListUnsubscribe from '../handleListUnsubscribe/handleListUnsubscribe'
-import type { IBodyProps } from './../bodyDecoder/bodyDecoderTypes'
-import { ThreadObject } from './types/threadRemapTypes'
 
 const remapPayloadHeaders = (
   rawMessage: gmail_v1.Schema$Message,

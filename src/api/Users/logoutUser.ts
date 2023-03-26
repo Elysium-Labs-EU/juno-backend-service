@@ -2,7 +2,7 @@ import type { Request, Response } from 'express'
 
 import { createAuthClientObject } from '../../google'
 
-export const logoutUser = async (req: Request, res: Response) => {
+export const logoutUser = (req: Request, res: Response) => {
   try {
     if (req.headers.authorization) {
       if (req.session.oAuthClient) {

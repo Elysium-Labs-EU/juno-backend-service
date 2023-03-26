@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import { gmail_v1, google } from 'googleapis'
 
+import requestBodyCreator from './threadRequest'
 import { USER } from '../../constants/globalConstants'
 import { authMiddleware } from '../../middleware/authMiddleware'
 import { responseMiddleware } from '../../middleware/responseMiddleware'
@@ -11,7 +12,6 @@ import {
 } from '../../types/gmailTypes'
 import errorHandeling from '../../utils/errorHandeling'
 import threadFullRemap from '../../utils/threadRemap/threadFullRemap'
-import requestBodyCreator from './threadRequest'
 
 async function singleThread(
   thread: gmail_v1.Schema$Thread,

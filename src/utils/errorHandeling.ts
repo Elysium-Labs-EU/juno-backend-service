@@ -1,5 +1,6 @@
 import type { GaxiosError } from 'gaxios'
 import { Common } from 'googleapis'
+
 export default function errorHandeling(err: unknown, functionName: string) {
   if ((err as GaxiosError).response) {
     const error = err as Common.GaxiosError

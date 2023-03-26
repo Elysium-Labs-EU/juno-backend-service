@@ -7,7 +7,10 @@ import { authMiddleware } from '../../middleware/authMiddleware'
 import { responseMiddleware } from '../../middleware/responseMiddleware'
 import errorHandeling from '../../utils/errorHandeling'
 
-const deleteLabels = async (auth: OAuth2Client | undefined, req: Request) => {
+export const deleteLabel = async (
+  auth: OAuth2Client | undefined,
+  req: Request | { body: Record<string, string> }
+) => {
   const gmail = google.gmail({ version: 'v1', auth })
   const {
     body: { id },
@@ -24,7 +27,7 @@ const deleteLabels = async (auth: OAuth2Client | undefined, req: Request) => {
   }
 }
 
-export const removeLabels = async (req: Request, res: Response) => {
-  const { data, statusCode } = await authMiddleware(deleteLabels)(req)
+export const removeLabel = async (req: Request, res: Response) => {
+  const { data, statusCode } = await authMiddleware(deleteLabel)(req)
   responseMiddleware(res, statusCode, data)
 }

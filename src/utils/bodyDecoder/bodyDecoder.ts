@@ -14,7 +14,7 @@ import { baseBase64, decodeBase64 } from '../decodeBase64'
 
 let decodedString: string | undefined
 let localMessageId: string | null
-let decodedResult: Array<string | Promise<any | Error>> = []
+let decodedResult: Array<string | Promise<unknown | Error>> = []
 let localGmail: gmail_v1.Gmail | null = null
 
 /**
