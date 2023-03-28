@@ -1,6 +1,6 @@
 {
   "name": "juno_backend",
-  "version": "1.0.1",
+  "version": "0.1.9",
   "type": "module",
   "description": "Backend server for Juno",
   "main": "server.js",
