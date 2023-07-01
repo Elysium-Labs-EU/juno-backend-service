@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 env-setup:
 	brew install redis
+	brew services start redis
 	yarn
 
 run-server:
