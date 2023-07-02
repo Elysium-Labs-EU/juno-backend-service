@@ -3,14 +3,20 @@
     "es2021": true,
     "node": true
   },
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 13,
     "project": "./tsconfig.json",
     "sourceType": "module"
   },
-  "plugins": ["import", "@typescript-eslint"],
+  "plugins": [
+    "import",
+    "@typescript-eslint"
+  ],
   "settings": {
     "typescript": {
       "project": "./tsconfig.json"
@@ -24,7 +30,10 @@
           "builtin", // Built-in imports (come from NodeJS native) go first
           "external", // <- External imports
           "internal", // <- Absolute imports
-          ["sibling", "parent"], // <- Relative imports, the sibling and parent types they can be mingled together
+          [
+            "sibling",
+            "parent"
+          ], // <- Relative imports, the sibling and parent types they can be mingled together
           "index", // <- index imports
           "unknown" // <- unknown
         ],
@@ -39,6 +48,9 @@
     ],
     "no-console": "warn",
     "require-await": "off",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
     "@typescript-eslint/require-await": "error"
   }
 }
