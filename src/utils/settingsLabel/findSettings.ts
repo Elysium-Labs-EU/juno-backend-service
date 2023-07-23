@@ -46,7 +46,7 @@ const findSettings = (
     .filter((label) => label !== longestSettingsLabel)
     .forEach((label) => {
       if (label && label?.id) {
-        deleteLabel(auth, { body: { id: label.id } })
+        void deleteLabel(auth, { body: { id: label.id } })
       }
     })
 

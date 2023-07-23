@@ -8,7 +8,7 @@ export const logoutUser = (req: Request, res: Response) => {
       if (req.session.oAuthClient) {
         const oAuth2Client = createAuthClientObject(null)
         oAuth2Client.setCredentials(req.session.oAuthClient)
-        oAuth2Client.revokeCredentials()
+        void oAuth2Client.revokeCredentials()
       }
       req.session.destroy(function (err) {
         if (err) {
