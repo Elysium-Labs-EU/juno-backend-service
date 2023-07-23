@@ -65,7 +65,7 @@ export default function parseSettings(
       const fixedResult = fixMissingSetting(missingSettings)
       // Patch the foundSettings with the fixed settings and update the settings label on Gmail with the fixed settings.
       const completeSettings = Object.assign(foundSettings, fixedResult)
-      createSettingsLabel(completeSettings)
+      void createSettingsLabel(completeSettings)
       return completeSettings
     }
     return foundSettings

@@ -1,52 +1,3 @@
-var __defProp = Object.defineProperty
-var __defProps = Object.defineProperties
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors
-var __getOwnPropSymbols = Object.getOwnPropertySymbols
-var __hasOwnProp = Object.prototype.hasOwnProperty
-var __propIsEnum = Object.prototype.propertyIsEnumerable
-var __defNormalProp = (obj, key, value) =>
-  key in obj
-    ? __defProp(obj, key, {
-        enumerable: true,
-        configurable: true,
-        writable: true,
-        value,
-      })
-    : (obj[key] = value)
-var __spreadValues = (a, b) => {
-  for (var prop in (b ||= {}))
-    if (__hasOwnProp.call(b, prop)) __defNormalProp(a, prop, b[prop])
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop)) __defNormalProp(a, prop, b[prop])
-    }
-  return a
-}
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b))
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value))
-      } catch (e) {
-        reject(e)
-      }
-    }
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value))
-      } catch (e) {
-        reject(e)
-      }
-    }
-    var step = (x) =>
-      x.done
-        ? resolve(x.value)
-        : Promise.resolve(x.value).then(fulfilled, rejected)
-    step((generator = generator.apply(__this, __arguments)).next())
-  })
-}
-
 // src/server.ts
 import http from 'http'
 
@@ -58,7 +9,7 @@ import RedisStore from './node_modules/connect-redis/dist/esm/index.js'
 import express2 from './node_modules/express/index.js'
 import session from './node_modules/express-session/index.js'
 import { google as google29 } from './node_modules/googleapis/build/src/index.js'
-import helmet from './node_modules/helmet/dist/esm/index.js'
+import helmet from './node_modules/helmet/index.mjs'
 import swaggerJSDoc from './node_modules/swagger-jsdoc/index.js'
 import swaggerUI from './node_modules/swagger-ui-express/index.js'
 
@@ -1020,13 +971,10 @@ var createAuthClientObject = (req) => {
     'No Google Redirect URL found'
   )
   function determineAuthURLStructure() {
-    var _a
     if (process.env.NODE_ENV === 'production') {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        ((_a = req == null ? void 0 : req.headers) == null
-          ? void 0
-          : _a.referer)
+        req?.headers?.referer
       ) {
         return req.headers.referer.endsWith('/')
           ? req.headers.referer.slice(0, -1)
@@ -1042,243 +990,221 @@ var createAuthClientObject = (req) => {
     `${determineAuthURLStructure()}${process.env.GOOGLE_REDIRECT_URL}`
   )
 }
-var getAuthenticateClient2 = (req, res) =>
-  __async(void 0, null, function* () {
-    var _a
-    try {
-      const { code, state } = req.body
-      if (code) {
-        const oAuth2Client = createAuthClientObject(req)
-        const { tokens } = yield oAuth2Client.getToken(code)
-        if (state && state !== 'noSession') {
-          if (
-            ((_a = req.session) == null ? void 0 : _a.hashSecret) &&
-            createHashState(req.session.hashSecret) === state
-          ) {
-            if (
-              tokens &&
-              (tokens == null ? void 0 : tokens.id_token) &&
-              (yield checkIdValidity(tokens.id_token))
-            ) {
-              oAuth2Client.setCredentials(tokens)
-              req.session.oAuthClient = tokens
-            } else {
-              return res.status(401).json(global.INVALID_TOKEN)
-            }
-          } else {
-            const errorMessage = 'Invalid state detected'
-            res.status(401).json('Invalid state detected')
-            throw Error(errorMessage)
-          }
-        }
-        if (state === 'noSession') {
-          if (tokens) {
-            oAuth2Client.setCredentials(tokens)
-            const result = {
-              credentials: oAuth2Client.credentials,
-            }
-            credentialsSchema.parse(result.credentials)
-            return res.status(200).json({
-              credentials: oAuth2Client.credentials,
-            })
-          } else {
-            const errorMessage = 'Token not found'
-            return res.status(401).json(errorMessage)
-            throw Error(errorMessage)
-          }
-        }
-        return res.status(200).json({
-          idToken: `"${randomUUID()}"`,
-        })
-      } else {
-        res.status(400).json('Code not found')
-      }
-    } catch (err) {
-      console.log('ERROR', err)
-      res.status(401).json(err)
-      throw Error(err)
-    }
-  })
-var getAuthUrl = (req, res) =>
-  __async(void 0, null, function* () {
-    var _a
-    try {
+var getAuthenticateClient2 = async (req, res) => {
+  try {
+    const { code, state } = req.body
+    if (code) {
       const oAuth2Client = createAuthClientObject(req)
-      const randomID = randomUUID()
-      const hashState = createHashState(randomID)
-      req.session.hashSecret = randomID
-      const authorizeUrl = oAuth2Client.generateAuthUrl({
-        access_type: 'offline',
-        // Use 'select_account' to ensure that the user is always using the wanted user.
-        prompt: 'select_account',
-        scope: SCOPES,
-        // Use a SHA256 state for security reasons when the cloud version is used.
-        state: (
-          (_a = req == null ? void 0 : req.body) == null ? void 0 : _a.noSession
-        )
-          ? 'noSession'
-          : hashState,
-        // code_challenge_method: S256,
-        // code_challenge: createHash('sha256').digest('hex'),
+      const { tokens } = await oAuth2Client.getToken(code)
+      if (state && state !== 'noSession') {
+        if (
+          req.session?.hashSecret &&
+          createHashState(req.session.hashSecret) === state
+        ) {
+          if (
+            tokens &&
+            tokens?.id_token &&
+            (await checkIdValidity(tokens.id_token))
+          ) {
+            oAuth2Client.setCredentials(tokens)
+            req.session.oAuthClient = tokens
+          } else {
+            return res.status(401).json(global.INVALID_TOKEN)
+          }
+        } else {
+          const errorMessage = 'Invalid state detected'
+          res.status(401).json('Invalid state detected')
+          throw Error(errorMessage)
+        }
+      }
+      if (state === 'noSession') {
+        if (tokens) {
+          oAuth2Client.setCredentials(tokens)
+          const result = {
+            credentials: oAuth2Client.credentials,
+          }
+          credentialsSchema.parse(result.credentials)
+          return res.status(200).json({
+            credentials: oAuth2Client.credentials,
+          })
+        } else {
+          const errorMessage = 'Token not found'
+          return res.status(401).json(errorMessage)
+          throw Error(errorMessage)
+        }
+      }
+      return res.status(200).json({
+        idToken: `"${randomUUID()}"`,
       })
-      getAuthUrlResponseSchema.parse(authorizeUrl)
-      return res.status(200).json(authorizeUrl)
-    } catch (err) {
-      res.status(401).json(err)
+    } else {
+      res.status(400).json('Code not found')
     }
-  })
-var checkIdValidity = (token) =>
-  __async(void 0, null, function* () {
-    const oAuth2Client = createAuthClientObject(null)
-    try {
-      yield oAuth2Client.verifyIdToken({
-        idToken: token.replace(/['"]+/g, ''),
-      })
-      return true
-    } catch (err) {
-      console.log('google err', err)
-      return false
-    }
-  })
+  } catch (err) {
+    console.log('ERROR', err)
+    res.status(401).json(err)
+    throw Error(err)
+  }
+}
+var getAuthUrl = async (req, res) => {
+  try {
+    const oAuth2Client = createAuthClientObject(req)
+    const randomID = randomUUID()
+    const hashState = createHashState(randomID)
+    req.session.hashSecret = randomID
+    const authorizeUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      // Use 'select_account' to ensure that the user is always using the wanted user.
+      prompt: 'select_account',
+      scope: SCOPES,
+      // Use a SHA256 state for security reasons when the cloud version is used.
+      state: req?.body?.noSession ? 'noSession' : hashState,
+      // code_challenge_method: S256,
+      // code_challenge: createHash('sha256').digest('hex'),
+    })
+    getAuthUrlResponseSchema.parse(authorizeUrl)
+    return res.status(200).json(authorizeUrl)
+  } catch (err) {
+    res.status(401).json(err)
+  }
+}
+var checkIdValidity = async (token) => {
+  const oAuth2Client = createAuthClientObject(null)
+  try {
+    await oAuth2Client.verifyIdToken({
+      idToken: token.replace(/['"]+/g, ''),
+    })
+    return true
+  } catch (err) {
+    console.log('google err', err)
+    return false
+  }
+}
 
 // src/google/localRoute.ts
-var authorizeLocal = (_0) =>
-  __async(void 0, [_0], function* ({ credentials }) {
-    if (credentials) {
-      const oAuth2Client = createAuthClientObject(null)
-      try {
-        oAuth2Client.setCredentials(credentials)
-        const checkedAccessToken = yield oAuth2Client.getAccessToken()
-        if (!checkedAccessToken) {
-          console.error('Cannot refresh the access token')
-          return INVALID_TOKEN
-        }
-        return oAuth2Client
-      } catch (err) {
-        return 'Error during authorization'
-        console.log('err', JSON.stringify(err))
-      }
-    } else {
-      return INVALID_TOKEN
-    }
-  })
-var authenticateLocal = (_0) =>
-  __async(void 0, [_0], function* ({ credentials }) {
-    try {
-      if (credentials) {
-        const response = yield authorizeLocal({ credentials })
-        return response
-      }
-      return INVALID_TOKEN
-    } catch (err) {
-      console.error(err)
-    }
-  })
-
-// src/google/sessionRoute.ts
-var authorizeSession = (_0) =>
-  __async(void 0, [_0], function* ({ req }) {
+var authorizeLocal = async ({ credentials }) => {
+  if (credentials) {
     const oAuth2Client = createAuthClientObject(null)
     try {
-      if (req.session.oAuthClient) {
-        oAuth2Client.setCredentials(req.session.oAuthClient)
-        const checkedAccessToken = yield oAuth2Client.getAccessToken()
-        if (!checkedAccessToken) {
-          console.error('Cannot refresh the access token')
-          return INVALID_TOKEN
-        }
-        req.session.oAuthClient = oAuth2Client.credentials
-        return oAuth2Client
+      oAuth2Client.setCredentials(credentials)
+      const checkedAccessToken = await oAuth2Client.getAccessToken()
+      if (!checkedAccessToken) {
+        console.error('Cannot refresh the access token')
+        return INVALID_TOKEN
       }
+      return oAuth2Client
     } catch (err) {
-      console.log('err', err)
       return 'Error during authorization'
+      console.log('err', JSON.stringify(err))
     }
-  })
-var authenticateSession = (_0) =>
-  __async(void 0, [_0], function* ({ req }) {
-    var _a
-    try {
-      if (
-        typeof ((_a = req.session) == null ? void 0 : _a.oAuthClient) !==
-        'undefined'
-      ) {
-        const response = yield authorizeSession({ req })
-        return response
+  } else {
+    return INVALID_TOKEN
+  }
+}
+var authenticateLocal = async ({ credentials }) => {
+  try {
+    if (credentials) {
+      const response = await authorizeLocal({ credentials })
+      return response
+    }
+    return INVALID_TOKEN
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// src/google/sessionRoute.ts
+var authorizeSession = async ({ req }) => {
+  const oAuth2Client = createAuthClientObject(null)
+  try {
+    if (req.session.oAuthClient) {
+      oAuth2Client.setCredentials(req.session.oAuthClient)
+      const checkedAccessToken = await oAuth2Client.getAccessToken()
+      if (!checkedAccessToken) {
+        console.error('Cannot refresh the access token')
+        return INVALID_TOKEN
       }
-      return INVALID_SESSION
-    } catch (err) {
-      console.error('Error on authenticateSession', err)
+      req.session.oAuthClient = oAuth2Client.credentials
+      return oAuth2Client
     }
-  })
+  } catch (err) {
+    console.log('err', err)
+    return 'Error during authorization'
+  }
+}
+var authenticateSession = async ({ req }) => {
+  try {
+    if (typeof req.session?.oAuthClient !== 'undefined') {
+      const response = await authorizeSession({ req })
+      return response
+    }
+    return INVALID_SESSION
+  } catch (err) {
+    console.error('Error on authenticateSession', err)
+  }
+}
 
 // src/api/Users/authenticateUser.ts
-var authenticateUserSession = (req) =>
-  __async(void 0, null, function* () {
-    const response = yield authenticateSession({
-      req,
+var authenticateUserSession = async (req) => {
+  const response = await authenticateSession({
+    req,
+  })
+  if (response === INVALID_TOKEN) {
+    throw Error(response)
+  }
+  if (response === INVALID_SESSION) {
+    throw Error(response)
+  }
+  if (response === 'Error during authorization') {
+    throw Error(response)
+  }
+  return response
+}
+var authenticateUserLocal = async (req) => {
+  if (req.headers?.authorization) {
+    const response = await authenticateLocal({
+      credentials: JSON.parse(req.headers.authorization),
     })
     if (response === INVALID_TOKEN) {
-      throw Error(response)
-    }
-    if (response === INVALID_SESSION) {
       throw Error(response)
     }
     if (response === 'Error during authorization') {
       throw Error(response)
     }
     return response
-  })
-var authenticateUserLocal = (req) =>
-  __async(void 0, null, function* () {
-    var _a
-    if ((_a = req.headers) == null ? void 0 : _a.authorization) {
-      const response = yield authenticateLocal({
-        credentials: JSON.parse(req.headers.authorization),
-      })
-      if (response === INVALID_TOKEN) {
-        throw Error(response)
-      }
-      if (response === 'Error during authorization') {
-        throw Error(response)
-      }
-      return response
-    }
-    throw Error('No Authorization header found')
-  })
+  }
+  throw Error('No Authorization header found')
+}
 
 // src/middleware/authMiddleware.ts
-var authMiddleware = (requestFunction) => (req) =>
-  __async(void 0, null, function* () {
-    var _a
-    try {
-      if ((_a = req.headers) == null ? void 0 : _a.authorization) {
-        const useLocalRoute =
-          typeof JSON.parse(req.headers.authorization) === 'object'
-        const auth = useLocalRoute
-          ? yield authenticateUserLocal(req)
-          : yield authenticateUserSession(req)
-        const response = yield requestFunction(auth, req)
-        if (response instanceof Error) {
-          return { success: false, data: response, statusCode: 400 }
-        }
-        return { success: true, data: response, statusCode: 200 }
+var authMiddleware = (requestFunction) => async (req) => {
+  try {
+    if (req.headers?.authorization) {
+      const useLocalRoute =
+        typeof JSON.parse(req.headers.authorization) === 'object'
+      const auth = useLocalRoute
+        ? await authenticateUserLocal(req)
+        : await authenticateUserSession(req)
+      const response = await requestFunction(auth, req)
+      if (response instanceof Error) {
+        return { success: false, data: response, statusCode: 400 }
       }
-      return {
-        success: false,
-        data: 'There is no authorization header found',
-        statusCode: 401,
-      }
-    } catch (err) {
-      process.env.NODE_ENV !== 'production' && console.error(err)
-      return {
-        statusCode: 401,
-        success: false,
-        error: err,
-        data: (err == null ? void 0 : err.message) || 'Internal server error',
-      }
+      return { success: true, data: response, statusCode: 200 }
     }
-  })
+    return {
+      success: false,
+      data: 'There is no authorization header found',
+      statusCode: 401,
+    }
+  } catch (err) {
+    process.env.NODE_ENV !== 'production' && console.error(err)
+    return {
+      statusCode: 401,
+      success: false,
+      error: err,
+      data: err?.message || 'Internal server error',
+    }
+  }
+}
 
 // src/middleware/responseMiddleware.ts
 var responseMiddleware = (res, statusCode, message) => {
@@ -1286,93 +1212,84 @@ var responseMiddleware = (res, statusCode, message) => {
 }
 
 // src/api/Labels/createLabel.ts
-var newLabel = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google.gmail({ version: 'v1', auth })
-    try {
-      const {
-        body: { labelListVisibility, messageListVisibility, name },
-      } = req
-      const response = yield gmail.users.labels.create({
-        userId: USER,
-        requestBody: {
-          labelListVisibility,
-          messageListVisibility,
-          name,
-        },
-      })
-      const validatedResponse = gmailV1SchemaLabelSchema.parse(response.data)
-      return validatedResponse
-    } catch (err) {
-      console.error(err)
-      errorHandeling(err, 'createLabel')
-    }
-  })
-var createLabel = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(newLabel)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+var newLabel = async (auth, req) => {
+  const gmail = google.gmail({ version: 'v1', auth })
+  try {
+    const {
+      body: { labelListVisibility, messageListVisibility, name },
+    } = req
+    const response = await gmail.users.labels.create({
+      userId: USER,
+      requestBody: {
+        labelListVisibility,
+        messageListVisibility,
+        name,
+      },
+    })
+    const validatedResponse = gmailV1SchemaLabelSchema.parse(response.data)
+    return validatedResponse
+  } catch (err) {
+    console.error(err)
+    errorHandeling(err, 'createLabel')
+  }
+}
+var createLabel = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(newLabel)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/utils/settingsLabel/createSettings.ts
-function createSettingsLabel(auth, presetValues) {
-  return __async(this, null, function* () {
-    if (presetValues) {
-      const presetValueBody = { body: { name: buildLabelString(presetValues) } }
-      const response2 = yield newLabel(auth, presetValueBody)
-      return response2
-    }
-    const defaultSettingsString = `${
-      SETTINGS_LABEL +
-      SETTINGS_DELIMITER +
-      showAvatarKeyMap.true +
-      SETTINGS_DELIMITER +
-      emailFetchSizeKeyMap[20] +
-      SETTINGS_DELIMITER +
-      showIntroductionKeyMap.true +
-      SETTINGS_DELIMITER +
-      flexibleFlowKeyMap.false +
-      SETTINGS_DELIMITER +
-      alternateActionsKeyMap.true
-    }`
-    const newLabelBody = { body: { name: defaultSettingsString } }
-    const response = yield newLabel(auth, newLabelBody)
-    return response
-  })
+async function createSettingsLabel(auth, presetValues) {
+  if (presetValues) {
+    const presetValueBody = { body: { name: buildLabelString(presetValues) } }
+    const response2 = await newLabel(auth, presetValueBody)
+    return response2
+  }
+  const defaultSettingsString = `${
+    SETTINGS_LABEL +
+    SETTINGS_DELIMITER +
+    showAvatarKeyMap.true +
+    SETTINGS_DELIMITER +
+    emailFetchSizeKeyMap[20] +
+    SETTINGS_DELIMITER +
+    showIntroductionKeyMap.true +
+    SETTINGS_DELIMITER +
+    flexibleFlowKeyMap.false +
+    SETTINGS_DELIMITER +
+    alternateActionsKeyMap.true
+  }`
+  const newLabelBody = { body: { name: defaultSettingsString } }
+  const response = await newLabel(auth, newLabelBody)
+  return response
 }
 
 // src/api/Labels/removeLabel.ts
 import { google as google2 } from './node_modules/googleapis/build/src/index.js'
-var deleteLabel = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google2.gmail({ version: 'v1', auth })
-    const {
-      body: { id },
-    } = req
-    try {
-      const response = yield gmail.users.labels.delete({
-        userId: USER,
-        id,
-      })
-      return response
-    } catch (err) {
-      errorHandeling(err, 'removeLabels')
-    }
-  })
-var removeLabel = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(deleteLabel)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+var deleteLabel = async (auth, req) => {
+  const gmail = google2.gmail({ version: 'v1', auth })
+  const {
+    body: { id },
+  } = req
+  try {
+    const response = await gmail.users.labels.delete({
+      userId: USER,
+      id,
+    })
+    return response
+  } catch (err) {
+    errorHandeling(err, 'removeLabels')
+  }
+}
+var removeLabel = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(deleteLabel)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/utils/settingsLabel/findSettings.ts
 var findSettings = (labels, auth) => {
-  const result = labels.filter((label) => {
-    var _a
-    return (_a = label.name) == null
-      ? void 0
-      : _a.includes(`${SETTINGS_LABEL + SETTINGS_DELIMITER}`)
-  })
+  const result = labels.filter((label) =>
+    label.name?.includes(`${SETTINGS_LABEL + SETTINGS_DELIMITER}`)
+  )
   if (!result.length) {
     return null
   }
@@ -1382,9 +1299,7 @@ var findSettings = (labels, auth) => {
   const longestSettingsLabel = result.reduce(
     (acc, curr) => {
       if (
-        ((curr == null ? void 0 : curr.name) &&
-          (acc == null ? void 0 : acc.name) &&
-          curr.name.length > acc.name.length) ||
+        (curr?.name && acc?.name && curr.name.length > acc.name.length) ||
         !acc.name
       ) {
         return curr
@@ -1396,8 +1311,8 @@ var findSettings = (labels, auth) => {
   result
     .filter((label) => label !== longestSettingsLabel)
     .forEach((label) => {
-      if (label && (label == null ? void 0 : label.id)) {
-        deleteLabel(auth, { body: { id: label.id } })
+      if (label && label?.id) {
+        void deleteLabel(auth, { body: { id: label.id } })
       }
     })
   return longestSettingsLabel
@@ -1430,9 +1345,7 @@ function fixMissingSetting(missingSettings) {
 
 // src/utils/settingsLabel/parseSettings.ts
 function parseSettings(settingsLabel) {
-  var _a
-  const parsedSettings =
-    (_a = settingsLabel.name) == null ? void 0 : _a.split(SETTINGS_DELIMITER)
+  const parsedSettings = settingsLabel.name?.split(SETTINGS_DELIMITER)
   if (parsedSettings && parsedSettings.length > 0) {
     parsedSettings.shift()
     const baseSettings = AVAILABLE_SETTINGS
@@ -1471,7 +1384,7 @@ function parseSettings(settingsLabel) {
     if (missingSettings.length > 0) {
       const fixedResult = fixMissingSetting(missingSettings)
       const completeSettings = Object.assign(foundSettings, fixedResult)
-      createSettingsLabel(completeSettings)
+      void createSettingsLabel(completeSettings)
       return completeSettings
     }
     return foundSettings
@@ -1480,315 +1393,273 @@ function parseSettings(settingsLabel) {
 
 // src/api/Labels/getLabels.ts
 import { google as google3 } from './node_modules/googleapis/build/src/index.js'
-var fetchLabels = (auth) =>
-  __async(void 0, null, function* () {
-    const gmail = google3.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.labels.list({
-        userId: USER,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaListLabelsResponseSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No Labels found...')
-    } catch (err) {
-      errorHandeling(err, 'getLabels')
+var fetchLabels = async (auth) => {
+  const gmail = google3.gmail({ version: 'v1', auth })
+  try {
+    const response = await gmail.users.labels.list({
+      userId: USER,
+    })
+    if (response?.data) {
+      gmailV1SchemaListLabelsResponseSchema.parse(response.data)
+      return response.data
     }
-  })
-var getLabels = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(fetchLabels)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No Labels found...')
+  } catch (err) {
+    errorHandeling(err, 'getLabels')
+  }
+}
+var getLabels = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(fetchLabels)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Users/fetchSendAs.ts
 import { google as google4 } from './node_modules/googleapis/build/src/index.js'
-var fetchSendAs = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google4.gmail({ version: 'v1', auth })
-    let emailId = ''
-    if (typeof req === 'string') {
-      emailId = req
-    } else {
-      emailId = req.query.emailId
-    }
-    if (typeof emailId === 'string') {
-      try {
-        const response = yield gmail.users.settings.sendAs.get({
-          userId: USER,
-          sendAsEmail: emailId,
-        })
-        if (response == null ? void 0 : response.data) {
-          gmailV1SchemaSendAsSchema.parse(response.data)
-          return response.data
-        }
-        return new Error('No data found...')
-      } catch (err) {
-        errorHandeling(err, 'getSendAs')
+var fetchSendAs = async (auth, req) => {
+  const gmail = google4.gmail({ version: 'v1', auth })
+  let emailId = ''
+  if (typeof req === 'string') {
+    emailId = req
+  } else {
+    emailId = req.query.emailId
+  }
+  if (typeof emailId === 'string') {
+    try {
+      const response = await gmail.users.settings.sendAs.get({
+        userId: USER,
+        sendAsEmail: emailId,
+      })
+      if (response?.data) {
+        gmailV1SchemaSendAsSchema.parse(response.data)
+        return response.data
       }
-    } else {
-      throw Error('Invalid email id request')
+      return new Error('No data found...')
+    } catch (err) {
+      errorHandeling(err, 'getSendAs')
     }
-  })
+  } else {
+    throw Error('Invalid email id request')
+  }
+}
 
 // src/api/Users/getProfile.ts
 import { google as google5 } from './node_modules/googleapis/build/src/index.js'
-var fetchProfile = (auth) =>
-  __async(void 0, null, function* () {
-    const gmail = google5.gmail({ version: 'v1', auth })
-    const people = google5.people({ version: 'v1', auth })
-    try {
-      const [userResponse, contactsResponse] = yield Promise.allSettled([
-        gmail.users.getProfile({
-          userId: USER,
-        }),
-        people.people.get({
-          resourceName: 'people/me',
-          personFields: 'emailAddresses,names,photos',
-        }),
-      ])
-      if (
-        userResponse.status === 'fulfilled' &&
-        contactsResponse.status === 'fulfilled'
-      ) {
-        gmailV1SchemaProfileSchema.parse(userResponse.value.data)
-        peopleV1SchemaPersonSchema.parse(contactsResponse.value.data)
-        const getName = () => {
-          var _a, _b, _c, _d
-          const displayName =
-            (_d =
-              (_c =
-                (_b =
-                  (_a =
-                    contactsResponse == null
-                      ? void 0
-                      : contactsResponse.value) == null
-                    ? void 0
-                    : _a.data) == null
-                  ? void 0
-                  : _b.names) == null
-                ? void 0
-                : _c.at(0)) == null
-              ? void 0
-              : _d.displayName
-          return displayName
-        }
-        const result = __spreadValues(
-          {
-            name: getName(),
-          },
-          userResponse.value.data
-        )
-        const validatedResponse =
-          extendedGmailV1SchemaProfileSchemaSchema.parse(result)
-        return validatedResponse
+var fetchProfile = async (auth) => {
+  const gmail = google5.gmail({ version: 'v1', auth })
+  const people = google5.people({ version: 'v1', auth })
+  try {
+    const [userResponse, contactsResponse] = await Promise.allSettled([
+      gmail.users.getProfile({
+        userId: USER,
+      }),
+      people.people.get({
+        resourceName: 'people/me',
+        personFields: 'emailAddresses,names,photos',
+      }),
+    ])
+    if (
+      userResponse.status === 'fulfilled' &&
+      contactsResponse.status === 'fulfilled'
+    ) {
+      gmailV1SchemaProfileSchema.parse(userResponse.value.data)
+      peopleV1SchemaPersonSchema.parse(contactsResponse.value.data)
+      const getName = () => {
+        const displayName =
+          contactsResponse?.value?.data?.names?.at(0)?.displayName
+        return displayName
       }
-      return new Error('No profile found...')
-    } catch (err) {
-      errorHandeling(err, 'getProfile')
+      const result = {
+        name: getName(),
+        ...userResponse.value.data,
+      }
+      const validatedResponse =
+        extendedGmailV1SchemaProfileSchemaSchema.parse(result)
+      return validatedResponse
     }
-  })
-var getProfile = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(fetchProfile)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No profile found...')
+  } catch (err) {
+    errorHandeling(err, 'getProfile')
+  }
+}
+var getProfile = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(fetchProfile)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Base/getBase.ts
-var createMissingLabel = (_0) =>
-  __async(void 0, [_0], function* ({ auth, label }) {
-    try {
-      const req = {
-        body: {
-          name: label,
-          labelListVisibility: 'labelShow',
-          messageListVisibility: 'show',
-        },
-      }
-      const labelResponse = yield newLabel(auth, req)
-      return labelResponse
-    } catch (err) {
-      errorHandeling(err, 'createMissingLabel')
-      return void 0
+var createMissingLabel = async ({ auth, label }) => {
+  try {
+    const req = {
+      body: {
+        name: label,
+        labelListVisibility: 'labelShow',
+        messageListVisibility: 'show',
+      },
     }
-  })
-var detectSettingsLabel = (_0) =>
-  __async(void 0, [_0], function* ({ auth, labels }) {
-    const settingsLabel = findSettings_default(labels, auth)
-    if (!settingsLabel || !settingsLabel.id) {
-      const response = yield createSettingsLabel(auth)
-      if (!response) {
-        throw Error('Cannot create settings label')
-      }
-      return response
-    } else {
-      return settingsLabel
+    const labelResponse = await newLabel(auth, req)
+    return labelResponse
+  } catch (err) {
+    errorHandeling(err, 'createMissingLabel')
+    return void 0
+  }
+}
+var detectSettingsLabel = async ({ auth, labels }) => {
+  const settingsLabel = findSettings_default(labels, auth)
+  if (!settingsLabel || !settingsLabel.id) {
+    const response = await createSettingsLabel(auth)
+    if (!response) {
+      throw Error('Cannot create settings label')
     }
-  })
+    return response
+  } else {
+    return settingsLabel
+  }
+}
 var stringArraySchema = z4.array(z4.string())
-function getBase(req, res) {
-  return __async(this, null, function* () {
-    var _a, _b, _c
-    try {
-      const { BASE_ARRAY } = req.body
-      const validatedRequestBody = stringArraySchema.parse(BASE_ARRAY)
-      if (!req.headers.authorization) {
-        throw Error('No Authorization header found')
-      }
-      const useLocalRoute =
-        typeof JSON.parse(req.headers.authorization) === 'object'
-      const auth = useLocalRoute
-        ? yield authenticateUserLocal(req)
-        : yield authenticateUserSession(req)
-      if (!auth) {
-        throw new Error('Unable to auth the user')
-      }
-      const userResponse = yield fetchProfile(auth)
-      const userData = userResponse || {}
-      if (!userData || userData instanceof Error) {
-        throw new Error('Invalid user response data')
-      }
-      const { emailAddress } = userData
-      if (!emailAddress) {
-        throw new Error('Invalid user email address')
-      }
-      req.query = { emailId: emailAddress }
-      const [sendAsResponse, labelResponse] = yield Promise.allSettled([
-        fetchSendAs(auth, req),
-        fetchLabels(auth),
-      ])
-      if (labelResponse.status === 'rejected') {
-        return res.status(500).json({
-          error: `Network Error. ${
-            (labelResponse == null ? void 0 : labelResponse.reason) ||
-            JSON.stringify(labelResponse)
-          }. Please try again later.`,
-        })
-      }
-      if (sendAsResponse.status === 'rejected') {
-        return res.status(500).json({
-          error: `Network Error. ${
-            (sendAsResponse == null ? void 0 : sendAsResponse.reason) ||
-            JSON.stringify(sendAsResponse)
-          }. Please try again later.`,
-        })
-      }
-      const promisesHaveSettledWithValues =
-        sendAsResponse.status === 'fulfilled' &&
-        labelResponse.status === 'fulfilled'
-      if (
-        !promisesHaveSettledWithValues ||
-        sendAsResponse.value instanceof Error ||
-        labelResponse.value instanceof Error
-      ) {
-        throw new Error('Invalid sendAs or label response data')
-      }
-      const possibleLabels =
-        ((_a = labelResponse.value) == null ? void 0 : _a.labels) || []
-      const nameMapLabels = new Set(possibleLabels.map((label) => label.name))
-      const missingLabels = validatedRequestBody.filter(
-        (item) => !nameMapLabels.has(item)
-      )
-      const batchCreateLabels = yield Promise.all(
-        missingLabels.map((item) => {
-          return createMissingLabel({ auth, label: item })
-        })
-      )
-      if (
-        batchCreateLabels.some((createdLabel) => createdLabel instanceof Error)
-      ) {
-        throw new Error('Invalid response on creation of labels')
-      }
-      const newlyCreatedLabels = batchCreateLabels
-        .map((createdLabel) => {
-          const checkValue = createdLabel
-          if (checkValue && !(checkValue instanceof Error)) {
-            return checkValue
-          }
-          return void 0
-        })
-        .filter((item) => item !== void 0)
-      const labels = [
-        .../* @__PURE__ */ new Set([...newlyCreatedLabels, ...possibleLabels]),
-      ]
-      const detectedSettingsLabel = yield detectSettingsLabel({ auth, labels })
-      const userSettingsLabel = detectedSettingsLabel
-      const parsedSettings = userSettingsSchemaNumericalSizes.parse(
-        parseSettings(detectedSettingsLabel)
-      )
-      const prefetchedBoxes = validatedRequestBody
-        .map((baseLabel) => labels.find((item) => item.name === baseLabel))
-        .filter((item) => item !== void 0)
-      const extendedPrefetchedBoxesWithArchiveLabel = [
-        {
-          id: ARCHIVE_LABEL,
-          name: ARCHIVE_LABEL,
-          messageListVisibility: 'show',
-          labelListVisibility: 'labelShow',
-          type: 'junoCustom',
-        },
-        ...prefetchedBoxes,
-      ]
-      const profile = __spreadValues(
-        {
-          signature:
-            (_c =
-              (_b = sendAsResponse == null ? void 0 : sendAsResponse.value) ==
-              null
-                ? void 0
-                : _b.signature) != null
-              ? _c
-              : '',
-        },
-        userResponse
-      )
-      const returnObject = {
-        prefetchedBoxes: extendedPrefetchedBoxesWithArchiveLabel,
-        profile,
-        userSettings: parsedSettings,
-        userSettingsLabel,
-      }
-      return res.status(200).json(returnObject)
-    } catch (error) {
-      console.error(error)
-      return res.status(500).json({ error: error.message })
+async function getBase(req, res) {
+  try {
+    const { BASE_ARRAY } = req.body
+    const validatedRequestBody = stringArraySchema.parse(BASE_ARRAY)
+    if (!req.headers.authorization) {
+      throw Error('No Authorization header found')
     }
-  })
+    const useLocalRoute =
+      typeof JSON.parse(req.headers.authorization) === 'object'
+    const auth = useLocalRoute
+      ? await authenticateUserLocal(req)
+      : await authenticateUserSession(req)
+    if (!auth) {
+      throw new Error('Unable to auth the user')
+    }
+    const userResponse = await fetchProfile(auth)
+    const userData = userResponse || {}
+    if (!userData || userData instanceof Error) {
+      throw new Error('Invalid user response data')
+    }
+    const { emailAddress } = userData
+    if (!emailAddress) {
+      throw new Error('Invalid user email address')
+    }
+    req.query = { emailId: emailAddress }
+    const [sendAsResponse, labelResponse] = await Promise.allSettled([
+      fetchSendAs(auth, req),
+      fetchLabels(auth),
+    ])
+    if (labelResponse.status === 'rejected') {
+      return res.status(500).json({
+        error: `Network Error. ${
+          labelResponse?.reason || JSON.stringify(labelResponse)
+        }. Please try again later.`,
+      })
+    }
+    if (sendAsResponse.status === 'rejected') {
+      return res.status(500).json({
+        error: `Network Error. ${
+          sendAsResponse?.reason || JSON.stringify(sendAsResponse)
+        }. Please try again later.`,
+      })
+    }
+    const promisesHaveSettledWithValues =
+      sendAsResponse.status === 'fulfilled' &&
+      labelResponse.status === 'fulfilled'
+    if (
+      !promisesHaveSettledWithValues ||
+      sendAsResponse.value instanceof Error ||
+      labelResponse.value instanceof Error
+    ) {
+      throw new Error('Invalid sendAs or label response data')
+    }
+    const possibleLabels = labelResponse.value?.labels || []
+    const nameMapLabels = new Set(possibleLabels.map((label) => label.name))
+    const missingLabels = validatedRequestBody.filter(
+      (item) => !nameMapLabels.has(item)
+    )
+    const batchCreateLabels = await Promise.all(
+      missingLabels.map((item) => {
+        return createMissingLabel({ auth, label: item })
+      })
+    )
+    if (
+      batchCreateLabels.some((createdLabel) => createdLabel instanceof Error)
+    ) {
+      throw new Error('Invalid response on creation of labels')
+    }
+    const newlyCreatedLabels = batchCreateLabels
+      .map((createdLabel) => {
+        const checkValue = createdLabel
+        if (checkValue && !(checkValue instanceof Error)) {
+          return checkValue
+        }
+        return void 0
+      })
+      .filter((item) => item !== void 0)
+    const labels = [
+      .../* @__PURE__ */ new Set([...newlyCreatedLabels, ...possibleLabels]),
+    ]
+    const detectedSettingsLabel = await detectSettingsLabel({ auth, labels })
+    const userSettingsLabel = detectedSettingsLabel
+    const parsedSettings = userSettingsSchemaNumericalSizes.parse(
+      parseSettings(detectedSettingsLabel)
+    )
+    const prefetchedBoxes = validatedRequestBody
+      .map((baseLabel) => labels.find((item) => item.name === baseLabel))
+      .filter((item) => item !== void 0)
+    const extendedPrefetchedBoxesWithArchiveLabel = [
+      {
+        id: ARCHIVE_LABEL,
+        name: ARCHIVE_LABEL,
+        messageListVisibility: 'show',
+        labelListVisibility: 'labelShow',
+        type: 'junoCustom',
+      },
+      ...prefetchedBoxes,
+    ]
+    const profile = {
+      signature: sendAsResponse?.value?.signature ?? '',
+      ...userResponse,
+    }
+    const returnObject = {
+      prefetchedBoxes: extendedPrefetchedBoxesWithArchiveLabel,
+      profile,
+      userSettings: parsedSettings,
+      userSettingsLabel,
+    }
+    return res.status(200).json(returnObject)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: error.message })
+  }
 }
 
 // src/api/Contacts/fetchAllContacts.ts
 import { google as google6 } from './node_modules/googleapis/build/src/index.js'
-var getContacts = (auth, req) =>
-  __async(void 0, null, function* () {
-    const people = google6.people({ version: 'v1', auth })
-    const requestBody = {}
-    requestBody.pageSize =
-      typeof Number(req.query.pageSize) !== 'number'
-        ? 1e3
-        : Number(req.query.pageSize)
-    if (req.query.readMask && typeof req.query.readMask === 'string') {
-      requestBody.readMask = req.query.readMask
+var getContacts = async (auth, req) => {
+  const people = google6.people({ version: 'v1', auth })
+  const requestBody = {}
+  requestBody.pageSize =
+    typeof Number(req.query.pageSize) !== 'number'
+      ? 1e3
+      : Number(req.query.pageSize)
+  if (req.query.readMask && typeof req.query.readMask === 'string') {
+    requestBody.readMask = req.query.readMask
+  }
+  if (req.query.pageToken && typeof req.query.pageToken === 'string') {
+    requestBody.pageToken = req.query.pageToken
+  }
+  try {
+    const response = await people.otherContacts.list(requestBody)
+    if (response?.data) {
+      peopleV1SchemaListOtherContactsResponseSchema.parse(response.data)
+      return response.data
     }
-    if (req.query.pageToken && typeof req.query.pageToken === 'string') {
-      requestBody.pageToken = req.query.pageToken
-    }
-    try {
-      const response = yield people.otherContacts.list(requestBody)
-      if (response == null ? void 0 : response.data) {
-        peopleV1SchemaListOtherContactsResponseSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No contacts found...')
-    } catch (err) {
-      errorHandeling(err, 'fetchAllContacts')
-    }
-  })
-function fetchAllContacts(req, res) {
-  return __async(this, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getContacts)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No contacts found...')
+  } catch (err) {
+    errorHandeling(err, 'fetchAllContacts')
+  }
+}
+async function fetchAllContacts(req, res) {
+  const { data, statusCode } = await authMiddleware(getContacts)(req)
+  responseMiddleware(res, statusCode, data)
 }
 
 // src/api/Contacts/queryContacts.ts
@@ -1796,95 +1667,59 @@ import { google as google7 } from './node_modules/googleapis/build/src/index.js'
 
 // src/api/Contacts/utils/remapContacts.ts
 function remapContacts({ results }) {
-  var _a
-  return (_a =
-    results == null
-      ? void 0
-      : results.map((contact) => {
-          var _a2, _b, _c, _d, _e, _f, _g, _h, _i
-          return {
-            name: Object.prototype.hasOwnProperty.call(contact.person, 'names')
-              ? (_c =
-                  (_b =
-                    (_a2 = contact == null ? void 0 : contact.person) == null
-                      ? void 0
-                      : _a2.names) == null
-                    ? void 0
-                    : _b[0]) == null
-                ? void 0
-                : _c.displayName
-              : (_f =
-                  (_e =
-                    (_d = contact == null ? void 0 : contact.person) == null
-                      ? void 0
-                      : _d.emailAddresses) == null
-                    ? void 0
-                    : _e[0]) == null
-              ? void 0
-              : _f.value,
-            emailAddress:
-              (_i =
-                (_h =
-                  (_g = contact == null ? void 0 : contact.person) == null
-                    ? void 0
-                    : _g.emailAddresses) == null
-                  ? void 0
-                  : _h[0]) == null
-                ? void 0
-                : _i.value,
-          }
-        })) != null
-    ? _a
-    : []
+  return (
+    results?.map((contact) => ({
+      name: Object.prototype.hasOwnProperty.call(contact.person, 'names')
+        ? contact?.person?.names?.[0]?.displayName
+        : contact?.person?.emailAddresses?.[0]?.value,
+      emailAddress: contact?.person?.emailAddresses?.[0]?.value,
+    })) ?? []
+  )
 }
 
 // src/api/Contacts/queryContacts.ts
-var getContacts2 = (auth, req) =>
-  __async(void 0, null, function* () {
-    const people = google7.people({ version: 'v1', auth })
-    const requestBody = {}
-    if (typeof req.query.query === 'string') {
-      requestBody.query = req.query.query
+var getContacts2 = async (auth, req) => {
+  const people = google7.people({ version: 'v1', auth })
+  const requestBody = {}
+  if (typeof req.query.query === 'string') {
+    requestBody.query = req.query.query
+  }
+  if (typeof req.query.readMask === 'string') {
+    requestBody.readMask = req.query.readMask
+  }
+  try {
+    const response = await people.otherContacts.search(requestBody)
+    if (response?.data) {
+      peopleV1SchemaSearchResponseSchema.parse(response.data)
+      return remapContacts({ results: response.data.results })
     }
-    if (typeof req.query.readMask === 'string') {
-      requestBody.readMask = req.query.readMask
-    }
-    try {
-      const response = yield people.otherContacts.search(requestBody)
-      if (response == null ? void 0 : response.data) {
-        peopleV1SchemaSearchResponseSchema.parse(response.data)
-        return remapContacts({ results: response.data.results })
-      }
-      return new Error('No contacts found...')
-    } catch (err) {
-      errorHandeling(err, 'queryContacts')
-    }
-  })
-var queryContacts = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getContacts2)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No contacts found...')
+  } catch (err) {
+    errorHandeling(err, 'queryContacts')
+  }
+}
+var queryContacts = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getContacts2)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Drafts/createDraft.ts
 import { google as google8 } from './node_modules/googleapis/build/src/index.js'
 
 // src/utils/formFieldParser/formFieldParser.ts
 import formidable from './node_modules/formidable/src/index.js'
-function formFieldParser(req) {
-  return __async(this, null, function* () {
-    const form = formidable({ multiples: true })
-    const formFields = yield new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        resolve(__spreadValues({ files }, fields))
-      })
+async function formFieldParser(req) {
+  const form = formidable({ multiples: true })
+  const formFields = await new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      resolve({ files, ...fields })
     })
-    return formFields
   })
+  return formFields
 }
 
 // src/utils/messageEncoding/messageEncoding.ts
@@ -1899,13 +1734,10 @@ var messageEncoding = ({
   signature,
   files,
 }) => {
-  var _a
   const nl = '\n'
   const boundary = '__juno__'
   const utf8Subject = subject
-    ? `=?utf-8?B?${Buffer.from((_a = subject[0]) != null ? _a : '').toString(
-        'base64'
-      )}?=`
+    ? `=?utf-8?B?${Buffer.from(subject[0] ?? '').toString('base64')}?=`
     : ''
   const messageParts = [
     `From: ${from}`,
@@ -1948,90 +1780,80 @@ var messageEncoding = ({
 var messageEncoding_default = messageEncoding
 
 // src/api/Drafts/createDraft.ts
-function setupDraft(auth, req) {
-  return __async(this, null, function* () {
-    const gmail = google8.gmail({ version: 'v1', auth })
-    try {
-      if ('body' in req) {
-        const parsedResult = yield formFieldParser(req)
-        const { threadId } = parsedResult
-        const response = yield gmail.users.drafts.create({
-          userId: USER,
-          requestBody: {
-            message: {
-              raw: messageEncoding_default(parsedResult),
-              threadId: threadId[0],
-            },
+async function setupDraft(auth, req) {
+  const gmail = google8.gmail({ version: 'v1', auth })
+  try {
+    if ('body' in req) {
+      const parsedResult = await formFieldParser(req)
+      const { threadId } = parsedResult
+      const response = await gmail.users.drafts.create({
+        userId: USER,
+        requestBody: {
+          message: {
+            raw: messageEncoding_default(parsedResult),
+            threadId: threadId[0],
           },
-        })
-        if (
-          (response == null ? void 0 : response.status) === 200 &&
-          (response == null ? void 0 : response.data)
-        ) {
-          gmailV1SchemaDraftSchema.parse(response.data)
-          return response.data
-        } else {
-          return new Error('Draft is not created...')
-        }
+        },
+      })
+      if (response?.status === 200 && response?.data) {
+        gmailV1SchemaDraftSchema.parse(response.data)
+        return response.data
+      } else {
+        return new Error('Draft is not created...')
       }
-    } catch (err) {
-      errorHandeling(err, 'createDraft')
     }
-  })
+  } catch (err) {
+    errorHandeling(err, 'createDraft')
+  }
 }
-var createDraft = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(setupDraft)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+var createDraft = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(setupDraft)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Drafts/deleteDraft.ts
 import { google as google9 } from './node_modules/googleapis/build/src/index.js'
-var removeDraft = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google9.gmail({ version: 'v1', auth })
-    const {
-      body: { id },
-    } = req
-    try {
-      const response = yield gmail.users.drafts.delete({
-        userId: USER,
-        id,
-      })
-      return response
-    } catch (err) {
-      errorHandeling(err, 'deleteDraft')
-    }
-  })
-var deleteDraft = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(removeDraft)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+var removeDraft = async (auth, req) => {
+  const gmail = google9.gmail({ version: 'v1', auth })
+  const {
+    body: { id },
+  } = req
+  try {
+    const response = await gmail.users.drafts.delete({
+      userId: USER,
+      id,
+    })
+    return response
+  } catch (err) {
+    errorHandeling(err, 'deleteDraft')
+  }
+}
+var deleteDraft = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(removeDraft)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Drafts/fetchDrafts.ts
 import { google as google10 } from './node_modules/googleapis/build/src/index.js'
-var getDrafts = (auth) =>
-  __async(void 0, null, function* () {
-    const gmail = google10.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.drafts.list({
-        userId: USER,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaListDraftsResponseSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No drafts found...')
-    } catch (err) {
-      errorHandeling(err, 'fetchDrafts')
+var getDrafts = async (auth) => {
+  const gmail = google10.gmail({ version: 'v1', auth })
+  try {
+    const response = await gmail.users.drafts.list({
+      userId: USER,
+    })
+    if (response?.data) {
+      gmailV1SchemaListDraftsResponseSchema.parse(response.data)
+      return response.data
     }
-  })
-var fetchDrafts = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getDrafts)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No drafts found...')
+  } catch (err) {
+    errorHandeling(err, 'fetchDrafts')
+  }
+}
+var fetchDrafts = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getDrafts)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Drafts/fetchSingleDraft.ts
 import { google as google11 } from './node_modules/googleapis/build/src/index.js'
@@ -2105,9 +1927,7 @@ function changeSignatureColor(activeDocument) {
   $('div[class*="signature"]').each((_, element) => {
     $(element).attr('style', 'color: var(--color-neutral-400) !important')
   })
-  return __spreadProps(__spreadValues({}, activeDocument), {
-    emailHTML: $.html(),
-  })
+  return { ...activeDocument, emailHTML: $.html() }
 }
 
 // src/utils/bodyDecoder/utils/cleanLink.ts
@@ -2125,22 +1945,19 @@ function cleanLink(activeDocument) {
       }
     }
   })
-  return __spreadProps(__spreadValues({}, activeDocument), {
-    emailHTML: $.html(),
-  })
+  return { ...activeDocument, emailHTML: $.html() }
 }
 
 // src/utils/bodyDecoder/utils/enhancePlainText.ts
 import AutoLinker from './node_modules/autolinker/dist/commonjs/index.js'
 function enhancePlainText(localString) {
-  var _a
   const lineBreakRegex = /(?:\r\n|\r|\n)/g
-  return (_a = AutoLinker.link(localString, { email: false }).replace(
-    lineBreakRegex,
-    '<br>'
-  )) != null
-    ? _a
-    : ''
+  return (
+    AutoLinker.link(localString, { email: false }).replace(
+      lineBreakRegex,
+      '<br>'
+    ) ?? ''
+  )
 }
 
 // src/utils/bodyDecoder/utils/openLinkInNewTab.ts
@@ -2155,9 +1972,7 @@ function openLinkInNewTab(activeDocument) {
       $(documentLink).attr('aria-label', 'Opens in new tab')
     }
   })
-  return __spreadProps(__spreadValues({}, activeDocument), {
-    emailHTML: $.html(),
-  })
+  return { ...activeDocument, emailHTML: $.html() }
 }
 
 // src/utils/bodyDecoder/utils/removeScripts.ts
@@ -2197,10 +2012,7 @@ function parseStyleIntoObject(documentImage) {
   )
   if (fetchedStyle.length > 0) {
     const parsedStyle = fetchedStyle
-      .map((item) => {
-        var _a
-        return (_a = item.value) == null ? void 0 : _a.split(/\s*;\s*/g)
-      })
+      .map((item) => item.value?.split(/\s*;\s*/g))
       .flat(1)
     for (let i = 0; parsedStyle.length > i; i += 1) {
       const parsedStyleEntry = parsedStyle[i]
@@ -2245,12 +2057,10 @@ function detectAndRemove(documentImage) {
   return foundImage
 }
 function removeTrackers(orderedObject) {
-  const localCopyOrderedObject = __spreadProps(
-    __spreadValues({}, orderedObject),
-    {
-      removedTrackers: [],
-    }
-  )
+  const localCopyOrderedObject = {
+    ...orderedObject,
+    removedTrackers: [],
+  }
   const $ = cheerio5.load(orderedObject.emailHTML)
   let foundImage = null
   $('img').each((_, documentImage) => {
@@ -2270,12 +2080,9 @@ function removeTrackers(orderedObject) {
     }
     if (foundImage) {
       $(foundImage).remove()
-      const srcOfTracker =
-        documentImage == null
-          ? void 0
-          : documentImage.attributes.filter(
-              (attribute) => attribute.name === 'src'
-            )[0]
+      const srcOfTracker = documentImage?.attributes.filter(
+        (attribute) => attribute.name === 'src'
+      )[0]
       if (srcOfTracker && localCopyOrderedObject.removedTrackers) {
         localCopyOrderedObject.removedTrackers.push(srcOfTracker.value)
       }
@@ -2305,138 +2112,98 @@ var decodedString
 var localMessageId
 var decodedResult = []
 var localGmail = null
-var inlineImageDecoder = (_0) =>
-  __async(void 0, [_0], function* ({ attachmentData, messageId }) {
-    var _a, _b
-    const { body, filename, mimeType, headers } = attachmentData
-    const getAttachment2 = () =>
-      __async(void 0, null, function* () {
-        if (localGmail && (body == null ? void 0 : body.attachmentId)) {
-          try {
-            const response2 = yield localGmail.users.messages.attachments.get({
-              userId: USER,
-              messageId,
-              id: body == null ? void 0 : body.attachmentId,
-            })
-            if (response2 && response2.data) {
-              return response2.data
-            }
-            return 'Message attachment not found...'
-          } catch (err) {
-            throw Error(`Get Attachment returned an error: ${err}`)
-          }
+var inlineImageDecoder = async ({ attachmentData, messageId }) => {
+  const { body, filename, mimeType, headers } = attachmentData
+  const getAttachment2 = async () => {
+    if (localGmail && body?.attachmentId) {
+      try {
+        const response2 = await localGmail.users.messages.attachments.get({
+          userId: USER,
+          messageId,
+          id: body?.attachmentId,
+        })
+        if (response2 && response2.data) {
+          return response2.data
         }
-      })
-    const response = yield getAttachment2()
-    if (
-      response &&
-      typeof response !== 'string' &&
-      (response == null ? void 0 : response.data)
-    ) {
-      const decodedB64 = baseBase64(response.data)
-      const contentID =
-        (_b =
-          (_a =
-            headers == null
-              ? void 0
-              : headers.find(
-                  (e) => e.name === 'Content-ID' || e.name === 'Content-Id'
-                )) == null
-            ? void 0
-            : _a.value) == null
-          ? void 0
-          : _b.replace(/<|>/gi, '')
-      if (contentID) {
-        const attachment = {
-          mimeType,
-          decodedB64,
-          filename,
-          contentID,
-        }
-        return attachment
+        return 'Message attachment not found...'
+      } catch (err) {
+        throw Error(`Get Attachment returned an error: ${err}`)
       }
-      return
     }
-  })
-var loopThroughBodyParts = (_0) =>
-  __async(void 0, [_0], function* ({ inputObject, signal }) {
-    if (signal == null ? void 0 : signal.aborted) {
-      throw new Error('Decoding aborted')
+  }
+  const response = await getAttachment2()
+  if (response && typeof response !== 'string' && response?.data) {
+    const decodedB64 = baseBase64(response.data)
+    const contentID = headers
+      ?.find((e) => e.name === 'Content-ID' || e.name === 'Content-Id')
+      ?.value?.replace(/<|>/gi, '')
+    if (contentID) {
+      const attachment = {
+        mimeType,
+        decodedB64,
+        filename,
+        contentID,
+      }
+      return attachment
     }
-    const loopingFunction = (_02) =>
-      __async(void 0, [_02], function* ({ loopObject }) {
-        var _a, _b, _c, _d, _e
-        try {
-          const objectKeys = Object.keys(loopObject)
-          for (const objectKey of objectKeys) {
-            if (objectKey === 'body') {
-              if (
-                ((_a = loopObject == null ? void 0 : loopObject.body) == null
-                  ? void 0
-                  : _a.size) &&
-                ((_b = loopObject == null ? void 0 : loopObject.body) == null
-                  ? void 0
-                  : _b.size) > 0
-              ) {
-                if (
-                  ((_c = loopObject.body) == null ? void 0 : _c.attachmentId) &&
-                  localMessageId
-                ) {
-                  const imageObjectPromise = inlineImageDecoder({
-                    attachmentData: loopObject,
-                    messageId: localMessageId,
-                  })
-                  if (imageObjectPromise) {
-                    decodedResult.push(imageObjectPromise)
-                  }
-                }
-                decodedString = decodeBase64(
-                  `${
-                    (_d = loopObject == null ? void 0 : loopObject.body) == null
-                      ? void 0
-                      : _d.data
-                  }`
-                )
-                if (loopObject.mimeType !== 'text/plain' && decodedString) {
-                  decodedResult.push(decodedString)
-                } else if (
-                  loopObject.mimeType === 'text/plain' &&
-                  decodedString
-                ) {
-                  const localString = decodedString
-                  const check = enhancePlainText(localString)
-                  decodedResult.push(check)
-                }
+    return
+  }
+}
+var loopThroughBodyParts = async ({ inputObject, signal }) => {
+  if (signal?.aborted) {
+    throw new Error('Decoding aborted')
+  }
+  const loopingFunction = async ({ loopObject }) => {
+    try {
+      const objectKeys = Object.keys(loopObject)
+      for (const objectKey of objectKeys) {
+        if (objectKey === 'body') {
+          if (loopObject?.body?.size && loopObject?.body?.size > 0) {
+            if (loopObject.body?.attachmentId && localMessageId) {
+              const imageObjectPromise = inlineImageDecoder({
+                attachmentData: loopObject,
+                messageId: localMessageId,
+              })
+              if (imageObjectPromise) {
+                decodedResult.push(imageObjectPromise)
               }
             }
-            if (objectKey === 'parts') {
-              if (
-                (((_e = loopObject == null ? void 0 : loopObject.body) == null
-                  ? void 0
-                  : _e.size) === 0 ||
-                  !Object.prototype.hasOwnProperty.call(loopObject, 'body')) &&
-                (loopObject == null ? void 0 : loopObject.parts)
-              ) {
-                loopObject.parts.forEach((part) => {
-                  loopingFunction({
-                    loopObject: part,
-                  })
-                })
-              }
+            decodedString = decodeBase64(`${loopObject?.body?.data}`)
+            if (loopObject.mimeType !== 'text/plain' && decodedString) {
+              decodedResult.push(decodedString)
+            } else if (loopObject.mimeType === 'text/plain' && decodedString) {
+              const localString = decodedString
+              const check = enhancePlainText(localString)
+              decodedResult.push(check)
             }
           }
-          if (!(signal == null ? void 0 : signal.aborted)) {
-            const result = yield Promise.all(decodedResult)
-            return result
-          }
-          return null
-        } catch (err) {
-          decodedResult = []
-          return err
         }
-      })
-    return loopingFunction({ loopObject: inputObject })
-  })
+        if (objectKey === 'parts') {
+          if (
+            (loopObject?.body?.size === 0 ||
+              !Object.prototype.hasOwnProperty.call(loopObject, 'body')) &&
+            loopObject?.parts
+          ) {
+            loopObject.parts.forEach((part) => {
+              void loopingFunction({
+                loopObject: part,
+              })
+            })
+          }
+        }
+      }
+      if (!signal?.aborted) {
+        const result = await Promise.all(decodedResult)
+        return result
+      }
+      return null
+    } catch (err) {
+      decodedResult = []
+      return err
+    }
+  }
+  return loopingFunction({ loopObject: inputObject })
+}
 var orderArrayPerType = (response) => {
   const firstStringOnly = []
   const objectOnly = []
@@ -2454,9 +2221,7 @@ var prioritizeHTMLbodyObject = (response) => {
   let htmlObject = ''
   let noHtmlObject = ''
   if (response.emailHTML.length === 1 && response.emailHTML[0]) {
-    return __spreadProps(__spreadValues({}, response), {
-      emailHTML: response.emailHTML[0],
-    })
+    return { ...response, emailHTML: response.emailHTML[0] }
   }
   if (response.emailHTML.length > 1) {
     for (const item of response.emailHTML) {
@@ -2470,13 +2235,9 @@ var prioritizeHTMLbodyObject = (response) => {
     }
   }
   if (htmlObject.length > 0) {
-    return __spreadProps(__spreadValues({}, response), {
-      emailHTML: htmlObject,
-    })
+    return { ...response, emailHTML: htmlObject }
   }
-  return __spreadProps(__spreadValues({}, response), {
-    emailHTML: noHtmlObject,
-  })
+  return { ...response, emailHTML: noHtmlObject }
 }
 var placeInlineImage = (orderedObject) => {
   if (orderedObject.emailFileHTML.length > 0) {
@@ -2501,46 +2262,44 @@ var placeInlineImage = (orderedObject) => {
   }
   return orderedObject
 }
-var bodyDecoder = (_0) =>
-  __async(void 0, [_0], function* ({ gmail, inputObject, messageId, signal }) {
-    try {
-      if (inputObject) {
-        if (messageId) {
-          localMessageId = messageId
-        }
-        if (gmail) {
-          localGmail = gmail
-        }
-        const response = yield loopThroughBodyParts({
-          inputObject,
-          signal,
-        })
-        decodedResult = []
-        if (response) {
-          const ordered = orderArrayPerType(response)
-          const prioritized = prioritizeHTMLbodyObject(ordered)
-          const inlinedImages = placeInlineImage(prioritized)
-          const removedTrackers = removeTrackers(inlinedImages)
-          const removedScript = removeScripts(removedTrackers)
-          const openLinks = openLinkInNewTab(removedScript)
-          const cleanedLinks = cleanLink(openLinks)
-          const alteredSignature = changeSignatureColor(cleanedLinks)
-          return alteredSignature
-        } else {
-          throw Error('Got no response from the body parts')
-        }
+var bodyDecoder = async ({ gmail, inputObject, messageId, signal }) => {
+  try {
+    if (inputObject) {
+      if (messageId) {
+        localMessageId = messageId
       }
-      return { emailHTML: '', emailFileHTML: [] }
-    } catch (err) {
-      return err
+      if (gmail) {
+        localGmail = gmail
+      }
+      const response = await loopThroughBodyParts({
+        inputObject,
+        signal,
+      })
+      decodedResult = []
+      if (response) {
+        const ordered = orderArrayPerType(response)
+        const prioritized = prioritizeHTMLbodyObject(ordered)
+        const inlinedImages = placeInlineImage(prioritized)
+        const removedTrackers = removeTrackers(inlinedImages)
+        const removedScript = removeScripts(removedTrackers)
+        const openLinks = openLinkInNewTab(removedScript)
+        const cleanedLinks = cleanLink(openLinks)
+        const alteredSignature = changeSignatureColor(cleanedLinks)
+        return alteredSignature
+      } else {
+        throw Error('Got no response from the body parts')
+      }
     }
-  })
+    return { emailHTML: '', emailFileHTML: [] }
+  } catch (err) {
+    return err
+  }
+}
 var bodyDecoder_default = bodyDecoder
 
 // src/utils/fetchAttachments/fetchAttachments.ts
 var foundAttachments = []
 var loopThroughParts = ({ input, reset = false }) => {
-  var _a
   if (reset) {
     foundAttachments = []
   }
@@ -2554,14 +2313,9 @@ var loopThroughParts = ({ input, reset = false }) => {
     if (
       !inputParts.parts &&
       inputParts.filename &&
-      ((_a = inputParts == null ? void 0 : inputParts.headers) == null
-        ? void 0
-        : _a.some((header) => {
-            var _a2
-            return (_a2 = header == null ? void 0 : header.name) == null
-              ? void 0
-              : _a2.includes('Content-Disposition')
-          }))
+      inputParts?.headers?.some((header) =>
+        header?.name?.includes('Content-Disposition')
+      )
     ) {
       foundAttachments.push(inputParts)
     }
@@ -2569,12 +2323,7 @@ var loopThroughParts = ({ input, reset = false }) => {
   return foundAttachments
 }
 function checkAttachment(message) {
-  var _a
-  if (
-    (_a = message == null ? void 0 : message.payload) == null
-      ? void 0
-      : _a.parts
-  ) {
+  if (message?.payload?.parts) {
     return loopThroughParts({ input: message.payload.parts, reset: true })
   }
   return []
@@ -2582,39 +2331,22 @@ function checkAttachment(message) {
 
 // src/utils/findHeader.ts
 function findHeader(rawMessage, query) {
-  var _a, _b, _c, _d, _e, _f, _g, _h
   if (
-    ((_a = rawMessage == null ? void 0 : rawMessage.payload) == null
-      ? void 0
-      : _a.headers) &&
-    ((_c =
-      (_b = rawMessage == null ? void 0 : rawMessage.payload) == null
-        ? void 0
-        : _b.headers) == null
-      ? void 0
-      : _c.find((e) => e.name === query))
+    rawMessage?.payload?.headers &&
+    rawMessage?.payload?.headers?.find((e) => e.name === query)
   ) {
-    return (_e =
-      (_d = rawMessage.payload.headers.find((e) => e.name === query)) == null
-        ? void 0
-        : _d.value) != null
-      ? _e
-      : null
+    return (
+      rawMessage.payload.headers.find((e) => e.name === query)?.value ?? null
+    )
   }
   if (
-    ((_f = rawMessage == null ? void 0 : rawMessage.payload) == null
-      ? void 0
-      : _f.headers) &&
+    rawMessage?.payload?.headers &&
     rawMessage.payload.headers.find((e) => e.name === query.toLowerCase())
   ) {
-    return (_h =
-      (_g = rawMessage.payload.headers.find(
-        (e) => e.name === query.toLowerCase()
-      )) == null
-        ? void 0
-        : _g.value) != null
-      ? _h
-      : null
+    return (
+      rawMessage.payload.headers.find((e) => e.name === query.toLowerCase())
+        ?.value ?? null
+    )
   }
   return null
 }
@@ -2647,9 +2379,8 @@ function fetchUnsubscribeLink(activeDocument) {
     if (
       documentLink.childNodes
         .map((childNode) => {
-          var _a
           if (isText(childNode)) {
-            return (_a = childNode.data) != null ? _a : ''
+            return childNode.data ?? ''
           }
           return ''
         })
@@ -2723,156 +2454,132 @@ var remapPayloadHeaders = (rawMessage, convertedBody) => {
     bcc: findHeader(rawMessage, 'Bcc'),
   }
 }
-var remapFullMessage = (rawMessage, gmail) =>
-  __async(void 0, null, function* () {
-    var _a, _b
-    const convertedBody = yield bodyDecoder_default({
-      gmail,
-      inputObject: rawMessage.payload,
-      messageId: rawMessage == null ? void 0 : rawMessage.id,
-    })
-    return {
-      id: rawMessage.id,
-      threadId: rawMessage.threadId,
-      labelIds: rawMessage.labelIds,
-      snippet: rawMessage.snippet,
-      payload: {
-        mimeType:
-          (_a = rawMessage == null ? void 0 : rawMessage.payload) == null
-            ? void 0
-            : _a.mimeType,
-        headers: remapPayloadHeaders(rawMessage, convertedBody),
-        body: convertedBody,
-        files: checkAttachment(rawMessage),
-        parts:
-          (_b = rawMessage == null ? void 0 : rawMessage.payload) == null
-            ? void 0
-            : _b.parts,
-      },
-      sizeEstimate: rawMessage.sizeEstimate,
-      historyId: rawMessage.historyId,
-      internalDate: rawMessage.internalDate,
-    }
+var remapFullMessage = async (rawMessage, gmail) => {
+  const convertedBody = await bodyDecoder_default({
+    gmail,
+    inputObject: rawMessage.payload,
+    messageId: rawMessage?.id,
   })
-function threadFullRemap(rawObject, gmail) {
-  return __async(this, null, function* () {
-    if (rawObject.messages) {
-      const mappedMessages = rawObject.messages.map((message) =>
-        remapFullMessage(message, gmail)
-      )
-      const result = {
-        id: rawObject.id,
-        historyId: rawObject.historyId,
-        messages: yield Promise.all(mappedMessages),
-      }
-      ThreadObject.parse(result)
-      return result
+  return {
+    id: rawMessage.id,
+    threadId: rawMessage.threadId,
+    labelIds: rawMessage.labelIds,
+    snippet: rawMessage.snippet,
+    payload: {
+      mimeType: rawMessage?.payload?.mimeType,
+      headers: remapPayloadHeaders(rawMessage, convertedBody),
+      body: convertedBody,
+      files: checkAttachment(rawMessage),
+      parts: rawMessage?.payload?.parts,
+    },
+    sizeEstimate: rawMessage.sizeEstimate,
+    historyId: rawMessage.historyId,
+    internalDate: rawMessage.internalDate,
+  }
+}
+async function threadFullRemap(rawObject, gmail) {
+  if (rawObject.messages) {
+    const mappedMessages = rawObject.messages.map((message) =>
+      remapFullMessage(message, gmail)
+    )
+    const result = {
+      id: rawObject.id,
+      historyId: rawObject.historyId,
+      messages: await Promise.all(mappedMessages),
     }
-    return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
-  })
+    ThreadObject.parse(result)
+    return result
+  }
+  return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
 }
 
 // src/api/Drafts/fetchSingleDraft.ts
-var getDraft = (auth, req) =>
-  __async(void 0, null, function* () {
-    var _a
-    const gmail = google11.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.drafts.get({
-        userId: USER,
-        id: req.params.id,
-        format: 'full',
-      })
-      if (
-        (_a = response == null ? void 0 : response.data) == null
-          ? void 0
-          : _a.message
-      ) {
-        gmailV1SchemaDraftSchema.parse(response.data)
-        const decodedResult2 = yield remapFullMessage(
-          response.data.message,
-          gmail
-        )
-        return { id: response.data.id, message: decodedResult2 }
-      }
-      return new Error('Draft not found...')
-    } catch (err) {
-      errorHandeling(err, 'fetchSingleDraft')
+var getDraft = async (auth, req) => {
+  const gmail = google11.gmail({ version: 'v1', auth })
+  try {
+    const response = await gmail.users.drafts.get({
+      userId: USER,
+      id: req.params.id,
+      format: 'full',
+    })
+    if (response?.data?.message) {
+      gmailV1SchemaDraftSchema.parse(response.data)
+      const decodedResult2 = await remapFullMessage(
+        response.data.message,
+        gmail
+      )
+      return { id: response.data.id, message: decodedResult2 }
     }
-  })
-var fetchSingleDraft = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getDraft)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('Draft not found...')
+  } catch (err) {
+    errorHandeling(err, 'fetchSingleDraft')
+  }
+}
+var fetchSingleDraft = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getDraft)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Drafts/sendDraft.ts
 import { google as google12 } from './node_modules/googleapis/build/src/index.js'
-var exportDraft = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google12.gmail({ version: 'v1', auth })
-    const { id } = req.body
-    try {
-      const response = yield gmail.users.drafts.send({
-        userId: USER,
-        requestBody: {
-          id,
-        },
-      })
-      if (response) {
-        gmailV1SchemaMessageSchema.parse(response)
-        return response
-      }
-      return new Error('Mail was not sent...')
-    } catch (err) {
-      errorHandeling(err, 'sendDraft')
+var exportDraft = async (auth, req) => {
+  const gmail = google12.gmail({ version: 'v1', auth })
+  const { id } = req.body
+  try {
+    const response = await gmail.users.drafts.send({
+      userId: USER,
+      requestBody: {
+        id,
+      },
+    })
+    if (response) {
+      gmailV1SchemaMessageSchema.parse(response)
+      return response
     }
-  })
-var sendDraft = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(exportDraft)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('Mail was not sent...')
+  } catch (err) {
+    errorHandeling(err, 'sendDraft')
+  }
+}
+var sendDraft = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(exportDraft)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Drafts/updateDraft.ts
 import { google as google13 } from './node_modules/googleapis/build/src/index.js'
-var exportDraft2 = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google13.gmail({ version: 'v1', auth })
-    try {
-      if ('body' in req) {
-        const parsedResult = yield formFieldParser(req)
-        const { draftId, threadId, messageId } = parsedResult
-        const response = yield gmail.users.drafts.update({
-          userId: USER,
-          id: draftId,
-          requestBody: {
-            message: {
-              raw: messageEncoding_default(parsedResult),
-              id: messageId[0],
-              threadId: threadId[0],
-            },
+var exportDraft2 = async (auth, req) => {
+  const gmail = google13.gmail({ version: 'v1', auth })
+  try {
+    if ('body' in req) {
+      const parsedResult = await formFieldParser(req)
+      const { draftId, threadId, messageId } = parsedResult
+      const response = await gmail.users.drafts.update({
+        userId: USER,
+        id: draftId,
+        requestBody: {
+          message: {
+            raw: messageEncoding_default(parsedResult),
+            id: messageId[0],
+            threadId: threadId[0],
           },
-        })
-        if (
-          (response == null ? void 0 : response.status) === 200 &&
-          (response == null ? void 0 : response.data)
-        ) {
-          gmailV1SchemaDraftSchema.parse(response.data)
-          return response
-        } else {
-          return new Error('Draft is not updated...')
-        }
+        },
+      })
+      if (response?.status === 200 && response?.data) {
+        gmailV1SchemaDraftSchema.parse(response.data)
+        return response
+      } else {
+        return new Error('Draft is not updated...')
       }
-    } catch (err) {
-      errorHandeling(err, 'updateDraft')
     }
-  })
-var updateDraft = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(exportDraft2)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+  } catch (err) {
+    errorHandeling(err, 'updateDraft')
+  }
+}
+var updateDraft = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(exportDraft2)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/health.ts
 var health = (req, res) => {
@@ -2909,22 +2616,18 @@ var restructureObject = (message) => {
   if (message === void 0) {
     return
   }
-  const newObject = __spreadProps(__spreadValues({}, message), {
-    id: message.threadId,
-  })
+  const newObject = { ...message, id: message.threadId }
   return newObject
 }
 function handleHistoryObject({ history, storageLabels }) {
-  var _a
   const inboxFeed = {
     labels: [INBOX_LABEL],
     threads: [],
     nextPageToken: HISTORY_NEXT_PAGETOKEN,
   }
-  const toDoLabelId =
-    (_a = storageLabels.find((label) => label.name === 'Juno/To Do')) == null
-      ? void 0
-      : _a.id
+  const toDoLabelId = storageLabels.find(
+    (label) => label.name === 'Juno/To Do'
+  )?.id
   if (!toDoLabelId) {
     throw Error('Cannot find the to do label')
   }
@@ -2949,24 +2652,10 @@ function handleHistoryObject({ history, storageLabels }) {
     nextPageToken: HISTORY_NEXT_PAGETOKEN,
   }
   const handleRemovalUnreadLabel = (item) => {
-    var _a2, _b, _c, _d
-    const message =
-      (_b =
-        (_a2 = item == null ? void 0 : item.labelsRemoved) == null
-          ? void 0
-          : _a2.at(0)) == null
-        ? void 0
-        : _b.message
-    const labelIds =
-      (_d =
-        (_c = item == null ? void 0 : item.labelsRemoved) == null
-          ? void 0
-          : _c.at(0)) == null
-        ? void 0
-        : _d.labelIds
-    const messageLabelIds = message == null ? void 0 : message.labelIds
-    const labelIdsHasUnread =
-      labelIds == null ? void 0 : labelIds.includes(UNREAD_LABEL)
+    const message = item?.labelsRemoved?.at(0)?.message
+    const labelIds = item?.labelsRemoved?.at(0)?.labelIds
+    const messageLabelIds = message?.labelIds
+    const labelIdsHasUnread = labelIds?.includes(UNREAD_LABEL)
     if (labelIdsHasUnread && messageLabelIds) {
       const staticOnlyLegalLabels = onlyLegalLabelObjects_default({
         labelNames: messageLabelIds,
@@ -2988,79 +2677,42 @@ function handleHistoryObject({ history, storageLabels }) {
     }
   }
   const handleRemovalOriginFeed = (item) => {
-    var _a2, _b, _c, _d
-    const message =
-      (_b =
-        (_a2 = item == null ? void 0 : item.labelsRemoved) == null
-          ? void 0
-          : _a2.at(0)) == null
-        ? void 0
-        : _b.message
-    const labelIds =
-      (_d =
-        (_c = item == null ? void 0 : item.labelsRemoved) == null
-          ? void 0
-          : _c.at(0)) == null
-        ? void 0
-        : _d.labelIds
-    if (message == null ? void 0 : message.threadId) {
-      if (labelIds == null ? void 0 : labelIds.includes(INBOX_LABEL)) {
+    const message = item?.labelsRemoved?.at(0)?.message
+    const labelIds = item?.labelsRemoved?.at(0)?.labelIds
+    if (message?.threadId) {
+      if (labelIds?.includes(INBOX_LABEL)) {
         const output = inboxFeed.threads.filter(
-          (filterItem) =>
-            (filterItem == null ? void 0 : filterItem.id) !==
-            (message == null ? void 0 : message.threadId)
+          (filterItem) => filterItem?.id !== message?.threadId
         )
         inboxFeed.threads = output
       }
-      if (labelIds == null ? void 0 : labelIds.includes(toDoLabelId)) {
+      if (labelIds?.includes(toDoLabelId)) {
         const output = todoFeed.threads.filter(
-          (filterItem) =>
-            (filterItem == null ? void 0 : filterItem.id) !==
-            (message == null ? void 0 : message.threadId)
+          (filterItem) => filterItem?.id !== message?.threadId
         )
         todoFeed.threads = output
       }
     }
   }
   const handleAdditionLabel = (item) => {
-    var _a2, _b, _c, _d
-    const message =
-      (_b =
-        (_a2 = item == null ? void 0 : item.labelsAdded) == null
-          ? void 0
-          : _a2.at(0)) == null
-        ? void 0
-        : _b.message
-    const labelIds =
-      (_d = (_c = item.labelsAdded) == null ? void 0 : _c.at(0)) == null
-        ? void 0
-        : _d.labelIds
-    if (labelIds == null ? void 0 : labelIds.includes(INBOX_LABEL)) {
+    const message = item?.labelsAdded?.at(0)?.message
+    const labelIds = item.labelsAdded?.at(0)?.labelIds
+    if (labelIds?.includes(INBOX_LABEL)) {
       inboxFeed.threads.push(restructureObject(message))
     }
-    if (labelIds == null ? void 0 : labelIds.includes(toDoLabelId)) {
+    if (labelIds?.includes(toDoLabelId)) {
       todoFeed.threads.push(restructureObject(message))
     }
-    if (labelIds == null ? void 0 : labelIds.includes(SENT_LABEL)) {
+    if (labelIds?.includes(SENT_LABEL)) {
       sentFeed.threads.push(restructureObject(message))
     }
   }
   const handleAdditionDraftMessage = (item) => {
-    var _a2, _b
-    const message =
-      (_b =
-        (_a2 = item == null ? void 0 : item.messagesAdded) == null
-          ? void 0
-          : _a2.at(0)) == null
-        ? void 0
-        : _b.message
-    if (message == null ? void 0 : message.labelIds) {
+    const message = item?.messagesAdded?.at(0)?.message
+    if (message?.labelIds) {
       const draftThreadIndex = draftFeed.threads.findIndex((thread) => {
-        if (item == null ? void 0 : item.messagesAdded) {
-          return (
-            (thread == null ? void 0 : thread.threadId) ===
-            (message == null ? void 0 : message.threadId)
-          )
+        if (item?.messagesAdded) {
+          return thread?.threadId === message?.threadId
         }
         return -1
       })
@@ -3073,15 +2725,8 @@ function handleHistoryObject({ history, storageLabels }) {
     }
   }
   const handleAdditionMessage = (item) => {
-    var _a2, _b
-    const message =
-      (_b =
-        (_a2 = item == null ? void 0 : item.messagesAdded) == null
-          ? void 0
-          : _a2.at(0)) == null
-        ? void 0
-        : _b.message
-    const messageLabelIds = message == null ? void 0 : message.labelIds
+    const message = item?.messagesAdded?.at(0)?.message
+    const messageLabelIds = message?.labelIds
     if (messageLabelIds) {
       if (messageLabelIds.includes(INBOX_LABEL)) {
         inboxFeed.threads.push(restructureObject(message))
@@ -3128,7 +2773,6 @@ import { google as google14 } from './node_modules/googleapis/build/src/index.js
 
 // src/api/Threads/threadRequest.ts
 var requestBodyCreator = (req) => {
-  var _a
   const requestBody = {
     userId: USER,
   }
@@ -3144,10 +2788,7 @@ var requestBodyCreator = (req) => {
       requestBody.q = '-label:inbox -label:sent -label:drafts -label:Juno/To Do'
     }
   }
-  if (
-    ((_a = req == null ? void 0 : req.query) == null ? void 0 : _a.pageToken) &&
-    typeof req.query.pageToken === 'string'
-  ) {
+  if (req?.query?.pageToken && typeof req.query.pageToken === 'string') {
     requestBody.pageToken = req.query.pageToken
   }
   if (req.query.q && typeof req.query.q === 'string') {
@@ -3170,17 +2811,13 @@ var remapPayloadHeaders2 = (rawMessage) => {
   }
 }
 var remapSimpleMessage = (rawMessage) => {
-  var _a
   return {
     id: rawMessage.id,
     threadId: rawMessage.threadId,
     labelIds: rawMessage.labelIds,
     snippet: rawMessage.snippet,
     payload: {
-      mimeType:
-        (_a = rawMessage == null ? void 0 : rawMessage.payload) == null
-          ? void 0
-          : _a.mimeType,
+      mimeType: rawMessage?.payload?.mimeType,
       headers: remapPayloadHeaders2(rawMessage),
       files: checkAttachment(rawMessage),
     },
@@ -3189,187 +2826,165 @@ var remapSimpleMessage = (rawMessage) => {
     internalDate: rawMessage.internalDate,
   }
 }
-function threadSimpleRemap(rawObject) {
-  return __async(this, null, function* () {
-    if (rawObject.messages) {
-      const mappedMessages = rawObject.messages.map((message) =>
-        remapSimpleMessage(message)
-      )
-      const result = {
-        id: rawObject.id,
-        historyId: rawObject.historyId,
-        messages: yield Promise.all(mappedMessages),
-      }
-      ThreadSimpleRemap.parse(result)
-      return result
+async function threadSimpleRemap(rawObject) {
+  if (rawObject.messages) {
+    const mappedMessages = rawObject.messages.map((message) =>
+      remapSimpleMessage(message)
+    )
+    const result = {
+      id: rawObject.id,
+      historyId: rawObject.historyId,
+      messages: await Promise.all(mappedMessages),
     }
-    return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
-  })
+    ThreadSimpleRemap.parse(result)
+    return result
+  }
+  return { id: rawObject.id, historyId: rawObject.historyId, messages: [] }
 }
 
 // src/api/Threads/fetchSimpleThreads.ts
-function singleThread(thread, gmail) {
-  return __async(this, null, function* () {
-    const { id } = thread
-    try {
-      if (id) {
-        const response = yield gmail.users.threads.get({
-          userId: USER,
-          id,
-          format: 'full',
-        })
-        if (response && response.data) {
-          gmailV1SchemaThreadSchema.parse(response.data)
-          return response.data
-        }
-      }
-      throw Error('Thread not found...')
-    } catch (err) {
-      errorHandeling(err, 'singleThread')
-    }
-  })
-}
-var hydrateMetaList = (_0) =>
-  __async(void 0, [_0], function* ({ gmail, response, timeStampLastFetch }) {
-    const { threads } = response
-    if (!threads) {
-      throw new Error('No threads found on the response')
-    }
-    const fetchedThreads = yield Promise.all(
-      threads.map((thread) => singleThread(thread, gmail))
-    )
-    const result = __spreadProps(
-      __spreadValues(
-        {
-          nextPageToken: null,
-        },
-        response
-      ),
-      {
-        threads: yield Promise.all(
-          fetchedThreads.map((thread) => thread && threadSimpleRemap(thread))
-        ),
-        timestamp: timeStampLastFetch,
-      }
-    )
-    return result
-  })
-var getSimpleThreads = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google14.gmail({ version: 'v1', auth })
-    const requestBody = threadRequest_default(req)
-    try {
-      const response = yield gmail.users.threads.list(requestBody)
-      const timeStampLastFetch = Date.now()
-      if (
-        !response ||
-        !(response == null ? void 0 : response.data) ||
-        response.data.resultSizeEstimate === 0
-      ) {
-        return __spreadValues(
-          {
-            nextPageToken: null,
-            threads: [],
-            timestamp: timeStampLastFetch,
-          },
-          response.data
-        )
-      }
-      const validatedData = gmailV1SchemaListThreadsResponseSchema.parse(
-        response.data
-      )
-      const output = yield hydrateMetaList({
-        gmail,
-        response: validatedData,
-        timeStampLastFetch,
+async function singleThread(thread, gmail) {
+  const { id } = thread
+  try {
+    if (id) {
+      const response = await gmail.users.threads.get({
+        userId: USER,
+        id,
+        format: 'full',
       })
-      return output
-    } catch (err) {
-      errorHandeling(err, 'fetchSimpleThreads')
+      if (response && response.data) {
+        gmailV1SchemaThreadSchema.parse(response.data)
+        return response.data
+      }
     }
-  })
-var fetchSimpleThreads = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getSimpleThreads)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    throw Error('Thread not found...')
+  } catch (err) {
+    errorHandeling(err, 'singleThread')
+  }
+}
+var hydrateMetaList = async ({ gmail, response, timeStampLastFetch }) => {
+  const { threads } = response
+  if (!threads) {
+    throw new Error('No threads found on the response')
+  }
+  const fetchedThreads = await Promise.all(
+    threads.map((thread) => singleThread(thread, gmail))
+  )
+  const result = {
+    nextPageToken: null,
+    ...response,
+    threads: await Promise.all(
+      fetchedThreads.map((thread) => thread && threadSimpleRemap(thread))
+    ),
+    timestamp: timeStampLastFetch,
+  }
+  return result
+}
+var getSimpleThreads = async (auth, req) => {
+  const gmail = google14.gmail({ version: 'v1', auth })
+  const requestBody = threadRequest_default(req)
+  try {
+    const response = await gmail.users.threads.list(requestBody)
+    const timeStampLastFetch = Date.now()
+    if (
+      !response ||
+      !response?.data ||
+      response.data.resultSizeEstimate === 0
+    ) {
+      return {
+        nextPageToken: null,
+        threads: [],
+        timestamp: timeStampLastFetch,
+        ...response.data,
+      }
+    }
+    const validatedData = gmailV1SchemaListThreadsResponseSchema.parse(
+      response.data
+    )
+    const output = await hydrateMetaList({
+      gmail,
+      response: validatedData,
+      timeStampLastFetch,
+    })
+    return output
+  } catch (err) {
+    errorHandeling(err, 'fetchSimpleThreads')
+  }
+}
+var fetchSimpleThreads = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getSimpleThreads)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/History/listHistory.ts
-var fetchHistory = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google15.gmail({ version: 'v1', auth })
-    try {
-      const { startHistoryId, storageLabels } = req.body.params
-      const response = yield gmail.users.history.list({
-        userId: USER,
-        historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],
-        startHistoryId,
-      })
-      if (
-        (response == null ? void 0 : response.status) === 200 &&
-        storageLabels
-      ) {
-        gmailV1SchemaListHistoryResponseSchema.parse(response.data)
-        const { data } = response
-        if (!data.history) {
-          const emptyResponse = {
-            labels: [],
-            threads: [],
-          }
-          return [emptyResponse]
+var fetchHistory = async (auth, req) => {
+  const gmail = google15.gmail({ version: 'v1', auth })
+  try {
+    const { startHistoryId, storageLabels } = req.body.params
+    const response = await gmail.users.history.list({
+      userId: USER,
+      historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],
+      startHistoryId,
+    })
+    if (response?.status === 200 && storageLabels) {
+      gmailV1SchemaListHistoryResponseSchema.parse(response.data)
+      const { data } = response
+      if (!data.history) {
+        const emptyResponse = {
+          labels: [],
+          threads: [],
         }
-        const history = handleHistoryObject({
-          history: data.history,
-          storageLabels,
-        })
-        const timeStampLastFetch = Date.now()
-        const hydratedOutput = yield Promise.all(
-          history.map((historyItem) =>
-            hydrateMetaList({
-              gmail,
-              timeStampLastFetch,
-              response: historyItem,
-            })
-          )
-        )
-        return hydratedOutput
+        return [emptyResponse]
       }
-      return new Error('No history found...')
-    } catch (err) {
-      errorHandeling(err, 'listHistory')
+      const history = handleHistoryObject({
+        history: data.history,
+        storageLabels,
+      })
+      const timeStampLastFetch = Date.now()
+      const hydratedOutput = await Promise.all(
+        history.map((historyItem) =>
+          hydrateMetaList({
+            gmail,
+            timeStampLastFetch,
+            response: historyItem,
+          })
+        )
+      )
+      return hydratedOutput
     }
-  })
-var listHistory = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(fetchHistory)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No history found...')
+  } catch (err) {
+    errorHandeling(err, 'listHistory')
+  }
+}
+var listHistory = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(fetchHistory)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Labels/getSingleLabel.ts
 import { google as google16 } from './node_modules/googleapis/build/src/index.js'
-var fetchSingleLabel = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google16.gmail({ version: 'v1', auth })
-    const { id } = req.params
-    try {
-      const response = yield gmail.users.labels.get({
-        userId: USER,
-        id,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaLabelSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No Label found...')
-    } catch (err) {
-      errorHandeling(err, 'getSingleLabel')
+var fetchSingleLabel = async (auth, req) => {
+  const gmail = google16.gmail({ version: 'v1', auth })
+  const { id } = req.params
+  try {
+    const response = await gmail.users.labels.get({
+      userId: USER,
+      id,
+    })
+    if (response?.data) {
+      gmailV1SchemaLabelSchema.parse(response.data)
+      return response.data
     }
-  })
-var getSingleLabel = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(fetchSingleLabel)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No Label found...')
+  } catch (err) {
+    errorHandeling(err, 'getSingleLabel')
+  }
+}
+var getSingleLabel = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(fetchSingleLabel)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Labels/updateLabel.ts
 import { google as google17 } from './node_modules/googleapis/build/src/index.js'
@@ -3387,351 +3002,325 @@ var handleRequestBody = ({ requestBody }) => {
     const parsedRequestBodyValue = userSettingsSchemaNumericalSizes.parse(value)
     const labelAsString = buildLabelString(parsedRequestBodyValue)
     const validatedSettingsLabel = gmailV1SchemaLabelSchema.parse(settingsLabel)
-    return __spreadProps(__spreadValues({}, validatedSettingsLabel), {
-      name: labelAsString,
-    })
+    return { ...validatedSettingsLabel, name: labelAsString }
   }
   const typedRegularRequestBody = requestBody
   return typedRegularRequestBody
 }
-var refreshLabel = (auth, req) =>
-  __async(void 0, null, function* () {
-    try {
-      const gmail = google17.gmail({ version: 'v1', auth })
-      const { id, requestBody } = req.body
-      const toUseRequestBody = handleRequestBody({ requestBody })
-      if (toUseRequestBody instanceof Error) {
-        throw toUseRequestBody
-      }
-      if (!id) {
-        throw new Error('Invalid id value received')
-      }
-      const response = yield gmail.users.labels.patch({
-        userId: USER,
-        id,
-        requestBody: toUseRequestBody,
-      })
-      if (response == null ? void 0 : response.data) {
-        const validatedResponse = gmailV1SchemaLabelSchema.parse(response.data)
-        return validatedResponse
-      }
-      return new Error('No labels created...')
-    } catch (err) {
-      errorHandeling(err, 'updateLabels')
+var refreshLabel = async (auth, req) => {
+  try {
+    const gmail = google17.gmail({ version: 'v1', auth })
+    const { id, requestBody } = req.body
+    const toUseRequestBody = handleRequestBody({ requestBody })
+    if (toUseRequestBody instanceof Error) {
+      throw toUseRequestBody
     }
-  })
-var updateLabel = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(refreshLabel)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    if (!id) {
+      throw new Error('Invalid id value received')
+    }
+    const response = await gmail.users.labels.patch({
+      userId: USER,
+      id,
+      requestBody: toUseRequestBody,
+    })
+    if (response?.data) {
+      const validatedResponse = gmailV1SchemaLabelSchema.parse(response.data)
+      return validatedResponse
+    }
+    return new Error('No labels created...')
+  } catch (err) {
+    errorHandeling(err, 'updateLabels')
+  }
+}
+var updateLabel = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(refreshLabel)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Message/deleteMessage.ts
 import { google as google18 } from './node_modules/googleapis/build/src/index.js'
-var deleteSingleMessage = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google18.gmail({ version: 'v1', auth })
-    const {
-      body: { id },
-    } = req
-    try {
-      const response = yield gmail.users.messages.delete({
-        userId: USER,
-        id,
-      })
-      return response
-    } catch (err) {
-      errorHandeling(err, 'deleteMessage')
-    }
-  })
-var deleteMessage = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(deleteSingleMessage)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+var deleteSingleMessage = async (auth, req) => {
+  const gmail = google18.gmail({ version: 'v1', auth })
+  const {
+    body: { id },
+  } = req
+  try {
+    const response = await gmail.users.messages.delete({
+      userId: USER,
+      id,
+    })
+    return response
+  } catch (err) {
+    errorHandeling(err, 'deleteMessage')
+  }
+}
+var deleteMessage = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(deleteSingleMessage)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Message/fetchMessageAttachment.ts
 import { google as google19 } from './node_modules/googleapis/build/src/index.js'
-var getAttachment = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google19.gmail({ version: 'v1', auth })
-    const { messageId } = req.params
-    const attachmentId = req.params.id
-    try {
-      const response = yield gmail.users.messages.attachments.get({
-        userId: USER,
-        messageId,
-        id: attachmentId,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaMessagePartBodySchema.parse(response.data)
-        return response.data
-      }
-      return new Error('Message attachment not found4...')
-    } catch (err) {
-      errorHandeling(err, 'fetchMessageAttachment')
+var getAttachment = async (auth, req) => {
+  const gmail = google19.gmail({ version: 'v1', auth })
+  const { messageId } = req.params
+  const attachmentId = req.params.id
+  try {
+    const response = await gmail.users.messages.attachments.get({
+      userId: USER,
+      messageId,
+      id: attachmentId,
+    })
+    if (response?.data) {
+      gmailV1SchemaMessagePartBodySchema.parse(response.data)
+      return response.data
     }
-  })
-var fetchMessageAttachment = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getAttachment)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('Message attachment not found4...')
+  } catch (err) {
+    errorHandeling(err, 'fetchMessageAttachment')
+  }
+}
+var fetchMessageAttachment = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getAttachment)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Message/sendMessage.ts
 import { google as google20 } from './node_modules/googleapis/build/src/index.js'
-var exportMessage = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google20.gmail({ version: 'v1', auth })
-    const { id, threadId } = req.body
-    try {
-      if ('body' in req) {
-        const parsedResult = yield formFieldParser(req)
-        const response = yield gmail.users.messages.send({
-          userId: USER,
-          requestBody: {
-            raw: messageEncoding_default(parsedResult),
-            id,
-            threadId,
-          },
-        })
-        if (response) {
-          gmailV1SchemaMessageSchema.parse(response)
-          return response
-        }
-        return new Error('Mail was not sent...')
+var exportMessage = async (auth, req) => {
+  const gmail = google20.gmail({ version: 'v1', auth })
+  const { id, threadId } = req.body
+  try {
+    if ('body' in req) {
+      const parsedResult = await formFieldParser(req)
+      const response = await gmail.users.messages.send({
+        userId: USER,
+        requestBody: {
+          raw: messageEncoding_default(parsedResult),
+          id,
+          threadId,
+        },
+      })
+      if (response) {
+        gmailV1SchemaMessageSchema.parse(response)
+        return response
       }
-    } catch (err) {
-      errorHandeling(err, 'sendMessage')
+      return new Error('Mail was not sent...')
     }
-  })
-var sendMessage = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(exportMessage)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+  } catch (err) {
+    errorHandeling(err, 'sendMessage')
+  }
+}
+var sendMessage = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(exportMessage)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Message/thrashMessage.ts
 import { google as google21 } from './node_modules/googleapis/build/src/index.js'
-var thrashSingleMessage = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google21.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.messages.trash({
-        userId: USER,
-        id: req.params.id,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaMessageSchema.parse(response)
-        return response.data
-      }
-      return new Error('No message found...')
-    } catch (err) {
-      errorHandeling(err, 'thrashMessage')
+var thrashSingleMessage = async (auth, req) => {
+  const gmail = google21.gmail({ version: 'v1', auth })
+  try {
+    const response = await gmail.users.messages.trash({
+      userId: USER,
+      id: req.params.id,
+    })
+    if (response?.data) {
+      gmailV1SchemaMessageSchema.parse(response)
+      return response.data
     }
-  })
-var thrashMessage = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(thrashSingleMessage)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No message found...')
+  } catch (err) {
+    errorHandeling(err, 'thrashMessage')
+  }
+}
+var thrashMessage = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(thrashSingleMessage)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Message/updateMessage.ts
 import { google as google22 } from './node_modules/googleapis/build/src/index.js'
-var modifyMessage = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google22.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.messages.modify({
-        userId: USER,
-        id: req.params.id,
-        requestBody: req.body,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaMessageSchema.parse(response)
-        return response.data
-      }
-      return new Error('Message not found...')
-    } catch (err) {
-      errorHandeling(err, 'updateMessage')
+var modifyMessage = async (auth, req) => {
+  const gmail = google22.gmail({ version: 'v1', auth })
+  try {
+    const response = await gmail.users.messages.modify({
+      userId: USER,
+      id: req.params.id,
+      requestBody: req.body,
+    })
+    if (response?.data) {
+      gmailV1SchemaMessageSchema.parse(response)
+      return response.data
     }
-  })
-var updateMessage = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(modifyMessage)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('Message not found...')
+  } catch (err) {
+    errorHandeling(err, 'updateMessage')
+  }
+}
+var updateMessage = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(modifyMessage)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Threads/deleteThread.ts
 import { google as google23 } from './node_modules/googleapis/build/src/index.js'
-var deleteSingleThread = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google23.gmail({ version: 'v1', auth })
-    const {
-      body: { id },
-    } = req
-    try {
-      const response = yield gmail.users.threads.delete({
-        userId: USER,
-        id,
-      })
-      return response
-    } catch (err) {
-      errorHandeling(err, 'deleteThread')
-    }
-  })
-var deleteThread = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(deleteSingleThread)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+var deleteSingleThread = async (auth, req) => {
+  const gmail = google23.gmail({ version: 'v1', auth })
+  const {
+    body: { id },
+  } = req
+  try {
+    const response = await gmail.users.threads.delete({
+      userId: USER,
+      id,
+    })
+    return response
+  } catch (err) {
+    errorHandeling(err, 'deleteThread')
+  }
+}
+var deleteThread = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(deleteSingleThread)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Threads/fetchFullThreads.ts
 import { google as google24 } from './node_modules/googleapis/build/src/index.js'
-function singleThread2(thread, gmail) {
-  return __async(this, null, function* () {
-    try {
-      const { id } = thread
-      if (id) {
-        const response = yield gmail.users.threads.get({
-          userId: USER,
-          id,
-          format: 'full',
-        })
-        if (!response.data) {
-          throw Error('Thread not found...')
-        }
-        const validatedData = gmailV1SchemaThreadSchema.parse(response.data)
-        return validatedData
-      }
-      throw Error('Thread not found...')
-    } catch (err) {
-      errorHandeling(err, 'singleThread')
-    }
-  })
-}
-var getFullThreads = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google24.gmail({ version: 'v1', auth })
-    const requestBody = threadRequest_default(req)
-    try {
-      const response = yield gmail.users.threads.list(requestBody)
-      if (!response || !response.data) {
-        throw new Error('Invalid response on listing threads')
-      }
-      gmailV1SchemaListThreadsResponseSchema.parse(response.data)
-      const hydrateMetaList2 = () =>
-        __async(void 0, null, function* () {
-          const { threads } = response.data
-          if (!threads) {
-            throw new Error('No threads found in response')
-          }
-          const timeStampLastFetch = Date.now()
-          const fetchedThreads = yield Promise.all(
-            threads.map((thread) => singleThread2(thread, gmail))
-          )
-          const result = __spreadProps(__spreadValues({}, response.data), {
-            threads: yield Promise.all(
-              fetchedThreads.map(
-                (thread) => thread && threadFullRemap(thread, gmail)
-              )
-            ),
-            timestamp: timeStampLastFetch,
-          })
-          return result
-        })
-      return hydrateMetaList2()
-    } catch (err) {
-      errorHandeling(err, 'fetchFullThreads')
-    }
-  })
-var fetchFullThreads = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getFullThreads)(req)
-    responseMiddleware(res, statusCode, data)
-  })
-
-// src/api/Threads/fetchSingleThread.ts
-import { google as google25 } from './node_modules/googleapis/build/src/index.js'
-var getThread = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google25.gmail({ version: 'v1', auth })
-    const { id } = req.params
-    try {
-      const response = yield gmail.users.threads.get({
+async function singleThread2(thread, gmail) {
+  try {
+    const { id } = thread
+    if (id) {
+      const response = await gmail.users.threads.get({
         userId: USER,
         id,
         format: 'full',
       })
-      if (response && response.data) {
-        gmailV1SchemaThreadSchema.parse(response.data)
-        const expandedResponse = yield threadFullRemap(response.data, gmail)
-        return expandedResponse
+      if (!response.data) {
+        throw Error('Thread not found...')
       }
-      return new Error('Thread not found...')
-    } catch (err) {
-      errorHandeling(err, 'fetchSingleThread')
+      const validatedData = gmailV1SchemaThreadSchema.parse(response.data)
+      return validatedData
     }
-  })
-var fetchSingleThread = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(getThread)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    throw Error('Thread not found...')
+  } catch (err) {
+    errorHandeling(err, 'singleThread')
+  }
+}
+var getFullThreads = async (auth, req) => {
+  const gmail = google24.gmail({ version: 'v1', auth })
+  const requestBody = threadRequest_default(req)
+  try {
+    const response = await gmail.users.threads.list(requestBody)
+    if (!response || !response.data) {
+      throw new Error('Invalid response on listing threads')
+    }
+    gmailV1SchemaListThreadsResponseSchema.parse(response.data)
+    const hydrateMetaList2 = async () => {
+      const { threads } = response.data
+      if (!threads) {
+        throw new Error('No threads found in response')
+      }
+      const timeStampLastFetch = Date.now()
+      const fetchedThreads = await Promise.all(
+        threads.map((thread) => singleThread2(thread, gmail))
+      )
+      const result = {
+        ...response.data,
+        threads: await Promise.all(
+          fetchedThreads.map(
+            (thread) => thread && threadFullRemap(thread, gmail)
+          )
+        ),
+        timestamp: timeStampLastFetch,
+      }
+      return result
+    }
+    return hydrateMetaList2()
+  } catch (err) {
+    errorHandeling(err, 'fetchFullThreads')
+  }
+}
+var fetchFullThreads = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getFullThreads)(req)
+  responseMiddleware(res, statusCode, data)
+}
+
+// src/api/Threads/fetchSingleThread.ts
+import { google as google25 } from './node_modules/googleapis/build/src/index.js'
+var getThread = async (auth, req) => {
+  const gmail = google25.gmail({ version: 'v1', auth })
+  const { id } = req.params
+  try {
+    const response = await gmail.users.threads.get({
+      userId: USER,
+      id,
+      format: 'full',
+    })
+    if (response && response.data) {
+      gmailV1SchemaThreadSchema.parse(response.data)
+      const expandedResponse = await threadFullRemap(response.data, gmail)
+      return expandedResponse
+    }
+    return new Error('Thread not found...')
+  } catch (err) {
+    errorHandeling(err, 'fetchSingleThread')
+  }
+}
+var fetchSingleThread = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(getThread)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Threads/thrashThread.ts
 import { google as google26 } from './node_modules/googleapis/build/src/index.js'
-var thrashSingleThread = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google26.gmail({ version: 'v1', auth })
-    google26.options({
-      http2: false,
+var thrashSingleThread = async (auth, req) => {
+  const gmail = google26.gmail({ version: 'v1', auth })
+  google26.options({
+    http2: false,
+  })
+  try {
+    const response = await gmail.users.threads.trash({
+      userId: USER,
+      id: req.params.id,
     })
-    try {
-      const response = yield gmail.users.threads.trash({
-        userId: USER,
-        id: req.params.id,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaThreadSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No message found...')
-    } catch (err) {
-      errorHandeling(err, 'thrashThread')
+    if (response?.data) {
+      gmailV1SchemaThreadSchema.parse(response.data)
+      return response.data
     }
-  })
-var thrashThread = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(thrashSingleThread)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No message found...')
+  } catch (err) {
+    errorHandeling(err, 'thrashThread')
+  }
+}
+var thrashThread = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(thrashSingleThread)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Threads/updateThread.ts
 import { google as google27 } from './node_modules/googleapis/build/src/index.js'
-var updateSingleThread = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google27.gmail({ version: 'v1', auth })
-    try {
-      const response = yield gmail.users.threads.modify({
-        userId: USER,
-        id: req.params.id,
-        requestBody: req.body,
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaThreadSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('Message not found...')
-    } catch (err) {
-      errorHandeling(err, 'updateThread')
+var updateSingleThread = async (auth, req) => {
+  const gmail = google27.gmail({ version: 'v1', auth })
+  try {
+    const response = await gmail.users.threads.modify({
+      userId: USER,
+      id: req.params.id,
+      requestBody: req.body,
+    })
+    if (response?.data) {
+      gmailV1SchemaThreadSchema.parse(response.data)
+      return response.data
     }
-  })
-var updateThread = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(updateSingleThread)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('Message not found...')
+  } catch (err) {
+    errorHandeling(err, 'updateThread')
+  }
+}
+var updateThread = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(updateSingleThread)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/api/Users/logoutUser.ts
 var logoutUser = (req, res) => {
@@ -3740,7 +3329,7 @@ var logoutUser = (req, res) => {
       if (req.session.oAuthClient) {
         const oAuth2Client = createAuthClientObject(null)
         oAuth2Client.setCredentials(req.session.oAuthClient)
-        oAuth2Client.revokeCredentials()
+        void oAuth2Client.revokeCredentials()
       }
       req.session.destroy(function (err) {
         if (err) {
@@ -3757,32 +3346,30 @@ var logoutUser = (req, res) => {
 
 // src/api/Users/updateSendAs.ts
 import { google as google28 } from './node_modules/googleapis/build/src/index.js'
-var updateSendAsGmail = (auth, req) =>
-  __async(void 0, null, function* () {
-    const gmail = google28.gmail({ version: 'v1', auth })
-    const { emailId, request } = req.body.params
-    try {
-      const response = yield gmail.users.settings.sendAs.update({
-        userId: USER,
-        sendAsEmail: emailId,
-        requestBody: {
-          signature: request.signature,
-        },
-      })
-      if (response == null ? void 0 : response.data) {
-        gmailV1SchemaSendAsSchema.parse(response.data)
-        return response.data
-      }
-      return new Error('No data found...')
-    } catch (err) {
-      errorHandeling(err, 'updateSendAs')
+var updateSendAsGmail = async (auth, req) => {
+  const gmail = google28.gmail({ version: 'v1', auth })
+  const { emailId, request } = req.body.params
+  try {
+    const response = await gmail.users.settings.sendAs.update({
+      userId: USER,
+      sendAsEmail: emailId,
+      requestBody: {
+        signature: request.signature,
+      },
+    })
+    if (response?.data) {
+      gmailV1SchemaSendAsSchema.parse(response.data)
+      return response.data
     }
-  })
-var updateSendAs = (req, res) =>
-  __async(void 0, null, function* () {
-    const { data, statusCode } = yield authMiddleware(updateSendAsGmail)(req)
-    responseMiddleware(res, statusCode, data)
-  })
+    return new Error('No data found...')
+  } catch (err) {
+    errorHandeling(err, 'updateSendAs')
+  }
+}
+var updateSendAs = async (req, res) => {
+  const { data, statusCode } = await authMiddleware(updateSendAsGmail)(req)
+  responseMiddleware(res, statusCode, data)
+}
 
 // src/routes/index.ts
 var router = express.Router()
@@ -3896,34 +3483,18 @@ var userEndpoints = {
     put: updateSendAs,
   },
 }
-var combinedRoutes = __spreadValues(
-  __spreadValues(
-    __spreadValues(
-      __spreadValues(
-        __spreadValues(
-          __spreadValues(
-            __spreadValues(
-              __spreadValues(
-                __spreadValues(
-                  __spreadValues({}, authEndpoints),
-                  baseEndpoints
-                ),
-                contactEndpoints
-              ),
-              draftEndpoints
-            ),
-            healthEndpoints
-          ),
-          historyEndpoints
-        ),
-        labelEndpoints
-      ),
-      messageEndpoints
-    ),
-    threadEndpoints
-  ),
-  userEndpoints
-)
+var combinedRoutes = {
+  ...authEndpoints,
+  ...baseEndpoints,
+  ...contactEndpoints,
+  ...draftEndpoints,
+  ...healthEndpoints,
+  ...historyEndpoints,
+  ...labelEndpoints,
+  ...messageEndpoints,
+  ...threadEndpoints,
+  ...userEndpoints,
+}
 for (const [path, handlers] of Object.entries(combinedRoutes)) {
   for (const [method, handler] of Object.entries(handlers)) {
     router[method](path, handler)
@@ -3966,7 +3537,6 @@ app.use(
 )
 var LOCALHOST_ORIGIN_TAURI = 'tauri://localhost'
 function determineAllowOrigin(req) {
-  var _a
   assertNonNullish(
     process.env.FRONTEND_URL,
     'No Frontend environment variable found.'
@@ -3975,7 +3545,7 @@ function determineAllowOrigin(req) {
     case 'production': {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        ((_a = req.headers) == null ? void 0 : _a.referer)
+        req.headers?.referer
       ) {
         return req.headers.referer.endsWith('/')
           ? req.headers.referer.slice(0, -1)
@@ -3992,12 +3562,11 @@ function determineAllowOrigin(req) {
   }
 }
 function determineAllowCredentials(req) {
-  var _a
   switch (process.env.NODE_ENV) {
     case 'production': {
       if (
         process.env.ALLOW_LOCAL_FRONTEND_WITH_CLOUD_BACKEND === 'true' &&
-        ((_a = req.headers) == null ? void 0 : _a.referer) &&
+        req.headers?.referer &&
         req.headers.referer.includes('localhost')
       ) {
         return 'false'

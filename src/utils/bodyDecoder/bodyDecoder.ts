@@ -101,6 +101,7 @@ export const loopThroughBodyParts = async ({
                 attachmentData: loopObject,
                 messageId: localMessageId,
               })
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
               if (imageObjectPromise) {
                 decodedResult.push(imageObjectPromise)
               }
@@ -123,7 +124,7 @@ export const loopThroughBodyParts = async ({
           ) {
             // If the object has parts of its own, loop through all of them to decode
             loopObject.parts.forEach((part) => {
-              loopingFunction({
+              void loopingFunction({
                 loopObject: part,
               })
             })
