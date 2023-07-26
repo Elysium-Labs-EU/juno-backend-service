@@ -1,6 +1,7 @@
 import type { Credentials } from 'google-auth-library'
 
 import * as global from '../constants/globalConstants'
+import logger from '../middleware/loggerMiddleware'
 
 import { createAuthClientObject } from '.'
 
@@ -15,24 +16,26 @@ export const authorizeLocal = async ({
 }: {
   credentials: Credentials
 }) => {
-  if (credentials) {
-    const oAuth2Client = createAuthClientObject(null)
-    try {
-      oAuth2Client.setCredentials(credentials)
-      const checkedAccessToken = await oAuth2Client.getAccessToken()
-      if (!checkedAccessToken) {
-        // eslint-disable-next-line no-console
-        console.error('Cannot refresh the access token')
-        return global.INVALID_TOKEN
-      }
-      return oAuth2Client
-    } catch (err) {
-      return 'Error during authorization'
-      // eslint-disable-next-line no-console
-      console.log('err', JSON.stringify(err))
-    }
-  } else {
+  if (!credentials) {
+    logger.error('Credentials not provided')
     return global.INVALID_TOKEN
+  }
+
+  const oAuth2Client = createAuthClientObject(null)
+
+  try {
+    oAuth2Client.setCredentials(credentials)
+    const checkedAccessToken = await oAuth2Client.getAccessToken()
+
+    if (!checkedAccessToken) {
+      logger.error('Cannot refresh the access token')
+      return global.INVALID_TOKEN
+    }
+
+    return oAuth2Client
+  } catch (err) {
+    logger.error('Error during authorization', { error: err })
+    return 'Error during authorization'
   }
 }
 
@@ -48,14 +51,14 @@ export const authenticateLocal = async ({
   credentials: Credentials
 }) => {
   try {
-    if (credentials) {
-      const response = await authorizeLocal({ credentials })
-      return response
+    if (!credentials) {
+      logger.error('Credentials not provided')
+      return global.INVALID_TOKEN
     }
-    // If a token is invalid, require the user to sign in again.
-    return global.INVALID_TOKEN
+
+    const response = await authorizeLocal({ credentials })
+    return response
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(err)
+    logger.error('Error during local authentication', { error: err })
   }
 }
