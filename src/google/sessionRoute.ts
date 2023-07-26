@@ -2,13 +2,15 @@ import type { Request } from 'express'
 import type { Credentials } from 'google-auth-library'
 
 import * as global from '../constants/globalConstants'
+import logger from '../middleware/loggerMiddleware'
 
 import { createAuthClientObject } from '.'
 
 declare module 'express-session' {
   interface SessionData {
-    oAuthClient: Credentials
     hashSecret: string
+    isNew: boolean
+    oAuthClient: Credentials
   }
 }
 
@@ -25,6 +27,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       oAuth2Client.setCredentials(req.session.oAuthClient)
       const checkedAccessToken = await oAuth2Client.getAccessToken()
       if (!checkedAccessToken) {
+        logger.error('Cannot refresh the access token')
         // eslint-disable-next-line no-console
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
@@ -34,6 +37,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       return oAuth2Client
     }
   } catch (err) {
+    logger.error(`Error during authorization: ${err}`)
     // eslint-disable-next-line no-console
     console.log('err', err)
     return 'Error during authorization'
@@ -50,12 +54,18 @@ export const authenticateSession = async ({ req }: { req: Request }) => {
   try {
     if (typeof req.session?.oAuthClient !== 'undefined') {
       const response = await authorizeSession({ req })
+      if (response === global.INVALID_TOKEN) {
+        // Log when a session token is found to be invalid
+        logger.warn('Session token found to be invalid during authentication')
+      }
       return response
+    } else {
+      // Log when a session is found to be invalid
+      logger.warn('Invalid session found during authentication')
     }
-    // If session is invalid, require the user to sign in again.
+
     return global.INVALID_SESSION
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Error on authenticateSession', err)
+    logger.error(`Error on authenticateSession: ${err}`)
   }
 }

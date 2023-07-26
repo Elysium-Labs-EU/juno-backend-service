@@ -9,6 +9,7 @@ import {
   credentialsSchema,
   getAuthUrlResponseSchema,
 } from '../types/otherTypes'
+import logger from '../middleware/loggerMiddleware'
 
 const SCOPES = [
   'email',
@@ -70,12 +71,17 @@ export const createAuthClientObject = (req: Request | null): OAuth2Client => {
 export const getAuthenticateClient = async (req: Request, res: Response) => {
   try {
     const { code, state } = req.body
+    if (!code) {
+      res.status(400).json('Code not found')
+      throw new Error('Code not found')
+    }
     // Now that we have the code, use that to acquire tokens.
-    if (code) {
-      const oAuth2Client = createAuthClientObject(req)
-      const { tokens } = await oAuth2Client.getToken(code)
-      // Make sure to set the credentials on the OAuth2 client.
-      if (state && state !== 'noSession') {
+    const oAuth2Client = createAuthClientObject(req)
+    const { tokens } = await oAuth2Client.getToken(code)
+
+    // Make sure to set the credentials on the OAuth2 client.
+    if (state && state !== 'noSession') {
+      try {
         if (
           req.session?.hashSecret &&
           createHashState(req.session.hashSecret) === state
@@ -87,44 +93,49 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
           ) {
             oAuth2Client.setCredentials(tokens)
             req.session.oAuthClient = tokens
+            // Logging the successful assignment of credentials
+            logger.info(
+              'Successfully set credentials on OAuth2Client and session'
+            )
           } else {
+            logger.warn('Invalid token during client authentication')
             return res.status(401).json(global.INVALID_TOKEN)
           }
         } else {
-          const errorMessage = 'Invalid state detected'
+          logger.error('Invalid state detected during client authentication')
           res.status(401).json('Invalid state detected')
-          throw Error(errorMessage)
+          throw new Error('Invalid state detected')
         }
+      } catch (err) {
+        logger.error(`Error during state and token check: ${err}`)
+        throw err
       }
-
-      // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
-      if (state === 'noSession') {
-        if (tokens) {
-          oAuth2Client.setCredentials(tokens)
-          const result = {
-            credentials: oAuth2Client.credentials,
-          }
-          credentialsSchema.parse(result.credentials)
-          return res.status(200).json({
-            credentials: oAuth2Client.credentials,
-          })
-        } else {
-          const errorMessage = 'Token not found'
-          return res.status(401).json(errorMessage)
-          throw Error(errorMessage)
-        }
-      }
-      // If the session route is used, only send back an random id to the user.
-      return res.status(200).json({
-        idToken: `"${randomUUID()}"`,
-      })
-    } else {
-      res.status(400).json('Code not found')
     }
+
+    // Send back the authclient credentials to the user's browser whenever the noSession variable is found.
+    if (state === 'noSession') {
+      if (tokens) {
+        oAuth2Client.setCredentials(tokens)
+        const result = {
+          credentials: oAuth2Client.credentials,
+        }
+        credentialsSchema.parse(result.credentials)
+        return res.status(200).json({
+          credentials: oAuth2Client.credentials,
+        })
+      } else {
+        const errorMessage = 'Token not found'
+        logger.error(errorMessage)
+        return res.status(401).json(errorMessage)
+      }
+    }
+    // If the session route is used, only send back a random id to the user.
+    return res.status(200).json({
+      idToken: `"${randomUUID()}"`,
+    })
   } catch (err) {
-    console.log('ERROR', err)
-    res.status(401).json(err)
-    throw Error(err)
+    logger.error(`Error in getAuthenticateClient function: ${err}`)
+    res.status(401).json(err.message)
   }
 }
 
