@@ -7,7 +7,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 
 assertNonNullish(
   isDevelopment ? '' : process.env.LOGTAIL_SOURCE_TOKEN,
-  'No Logtail Source Token defined'
+  'No LOGTAIL_SOURCE_TOKEN defined'
 )
 
 const logtailSourceToken = process.env.LOGTAIL_SOURCE_TOKEN

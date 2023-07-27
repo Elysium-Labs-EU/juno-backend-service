@@ -50,7 +50,7 @@ import winston from "./node_modules/winston/lib/winston.js";
 var isDevelopment = process.env.NODE_ENV !== "production";
 assertNonNullish(
   isDevelopment ? "" : process.env.LOGTAIL_SOURCE_TOKEN,
-  "No Logtail Source Token defined"
+  "No LOGTAIL_SOURCE_TOKEN defined"
 );
 var logtailSourceToken = process.env.LOGTAIL_SOURCE_TOKEN;
 var logger = isDevelopment ? winston.createLogger({
