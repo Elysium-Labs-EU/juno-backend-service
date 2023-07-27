@@ -45,6 +45,9 @@ const loggingMiddleware = (
   if (process.env.NODE_ENV !== 'production' && 'add' in logger) {
     logger.defaultMeta = { ...logger.defaultMeta, headers: req.headers }
   }
+  if ('flush' in logger) {
+    void logger.flush()
+  }
   next()
 }
 app.use(loggingMiddleware)
