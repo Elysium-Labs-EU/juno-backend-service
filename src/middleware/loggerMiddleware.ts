@@ -6,7 +6,7 @@ import assertNonNullish from '../utils/assertNonNullish'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 assertNonNullish(
-  isDevelopment ? '' : process.env.LOGTAIL_SOURCE_TOKEN,
+  process.env.LOGTAIL_SOURCE_TOKEN,
   'No LOGTAIL_SOURCE_TOKEN defined'
 )
 

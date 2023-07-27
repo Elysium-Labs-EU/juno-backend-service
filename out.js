@@ -50,7 +50,7 @@ import { Logtail } from './node_modules/@logtail/node/dist/cjs/index.js'
 import winston from './node_modules/winston/lib/winston.js'
 var isDevelopment = process.env.NODE_ENV !== 'production'
 assertNonNullish(
-  isDevelopment ? '' : process.env.LOGTAIL_SOURCE_TOKEN,
+  process.env.LOGTAIL_SOURCE_TOKEN,
   'No LOGTAIL_SOURCE_TOKEN defined'
 )
 var logtailSourceToken = process.env.LOGTAIL_SOURCE_TOKEN
@@ -1135,7 +1135,7 @@ var checkIdValidity = async (token) => {
 // src/google/localRoute.ts
 var authorizeLocal = async ({ credentials }) => {
   if (!credentials) {
-    loggerMiddleware_default.error('Credentials not provided')
+    void loggerMiddleware_default.error('Credentials not provided')
     return INVALID_TOKEN
   }
   const oAuth2Client = createAuthClientObject(null)
@@ -1143,25 +1143,27 @@ var authorizeLocal = async ({ credentials }) => {
     oAuth2Client.setCredentials(credentials)
     const checkedAccessToken = await oAuth2Client.getAccessToken()
     if (!checkedAccessToken) {
-      loggerMiddleware_default.error('Cannot refresh the access token')
+      void loggerMiddleware_default.error('Cannot refresh the access token')
       return INVALID_TOKEN
     }
     return oAuth2Client
   } catch (err) {
-    loggerMiddleware_default.error('Error during authorization', { error: err })
+    void loggerMiddleware_default.error('Error during authorization', {
+      error: err,
+    })
     return 'Error during authorization'
   }
 }
 var authenticateLocal = async ({ credentials }) => {
   try {
     if (!credentials) {
-      loggerMiddleware_default.error('Credentials not provided')
+      void loggerMiddleware_default.error('Credentials not provided')
       return INVALID_TOKEN
     }
     const response = await authorizeLocal({ credentials })
     return response
   } catch (err) {
-    loggerMiddleware_default.error('Error during local authentication', {
+    void loggerMiddleware_default.error('Error during local authentication', {
       error: err,
     })
   }
@@ -1175,7 +1177,7 @@ var authorizeSession = async ({ req }) => {
       oAuth2Client.setCredentials(req.session.oAuthClient)
       const checkedAccessToken = await oAuth2Client.getAccessToken()
       if (!checkedAccessToken) {
-        loggerMiddleware_default.error('Cannot refresh the access token')
+        void loggerMiddleware_default.error('Cannot refresh the access token')
         console.error('Cannot refresh the access token')
         return INVALID_TOKEN
       }
@@ -1183,7 +1185,7 @@ var authorizeSession = async ({ req }) => {
       return oAuth2Client
     }
   } catch (err) {
-    loggerMiddleware_default.error(`Error during authorization: ${err}`)
+    void loggerMiddleware_default.error(`Error during authorization: ${err}`)
     console.log('err', err)
     return 'Error during authorization'
   }
@@ -1193,19 +1195,19 @@ var authenticateSession = async ({ req }) => {
     if (typeof req.session?.oAuthClient !== 'undefined') {
       const response = await authorizeSession({ req })
       if (response === INVALID_TOKEN) {
-        loggerMiddleware_default.warn(
+        void loggerMiddleware_default.warn(
           'Session token found to be invalid during authentication'
         )
       }
       return response
     } else {
-      loggerMiddleware_default.warn(
+      void loggerMiddleware_default.warn(
         'Invalid session found during authentication'
       )
     }
     return INVALID_SESSION
   } catch (err) {
-    loggerMiddleware_default.error(`Error on authenticateSession: ${err}`)
+    void loggerMiddleware_default.error(`Error on authenticateSession: ${err}`)
   }
 }
 
@@ -3575,7 +3577,7 @@ var app = express2()
 var redisClient = redis_default()
 var redisStore = new RedisStore({
   client: redisClient.on('destroy', (sid) => {
-    loggerMiddleware_default.info(`Session ${sid} was destroyed.`)
+    void loggerMiddleware_default.info(`Session ${sid} was destroyed.`)
   }),
   prefix: 'juno:',
 })
@@ -3591,21 +3593,24 @@ var loggingMiddleware = (req, res, next) => {
       headers: req.headers,
     }
   }
+  if ('flush' in loggerMiddleware_default) {
+    void loggerMiddleware_default.flush()
+  }
   next()
 }
 app.use(loggingMiddleware)
 app.use((req, res, next) => {
   if (req.session && req.session.isNew && !req.session.oAuthClient) {
-    loggerMiddleware_default.info('A new session was initialized.')
+    void loggerMiddleware_default.info('A new session was initialized.')
     req.session.isNew = void 0
   }
   next()
 })
 app.use((req, res, next) => {
   if (req.session) {
-    loggerMiddleware_default.info(`Session ID: ${req.sessionID}`)
+    void loggerMiddleware_default.info(`Session ID: ${req.sessionID}`)
     if (req.session.oAuthClient) {
-      loggerMiddleware_default.info(
+      void loggerMiddleware_default.info(
         `User oAuthClient: ${req.session.oAuthClient}`
       )
     }
