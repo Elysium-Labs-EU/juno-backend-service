@@ -8,7 +8,7 @@
     "start": "node esbuild.config.js && node --inspect out.js",
     "start:watch": "nodemon",
     "start:tsc": "tsc && node dist/server.js",
-    "start:watch:dev": "cp ./src/environments/.env.dev  .env && nodemon",
+    "start:watch:dev": "cp ./src/environments/.env.dev .env && nodemon",
     "start:watch:dev:win": "copy .env .env.dev  && nodemon",
     "lint": "eslint \"src/**/*.{js,json,md,ts}\"",
     "lint-fix": "eslint \"src/**/*.{js,json,md,ts}\" --fix",

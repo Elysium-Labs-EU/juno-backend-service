@@ -1,14 +1,14 @@
 import { Logtail } from '@logtail/node'
 import winston from 'winston'
 
-// import assertNonNullish from '../utils/assertNonNullish'
+import assertNonNullish from '../utils/assertNonNullish'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-// assertNonNullish(
-//   isDevelopment ? '' : process.env.LOGTAIL_SOURCE_TOKEN,
-//   'No LOGTAIL_SOURCE_TOKEN defined'
-// )
+assertNonNullish(
+  isDevelopment ? '' : process.env.LOGTAIL_SOURCE_TOKEN,
+  'No LOGTAIL_SOURCE_TOKEN defined'
+)
 
 const logtailSourceToken = process.env.LOGTAIL_SOURCE_TOKEN
 
