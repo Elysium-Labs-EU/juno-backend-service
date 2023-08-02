@@ -4,28 +4,29 @@ import winston from 'winston'
 import assertNonNullish from '../utils/assertNonNullish'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
-
-assertNonNullish(
-  process.env.LOGTAIL_SOURCE_TOKEN,
-  'No LOGTAIL_SOURCE_TOKEN defined'
-)
-
 const logtailSourceToken = process.env.LOGTAIL_SOURCE_TOKEN
 
-const logger = isDevelopment
-  ? winston.createLogger({
-      level: 'info', // Log only info and above level messages (can be error, warn, info, verbose, debug, silly)
-      format: winston.format.json(),
-      defaultMeta: { service: 'juno-backend' },
-      transports: [
-        new winston.transports.File({
-          filename: 'error.log',
-          level: 'error',
-        }),
-        new winston.transports.File({ filename: 'combined.log' }),
-      ],
-    })
-  : new Logtail(logtailSourceToken ?? '')
+// assertNonNullish(
+//   logtailSourceToken,
+//   'No LOGTAIL_SOURCE_TOKEN defined'
+// )
+
+const logger =
+  isDevelopment ? winston.createLogger({
+    level: 'info',
+    format: winston.format.json(),
+    defaultMeta: { service: 'juno-backend' },
+    transports: [
+      new winston.transports.File({
+        filename: 'error.log',
+        level: 'error',
+      }),
+      new winston.transports.File({ filename: 'combined.log' }),
+    ],
+  }) :
+    logtailSourceToken ? new Logtail(logtailSourceToken) :
+      undefined;
+
 
 if (isDevelopment && 'add' in logger) {
   logger.add(
