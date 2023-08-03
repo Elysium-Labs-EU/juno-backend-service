@@ -27,7 +27,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       oAuth2Client.setCredentials(req.session.oAuthClient)
       const checkedAccessToken = await oAuth2Client.getAccessToken()
       if (!checkedAccessToken) {
-        void logger.error('Cannot refresh the access token')
+        void logger?.error('Cannot refresh the access token')
         // eslint-disable-next-line no-console
         console.error('Cannot refresh the access token')
         return global.INVALID_TOKEN
@@ -37,7 +37,7 @@ export const authorizeSession = async ({ req }: { req: Request }) => {
       return oAuth2Client
     }
   } catch (err) {
-    void logger.error(`Error during authorization: ${err}`)
+    void logger?.error(`Error during authorization: ${err}`)
     // eslint-disable-next-line no-console
     console.log('err', err)
     return 'Error during authorization'
@@ -56,16 +56,18 @@ export const authenticateSession = async ({ req }: { req: Request }) => {
       const response = await authorizeSession({ req })
       if (response === global.INVALID_TOKEN) {
         // Log when a session token is found to be invalid
-        void logger.warn('Session token found to be invalid during authentication')
+        void logger?.warn(
+          'Session token found to be invalid during authentication'
+        )
       }
       return response
     } else {
       // Log when a session is found to be invalid
-      void logger.warn('Invalid session found during authentication')
+      void logger?.warn('Invalid session found during authentication')
     }
 
     return global.INVALID_SESSION
   } catch (err) {
-    void logger.error(`Error on authenticateSession: ${err}`)
+    void logger?.error(`Error on authenticateSession: ${err}`)
   }
 }

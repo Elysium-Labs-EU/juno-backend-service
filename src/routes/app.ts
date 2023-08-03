@@ -26,7 +26,7 @@ const app = express()
 const redisClient = initiateRedis()
 const redisStore = new RedisStore({
   client: redisClient.on('destroy', (sid) => {
-    void logger.info(`Session ${sid} was destroyed.`)
+    void logger?.info(`Session ${sid} was destroyed.`)
   }),
   prefix: 'juno:',
 })
@@ -42,10 +42,10 @@ const loggingMiddleware = (
   res: express.Response,
   next: express.NextFunction
 ) => {
-  if (process.env.NODE_ENV !== 'production' && 'add' in logger) {
+  if (process.env.NODE_ENV !== 'production' && logger && 'add' in logger) {
     logger.defaultMeta = { ...logger.defaultMeta, headers: req.headers }
   }
-  if ('flush' in logger) {
+  if (logger && 'flush' in logger) {
     void logger.flush()
   }
   next()
@@ -67,9 +67,9 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   // If there's a session, log its ID and the associated user ID.
   if (req.session) {
-    void logger.info(`Session ID: ${req.sessionID}`)
+    void logger?.info(`Session ID: ${req.sessionID}`)
     if (req.session.oAuthClient) {
-      void logger.info(`User oAuthClient: ${req.session.oAuthClient}`)
+      void logger?.info(`User oAuthClient: ${req.session.oAuthClient}`)
     }
   }
 

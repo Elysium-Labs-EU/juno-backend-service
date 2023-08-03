@@ -94,20 +94,20 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
             oAuth2Client.setCredentials(tokens)
             req.session.oAuthClient = tokens
             // Logging the successful assignment of credentials
-            logger.info(
+            logger?.info(
               'Successfully set credentials on OAuth2Client and session'
             )
           } else {
-            logger.warn('Invalid token during client authentication')
+            logger?.warn('Invalid token during client authentication')
             return res.status(401).json(global.INVALID_TOKEN)
           }
         } else {
-          logger.error('Invalid state detected during client authentication')
+          logger?.error('Invalid state detected during client authentication')
           res.status(401).json('Invalid state detected')
           throw new Error('Invalid state detected')
         }
       } catch (err) {
-        logger.error(`Error during state and token check: ${err}`)
+        logger?.error(`Error during state and token check: ${err}`)
         throw err
       }
     }
@@ -125,7 +125,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
         })
       } else {
         const errorMessage = 'Token not found'
-        logger.error(errorMessage)
+        logger?.error(errorMessage)
         return res.status(401).json(errorMessage)
       }
     }
@@ -134,7 +134,7 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
       idToken: `"${randomUUID()}"`,
     })
   } catch (err) {
-    logger.error(`Error in getAuthenticateClient function: ${err}`)
+    logger?.error(`Error in getAuthenticateClient function: ${err}`)
     res.status(401).json(err.message)
   }
 }

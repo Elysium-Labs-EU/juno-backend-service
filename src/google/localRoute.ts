@@ -17,7 +17,7 @@ export const authorizeLocal = async ({
   credentials: Credentials
 }) => {
   if (!credentials) {
-    void logger.error('Credentials not provided')
+    void logger?.error('Credentials not provided')
     return global.INVALID_TOKEN
   }
 
@@ -28,13 +28,13 @@ export const authorizeLocal = async ({
     const checkedAccessToken = await oAuth2Client.getAccessToken()
 
     if (!checkedAccessToken) {
-      void logger.error('Cannot refresh the access token')
+      void logger?.error('Cannot refresh the access token')
       return global.INVALID_TOKEN
     }
 
     return oAuth2Client
   } catch (err) {
-    void logger.error('Error during authorization', { error: err })
+    void logger?.error('Error during authorization', { error: err })
     return 'Error during authorization'
   }
 }
@@ -52,13 +52,13 @@ export const authenticateLocal = async ({
 }) => {
   try {
     if (!credentials) {
-      void logger.error('Credentials not provided')
+      void logger?.error('Credentials not provided')
       return global.INVALID_TOKEN
     }
 
     const response = await authorizeLocal({ credentials })
     return response
   } catch (err) {
-    void logger.error('Error during local authentication', { error: err })
+    void logger?.error('Error during local authentication', { error: err })
   }
 }
