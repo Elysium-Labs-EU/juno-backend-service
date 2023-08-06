@@ -157,7 +157,7 @@ export const getAuthUrl = async (req: Request, res: Response) => {
       prompt: 'select_account',
       scope: SCOPES,
       // Use a SHA256 state for security reasons when the cloud version is used.
-      state: req?.body?.noSession ? 'noSession' : hashState,
+      state: req?.body?.useSession ? hashState : 'noSession',
       // code_challenge_method: S256,
       // code_challenge: createHash('sha256').digest('hex'),
     })

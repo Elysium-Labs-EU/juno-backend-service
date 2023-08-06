@@ -106,16 +106,14 @@ export async function getBase(req: Request, res: Response) {
 
     if (labelResponse.status === 'rejected') {
       return res.status(500).json({
-        error: `Network Error. ${
-          labelResponse?.reason || JSON.stringify(labelResponse)
-        }. Please try again later.`,
+        error: `Network Error. ${labelResponse?.reason || JSON.stringify(labelResponse)
+          }. Please try again later.`,
       })
     }
     if (sendAsResponse.status === 'rejected') {
       return res.status(500).json({
-        error: `Network Error. ${
-          sendAsResponse?.reason || JSON.stringify(sendAsResponse)
-        }. Please try again later.`,
+        error: `Network Error. ${sendAsResponse?.reason || JSON.stringify(sendAsResponse)
+          }. Please try again later.`,
       })
     }
 

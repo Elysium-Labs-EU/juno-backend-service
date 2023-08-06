@@ -55,7 +55,7 @@ app.use(loggingMiddleware)
 app.use((req, res, next) => {
   // Check if session was just initialized.
   if (req.session && req.session.isNew && !req.session.oAuthClient) {
-    void logger.info('A new session was initialized.')
+    void logger?.info('A new session was initialized.')
 
     // Remove isNew flag after logging it
     req.session.isNew = undefined
@@ -90,7 +90,7 @@ app.use(
       secure: process.env.NODE_ENV !== 'production' ? false : true,
       httpOnly: true,
       maxAge: SEVEN_DAYS,
-      sameSite: process.env.NODE_ENV !== 'production' ? 'lax' : 'none',
+      sameSite: process.env.NODE_ENV !== 'production' ? 'strict' : 'none',
       domain:
         process.env.NODE_ENV !== 'production'
           ? undefined
