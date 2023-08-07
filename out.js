@@ -1852,7 +1852,7 @@ var SimpleMessage = z5.object({
   payload: z5.object({
     mimeType: z5.string(),
     headers: PayloadHeaders,
-    files: z5.array(z5.any())
+    files: z5.array(gmailV1SchemaMessagePartSchema)?.nullable()
   }),
   sizeEstimate: z5.number(),
   historyId: z5.string(),
@@ -1879,7 +1879,7 @@ var FullMessage = z5.object({
       emailFileHTML: z5.array(z5.any()),
       removedTrackers: z5.array(z5.string()).optional()
     }),
-    files: z5.array(gmailV1SchemaMessagePartSchema),
+    files: z5.array(gmailV1SchemaMessagePartSchema).nullable(),
     parts: z5.array(gmailV1SchemaMessagePartSchema).optional()
   }),
   sizeEstimate: z5.number(),
@@ -2293,7 +2293,7 @@ function checkAttachment(message) {
   if (message?.payload?.parts) {
     return loopThroughParts({ input: message.payload.parts, reset: true });
   }
-  return [];
+  return null;
 }
 
 // src/utils/findHeader.ts

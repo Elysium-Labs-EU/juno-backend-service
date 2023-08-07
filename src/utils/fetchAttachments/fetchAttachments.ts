@@ -36,12 +36,12 @@ export const loopThroughParts = ({
  * @function checkAttachment
  * @param message - it takes in a message object.
  * The function sends a reset flag on the first run, this is to clear out the recursive function.
- * @returns returns an empty array on unsuccesful detection of files, or an array of files (MessagePart)
+ * @returns returns a null on unsuccesful detection of files, or an array of files (MessagePart)
  */
 
 export default function checkAttachment(message: gmail_v1.Schema$Message) {
   if (message?.payload?.parts) {
     return loopThroughParts({ input: message.payload.parts, reset: true })
   }
-  return []
+  return null
 }

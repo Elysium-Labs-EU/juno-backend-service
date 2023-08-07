@@ -20,7 +20,7 @@ const SimpleMessage = z.object({
   payload: z.object({
     mimeType: z.string(),
     headers: PayloadHeaders,
-    files: z.array(z.any()),
+    files: z.array(gmailV1SchemaMessagePartSchema)?.nullable(),
   }),
   sizeEstimate: z.number(),
   historyId: z.string(),
@@ -52,7 +52,7 @@ const FullMessage = z.object({
       emailFileHTML: z.array(z.any()),
       removedTrackers: z.array(z.string()).optional(),
     }),
-    files: z.array(gmailV1SchemaMessagePartSchema),
+    files: z.array(gmailV1SchemaMessagePartSchema).nullable(),
     parts: z.array(gmailV1SchemaMessagePartSchema).optional(),
   }),
   sizeEstimate: z.number(),
