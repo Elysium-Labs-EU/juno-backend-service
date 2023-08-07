@@ -14,7 +14,7 @@ const fetchHistory = async (auth: OAuth2Client | undefined, req: Request) => {
   const gmail = google.gmail({ version: 'v1', auth })
 
   try {
-    const { startHistoryId, storageLabels } = req.body.params
+    const { startHistoryId, storageLabels } = req.body
     const response = await gmail.users.history.list({
       userId: USER,
       historyTypes: ['labelAdded', 'labelRemoved', 'messageAdded'],

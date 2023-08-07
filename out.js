@@ -1002,9 +1002,11 @@ var createAuthClientObject = (req) => {
 var getAuthenticateClient2 = async (req, res) => {
   try {
     const { code, state } = req.body;
+    console.log("BAS", req.body);
     if (!code) {
       res.status(400).json("Code not found");
       throw new Error("Code not found");
+      return;
     }
     const oAuth2Client = createAuthClientObject(req);
     const { tokens } = await oAuth2Client.getToken(code);
@@ -1034,12 +1036,12 @@ var getAuthenticateClient2 = async (req, res) => {
     if (state === "noSession") {
       if (tokens) {
         oAuth2Client.setCredentials(tokens);
-        const result = {
+        const { credentials } = {
           credentials: oAuth2Client.credentials
         };
-        credentialsSchema.parse(result.credentials);
+        const validatedCredentials = credentialsSchema.parse(credentials);
         return res.status(200).json({
-          credentials: oAuth2Client.credentials
+          credentials: validatedCredentials
         });
       } else {
         const errorMessage = "Token not found";
@@ -2847,7 +2849,7 @@ var fetchSimpleThreads = async (req, res) => {
 var fetchHistory = async (auth, req) => {
   const gmail = google15.gmail({ version: "v1", auth });
   try {
-    const { startHistoryId, storageLabels } = req.body.params;
+    const { startHistoryId, storageLabels } = req.body;
     const response = await gmail.users.history.list({
       userId: USER,
       historyTypes: ["labelAdded", "labelRemoved", "messageAdded"],

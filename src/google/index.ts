@@ -71,9 +71,11 @@ export const createAuthClientObject = (req: Request | null): OAuth2Client => {
 export const getAuthenticateClient = async (req: Request, res: Response) => {
   try {
     const { code, state } = req.body
+    console.log('BAS', req.body)
     if (!code) {
       res.status(400).json('Code not found')
       throw new Error('Code not found')
+      return
     }
     // Now that we have the code, use that to acquire tokens.
     const oAuth2Client = createAuthClientObject(req)
@@ -116,12 +118,12 @@ export const getAuthenticateClient = async (req: Request, res: Response) => {
     if (state === 'noSession') {
       if (tokens) {
         oAuth2Client.setCredentials(tokens)
-        const result = {
+        const { credentials } = {
           credentials: oAuth2Client.credentials,
         }
-        credentialsSchema.parse(result.credentials)
+        const validatedCredentials = credentialsSchema.parse(credentials)
         return res.status(200).json({
-          credentials: oAuth2Client.credentials,
+          credentials: validatedCredentials,
         })
       } else {
         const errorMessage = 'Token not found'
